@@ -1,0 +1,13 @@
+Checks: >
+  bugprone-*
+  cppcoreguidelines-*
+  clang-analyzer-*
+  modernize-*
+  performance-*
+  readability-*
+  misc-*
+  -modernize-use-trailing-return-type
+
+WarningsAsErrors: 'bugprone-*,clang-analyzer-*'
+HeaderFilterRegex: ''
+FormatStyle: none

@@ -1,0 +1,10 @@
+include(CheckCXXCompilerFlag)
+
+function (add_cxx_compiler_flag FLAG)
+    check_cxx_compiler_flag(${FLAG} FLAG_SUPPORTED)
+    if(FLAG_SUPPORTED)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAG}" PARENT_SCOPE)
+    else()
+        message(STATUS "Compiler flag not supported: ${FLAG}")
+    endif()
+endfunction()

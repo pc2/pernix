@@ -14,7 +14,7 @@ option(LIBCOMPRESSION_ENABLE_FORTRAN_BINDINGS "Build Fortran bindings for libcom
 
 option(LIBCOMPRESSION_ENABLE_DOXYGEN "Build documentation with Doxygen." on)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 find_program(CCACHE_PROGRAM ccache)
 if (CCACHE_PROGRAM)

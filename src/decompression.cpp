@@ -2,7 +2,7 @@
 
 namespace libcompression {
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
-int mm256_decompress_block_bmi2(const uint8_t bit_width, const uint8_t* input, float_t scale, float_t* output) {
+int mm256_decompress_block_bmi2(const uint8_t bit_width, const uint8_t* input, const float_t scale, float_t* output) {
     switch (bit_width) {
         COMPRESSION_BLOCK_SWITCH_CASE(mm256_decompress_block_bmi2, 1, true)
         COMPRESSION_BLOCK_SWITCH_CASE(mm256_decompress_block_bmi2, 2, true)
@@ -127,7 +127,7 @@ int mm256_decompress_blocks_avx2(const uint8_t bit_width, const uint8_t* input, 
             return -1;
     }
 }
-#endif // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // LIBCOMPRESSION_AVX2_ENABLED
 
 int decompress_block_fallback(const uint8_t bit_width, const uint8_t* input, const float_t scale, float_t* output) {
     switch (bit_width) {
@@ -197,17 +197,17 @@ int decompress_blocks(const AvailableImplementations implementation, const uint8
 #ifdef LIBCOMPRESSION_AVX512_VBMI_ENABLED
         case AvailableImplementations::AVX512_VBMI:
             return mm512_decompress_blocks_avx512vbmi(bit_width, input, scale, output, blocks);
-#endif // LIBCOMPRESSION_AVX512_VBMI_ENABLED
+#endif  // LIBCOMPRESSION_AVX512_VBMI_ENABLED
 #ifdef LIBCOMPRESSION_AVX512_ENABLED
         case AvailableImplementations::AVX512:
             return decompress_blocks_fallback(bit_width, input, scale, output, blocks);
-#endif // LIBCOMPRESSION_AVX512_ENABLED
+#endif  // LIBCOMPRESSION_AVX512_ENABLED
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
         case AvailableImplementations::AVX2_BMI2:
             return mm256_decompress_blocks_bmi2(bit_width, input, scale, output, blocks);
         case AvailableImplementations::AVX2:
             return mm256_decompress_blocks_avx2(bit_width, input, scale, output, blocks);
-#endif // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // LIBCOMPRESSION_AVX2_ENABLED
         case AvailableImplementations::FALLBACK:
         default:
             return decompress_blocks_fallback(bit_width, input, scale, output, blocks);
@@ -220,27 +220,27 @@ int decompress_block(const AvailableImplementations implementation, const uint8_
 #ifdef LIBCOMPRESSION_AVX512_VBMI_ENABLED
         case AvailableImplementations::AVX512_VBMI:
             return mm512_decompress_block_avx512vbmi(bit_width, input, scale, output);
-#endif // LIBCOMPRESSION_AVX512_VBMI_ENABLED
+#endif  // LIBCOMPRESSION_AVX512_VBMI_ENABLED
 #ifdef LIBCOMPRESSION_AVX512_ENABLED
         case AvailableImplementations::AVX512:
             return decompress_block_fallback(bit_width, input, scale, output);
-#endif // LIBCOMPRESSION_AVX512_ENABLED
+#endif  // LIBCOMPRESSION_AVX512_ENABLED
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
         case AvailableImplementations::AVX2_BMI2:
             return mm256_decompress_block_bmi2(bit_width, input, scale, output);
         case AvailableImplementations::AVX2:
             return mm256_decompress_block_avx2(bit_width, input, scale, output);
-#endif // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // LIBCOMPRESSION_AVX2_ENABLED
         case AvailableImplementations::FALLBACK:
         default:
             return decompress_block_fallback(bit_width, input, scale, output);
     }
 }
-}
+}  // namespace libcompression
 
 #ifdef __cplusplus
 extern "C" {
-#endif // __cplusplus
+#endif  // __cplusplus
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
 int mm256_decompress_block_bmi2_c(const uint8_t bit_width, const uint8_t* input, const float_t scale, float_t* output) {
     return libcompression::mm256_decompress_block_bmi2(bit_width, input, scale, output);
@@ -260,7 +260,7 @@ int mm256_decompress_blocks_avx2_c(const uint8_t bit_width, const uint8_t* input
                                    const uint32_t blocks) {
     return libcompression::mm256_decompress_blocks_avx2(bit_width, input, scale, output, blocks);
 }
-#endif // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // LIBCOMPRESSION_AVX2_ENABLED
 
 int decompress_block_fallback_c(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale,
                                 float_t* __restrict__ output) {
@@ -273,5 +273,5 @@ int decompress_blocks_fallback_c(const uint8_t bit_width, const uint8_t* input, 
 }
 
 #ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
+}  // extern "C"
+#endif  // __cplusplus

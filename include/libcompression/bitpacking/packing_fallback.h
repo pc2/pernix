@@ -13,23 +13,23 @@ namespace internal {
 template <typename T, uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
 void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t bit_offset, uint8_t* __restrict__ destination) {
-     constexpr uint32_t bits_in_type = sizeof(T) * 8;
-     constexpr uint32_t typemask     = std::numeric_limits<T>::max();
-     constexpr T bitmask             = BIT_WIDTH == bits_in_type ? std::numeric_limits<T>::max() : (1U << BIT_WIDTH) - 1U;
+    constexpr uint32_t bits_in_type = sizeof(T) * 8;
+    constexpr uint32_t typemask     = std::numeric_limits<T>::max();
+    constexpr T bitmask             = BIT_WIDTH == bits_in_type ? std::numeric_limits<T>::max() : (1U << BIT_WIDTH) - 1U;
 
-     std::span<T> destination_span(reinterpret_cast<T*>(destination),
-                                   (input.size() * BIT_WIDTH + bit_offset + bits_in_type - 1) / bits_in_type);
+    std::span<T> destination_span(reinterpret_cast<T*>(destination),
+                                  (input.size() * BIT_WIDTH + bit_offset + bits_in_type - 1) / bits_in_type);
 
-     std::size_t idx            = 0;
-     std::size_t bits_in_buffer = bit_offset;
-     uint64_t buffer            = 0;
+    std::size_t idx            = 0;
+    std::size_t bits_in_buffer = bit_offset;
+    uint64_t buffer            = 0;
 
-     if (bit_offset) {
-         buffer = static_cast<uint64_t>(destination_span[0] & (1ULL << bit_offset) - 1ULL);
-         idx++;
-     }
+    if (bit_offset) {
+        buffer = static_cast<uint64_t>(destination_span[0] & (1ULL << bit_offset) - 1ULL);
+        idx++;
+    }
 
-// #pragma GCC unroll 512
+#pragma GCC unroll 512
     for (uint32_t raw_value : input) {
         const uint32_t next_value = raw_value & bitmask;
 
@@ -43,11 +43,11 @@ void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t
         }
     }
 
-     if (bits_in_buffer > 0) {
-         destination_span[idx] = buffer & typemask;
-     }
+    if (bits_in_buffer > 0) {
+        destination_span[idx] = buffer & typemask;
+    }
 }
-} // namespace internal
+}  // namespace internal
 
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
@@ -62,6 +62,6 @@ void pack_epi32_fallback(const std::vector<uint32_t>& input, uint8_t* __restrict
 }
 
 void pack_epi32_fallback(uint8_t bit_width, const std::vector<uint32_t>& input, uint8_t* __restrict__ destination);
-} // namespace libcompression::bitpacking
+}  // namespace libcompression::bitpacking
 
-#endif //LIBCOMPRESSION_PACKING_FALLBACK_H
+#endif  // LIBCOMPRESSION_PACKING_FALLBACK_H

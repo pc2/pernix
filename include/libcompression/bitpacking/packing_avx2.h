@@ -6,9 +6,9 @@
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
 
 #include <immintrin.h>
-#include <cstdint>
-
 #include <libcompression/bitpacking/packing_tables.h>
+
+#include <cstdint>
 
 namespace libcompression::bitpacking {
 namespace internal {
@@ -76,7 +76,8 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
     return mm256_blend_epi8(low_half, high_half, 0xaa);
 }
 
-template <uint8_t BIT_WIDTH> requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 __always_inline auto mm_pack_epi32_avx2_9to16(__m128i& input) -> __m128i {
     using tables               = pack_tables_avx2_16<BIT_WIDTH, __m128i>;
     constexpr uint16_t bitmask = (1 << BIT_WIDTH) - 1;
@@ -105,8 +106,9 @@ __always_inline auto mm_pack_epi32_avx2_9to16(__m128i& input) -> __m128i {
     return combined;
 }
 
-template <uint8_t BIT_WIDTH> requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline auto mm256_pack_epi32_avx2_9to16(__m256i& input) -> __m256i {
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
+__always_inline auto mm256_pack_epi32_avx2_9to16(const __m256i& input) -> __m256i {
     using tables               = pack_tables_avx2_16<BIT_WIDTH, __m128i>;
     constexpr uint16_t bitmask = (1 << BIT_WIDTH) - 1;
     const __m128i packed       = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
@@ -135,8 +137,27 @@ __always_inline auto mm256_pack_epi32_avx2_9to16(__m256i& input) -> __m256i {
     return _mm256_castsi128_si256(combined);
 }
 
-template <uint8_t BIT_WIDTH> requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline auto mm256_pack_epi32_avx2_17to24(__m256i& input) -> __m256i {
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 4 && BIT_WIDTH <= 8)
+__always_inline auto mm256_pack_epi32_avx2_4to8(const __m256i& input) -> __m256i {
+    // using tables              = pack_tables_avx2_16<BIT_WIDTH, __m128i>;
+    constexpr uint8_t bitmask = (1 << BIT_WIDTH) - 1;
+
+    const __m128i packed = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
+    const __m128i masked = _mm_and_si128(packed, _mm_set1_epi16(bitmask));
+    const __m128i half1  = _mm_and_si128(masked, _mm_set_epi64x(0x5555555555555555, 0x5555555555555555));
+    __m128i half2        = _mm_and_si128(masked, _mm_set_epi64x(0xAAAAAAAAAAAAAAAA, 0xAAAAAAAAAAAAAAAA));
+
+    half2                  = _mm_srli_epi16(half2, 2);
+    const __m128i combined = _mm_or_si128(half1, half2);
+    const __m256i result   = _mm256_castsi128_si256(_mm_cvtepi16_epi32(combined));
+
+    return mm256_pack_epi32_avx2_9to16<12>(result);
+}
+
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
+__always_inline auto mm256_pack_epi32_avx2_17to24(const __m256i& input) -> __m256i {
     using tables               = pack_tables_avx2_32<BIT_WIDTH, __m256i>;
     constexpr uint32_t bitmask = (1 << BIT_WIDTH) - 1;
     const __m256i masked       = _mm256_and_si256(input, _mm256_set1_epi32(bitmask));
@@ -164,9 +185,10 @@ __always_inline auto mm256_pack_epi32_avx2_17to24(__m256i& input) -> __m256i {
 
     return combined;
 }
-}
+}  // namespace internal
 
-template <uint8_t BIT_WIDTH> requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 auto mm_pack_aligned_epi32_avx2(__m128i& input) -> __m128i {
     if constexpr (BIT_WIDTH == 8) {
         return _mm_packus_epi16(_mm_packs_epi32(input, _mm_setzero_si128()), _mm_setzero_si128());
@@ -175,11 +197,13 @@ auto mm_pack_aligned_epi32_avx2(__m128i& input) -> __m128i {
     }
 }
 
-template <uint8_t BIT_WIDTH> requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
-    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
-        // TODO: implementation for 1-8 bits
+    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
+        // TODO: implementation for 1-3 bits
         return _mm_setzero_si128();
+    } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH <= 8) {
     } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 16) {
         return internal::mm_pack_epi32_avx2_9to16<BIT_WIDTH>(input);
     } else {
@@ -187,7 +211,8 @@ auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
     }
 }
 
-template <uint8_t BIT_WIDTH> requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 auto mm256_pack_aligned_epi32_avx2(__m256i& input) -> __m256i {
     if constexpr (BIT_WIDTH == 8) {
     } else {
@@ -195,11 +220,14 @@ auto mm256_pack_aligned_epi32_avx2(__m256i& input) -> __m256i {
     }
 }
 
-template <uint8_t BIT_WIDTH> requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 auto mm256_pack_epi32_avx2(__m256i& input) -> __m256i {
-    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH < 8) {
-        // TODO: implementation for 1-8 bits
+    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
+        // TODO: implementation for 1-3 bits
         return _mm256_setzero_si256();
+    } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH < 8) {
+        return internal::mm256_pack_epi32_avx2_4to8<BIT_WIDTH>(input);
     } else if constexpr (BIT_WIDTH == 8) {
         return mm256_pack_aligned_epi32_avx2<BIT_WIDTH>(input);
     } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH < 16) {
@@ -218,6 +246,6 @@ auto mm_pack_epi32_avx2(uint8_t bit_width, __m128i& input) -> __m128i;
 auto mm256_pack_aligned_epi32_avx2(uint8_t bit_width, __m256i& input) -> __m256i;
 
 auto mm256_pack_epi32_avx2(uint8_t bit_width, __m256i& input) -> __m256i;
-} // namespace libcompression::bitpacking
+}  // namespace libcompression::bitpacking
 #endif  // LIBCOMPRESSION_AVX2_ENABLED
-#endif //LIBCOMPRESSION_PACKING_AVX2_H
+#endif  // LIBCOMPRESSION_PACKING_AVX2_H

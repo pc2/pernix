@@ -1,19 +1,18 @@
 #ifndef LIBCOMPRESSION_BENCHMARK_MACROS_H
 #define LIBCOMPRESSION_BENCHMARK_MACROS_H
 
-#include <functional>
-
+#include <benchmark/benchmark.h>
 #include <libcompression.h>
 
-#define BENCHMARK_DECOMPRESS_BLOCKS_REGISTER(name) \
-    BENCHMARK(BM_##name)->RangeMultiplier(2)->Range(1 << 0, 1 << 22)
+#include <functional>
 
-#define BENCHMARK_DECOMPRESS_BLOCKS_FUNCTION(name, func, N, MEM)                \
-    static void BM_##name##_##MEM##_##N(benchmark::State& state) {              \
-        BM_decompress_blocks<N, true, MEM>(state, func<N>);                     \
-    }                                                                           \
+#define BENCHMARK_DECOMPRESS_BLOCKS_REGISTER(name) BENCHMARK(BM_##name)->RangeMultiplier(2)->Range(1 << 0, 1 << 22)
+
+#define BENCHMARK_DECOMPRESS_BLOCKS_FUNCTION(name, func, N, MEM)   \
+    static void BM_##name##_##MEM##_##N(benchmark::State& state) { \
+        BM_decompress_blocks<N, true, MEM>(state, func<N>);        \
+    }                                                              \
     BENCHMARK_DECOMPRESS_BLOCKS_REGISTER(name##_##MEM##_##N);
-
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, bool DISABLE_MEM = false>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
@@ -33,7 +32,7 @@ __always_inline void BM_decompress_blocks(benchmark::State& state,
         for (auto _ : state) {
             for (uint32_t block = 0; block < number_of_blocks; block++) {
                 decompress_function(dummy_input, benchmark_set.scales[block], dummy_output);
-                asm volatile("" :: "r"(dummy_input), "r"(dummy_output));
+                asm volatile("" ::"r"(dummy_input), "r"(dummy_output));
             }
         }
     } else {
@@ -62,4 +61,4 @@ __always_inline void BM_decompress_blocks(benchmark::State& state,
     state.SetItemsProcessed(items);
 }
 
-#endif //LIBCOMPRESSION_BENCHMARK_MACROS_H
+#endif  // LIBCOMPRESSION_BENCHMARK_MACROS_H

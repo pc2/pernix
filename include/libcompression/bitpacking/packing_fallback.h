@@ -29,7 +29,7 @@ void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t
         idx++;
     }
 
-#pragma GCC unroll 512
+    // #pragma GCC unroll 512
     for (uint32_t raw_value : input) {
         const uint32_t next_value = raw_value & bitmask;
 

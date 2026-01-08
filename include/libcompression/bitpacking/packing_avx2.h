@@ -213,8 +213,9 @@ auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
 
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-auto mm256_pack_aligned_epi32_avx2(__m256i& input) -> __m256i {
+auto mm256_pack_aligned_epi32_avx2(const __m256i& input) -> __m256i {
     if constexpr (BIT_WIDTH == 8) {
+        return _mm256_setzero_si256();
     } else {
         return _mm256_castsi128_si256(_mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1)));
     }
@@ -222,7 +223,7 @@ auto mm256_pack_aligned_epi32_avx2(__m256i& input) -> __m256i {
 
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
-auto mm256_pack_epi32_avx2(__m256i& input) -> __m256i {
+auto mm256_pack_epi32_avx2(const __m256i& input) -> __m256i {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
         // TODO: implementation for 1-3 bits
         return _mm256_setzero_si256();

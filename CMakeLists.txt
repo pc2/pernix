@@ -12,7 +12,7 @@ option(LIBCOMPRESSION_DISABLE_AVX512 "Enable AVX512 optimizations" off)
 
 option(LIBCOMPRESSION_ENABLE_FORTRAN_BINDINGS "Build Fortran bindings for libcompression" off)
 
-option(LIBCOMPRESSION_ENABLE_DOXYGEN "Build documentation with Doxygen." on)
+option(LIBCOMPRESSION_ENABLE_DOXYGEN "Build documentation with Doxygen." off)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 

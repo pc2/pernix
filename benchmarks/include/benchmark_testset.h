@@ -2,15 +2,13 @@
 #define LIBCOMPRESSION_FIXTURES_H
 
 #include <benchmark/benchmark.h>
-#include <functional>
-#include <cstdint>
+
 #include <cassert>
 #include <cmath>
 #include <random>
 
-
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires (BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 struct DecompressionBenchmarkSet {
     int64_t number_of_blocks = 0;
 
@@ -31,9 +29,9 @@ struct DecompressionBenchmarkSet {
 };
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires (BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-DecompressionBenchmarkSet<BIT_WIDTH, SIGN_VALUES> create_decompression_benchmark_set(int64_t number_of_blocks) {
-    DecompressionBenchmarkSet<BIT_WIDTH, SIGN_VALUES> benchmark_set;
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+DecompressionBenchmarkSet<BIT_WIDTH> create_decompression_benchmark_set(int64_t number_of_blocks) {
+    DecompressionBenchmarkSet<BIT_WIDTH> benchmark_set;
     benchmark_set.number_of_blocks = number_of_blocks;
 
     const int64_t elements_per_block = 512 / BIT_WIDTH;
@@ -60,4 +58,4 @@ DecompressionBenchmarkSet<BIT_WIDTH, SIGN_VALUES> create_decompression_benchmark
     return benchmark_set;
 }
 
-#endif //LIBCOMPRESSION_FIXTURES_H
+#endif  // LIBCOMPRESSION_FIXTURES_H

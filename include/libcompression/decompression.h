@@ -1,23 +1,36 @@
 #ifndef LIBCOMPRESSION_DECOMPRESSION_H
 #define LIBCOMPRESSION_DECOMPRESSION_H
 
-#include <libcompression/helper.h>
-#include <cstdint>
-#include <cmath>
-#include <vector>
-
 #include <libcompression/bitpacking/unpacking.h>
+#include <libcompression/helper.h>
 #include <libcompression/quantization/dequantization.h>
+
+#include <cmath>
+#include <cstdint>
+#include <vector>
 
 using namespace libcompression::bitpacking;
 using namespace libcompression::quantization;
 
 namespace libcompression {
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
+
+/**
+ * @brief Decompress a single 512\-bit block using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t scale,
-                                float_t* __restrict__ output) {
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
     constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
@@ -36,17 +49,30 @@ int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t
     if constexpr (remaining > 0) {
         const __m256i unpacked   = mm256_unpack_epi32_bmi2<BIT_WIDTH, SIGN_VALUES>(input);
         const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v);
-        _mm256_maskstore_ps(output, libcompression::internal::mm256_convert_vmask_epi32(remaining_mask),
-                            dequantized);
+        _mm256_maskstore_ps(output, internal::mm256_convert_vmask_epi32(remaining_mask), dequantized);
     }
 
     return 0;
 }
 
+/**
+ * @brief Decompress multiple 512\-bit blocks using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_t scale,
-                                 float_t* __restrict__ output, const uint32_t blocks) {
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
+                                 const uint32_t blocks) {
     const uint8_t* block_input = input;
     float_t* block_output      = output;
 
@@ -59,17 +85,50 @@ int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_
     return 0;
 }
 
-int mm256_decompress_block_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                float_t* __restrict__ output);
+/**
+ * @brief Decompress a single 512-bit block using AVX2 and BMI2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+int mm256_decompress_block_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int mm256_decompress_blocks_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                 float_t* __restrict__ output, uint32_t blocks);
+/**
+ * @brief Decompress multiple 512-bit blocks using AVX2 and BMI2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+int mm256_decompress_blocks_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                 uint32_t blocks);
 
-
+/**
+ * @brief Decompress a single 512\-bit block using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t scale,
-                                float_t* __restrict__ output) {
+int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
     constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
@@ -94,10 +153,24 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t
     return 0;
 }
 
+/**
+ * @brief Decompress multiple 512\-bit blocks using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const float_t scale,
-                                 float_t* __restrict__ output, const uint32_t blocks) {
+int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
+                                 const uint32_t blocks) {
     const uint8_t* block_input = input;
     float_t* block_output      = output;
 
@@ -110,19 +183,53 @@ int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const float_
     return 0;
 }
 
-int mm256_decompress_block_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                float_t* __restrict__ output);
+/**
+ * @brief Decompress a single 512-bit block using AVX2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
+int mm256_decompress_block_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int mm256_decompress_blocks_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                 float_t* __restrict__ output, uint32_t blocks);
-# endif // LIBCOMPRESSION_AVX2_ENABLED
+/**
+ * @brief Decompress multiple 512-bit blocks using AVX2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
+int mm256_decompress_blocks_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                 uint32_t blocks);
+#endif  // LIBCOMPRESSION_AVX2_ENABLED
 
 #ifdef LIBCOMPRESSION_AVX512_VBMI_ENABLED
 
+/**
+ * @brief Decompress a single 512\-bit block using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX-512 and AVX-512-VBMI support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict__ input, const float_t scale,
-                                      float_t* __restrict__ output) {
+int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
     constexpr uint32_t iterations_16      = elements_per_block / 16;
     constexpr uint8_t remaining           = elements_per_block - iterations_16 * 16;
@@ -153,10 +260,24 @@ int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict__ input, const f
     return 0;
 }
 
+/**
+ * @brief Decompress multiple 512\-bit blocks using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX-512 and AVX-512-VBMI support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const float_t scale,
-                                       float_t* __restrict__ output, const uint32_t blocks) {
+int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
+                                       const uint32_t blocks) {
     const uint8_t* block_input = input;
     float_t* block_output      = output;
 
@@ -169,22 +290,52 @@ int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const 
     return 0;
 }
 
-int mm512_decompress_block_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                      float_t* __restrict__ output);
+/**
+ * @brief Decompress a single 512-bit block using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX-512 and AVX-512-VBMI support.
+ */
+int mm512_decompress_block_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int mm512_decompress_blocks_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                       float_t* __restrict__ output, uint32_t blocks);
+/**
+ * @brief Decompress multiple 512-bit blocks using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX-512 and AVX-512-VBMI support.
+ */
+int mm512_decompress_blocks_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                       uint32_t blocks);
 
-#endif // LIBCOMPRESSION_AVX512_VBMI_ENABLED
+#endif  // LIBCOMPRESSION_AVX512_VBMI_ENABLED
 
+/**
+ * @brief Decompress a single 512\-bit block using fallback scalar implementation.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
-int decompress_block_fallback(const uint8_t* __restrict__ input, const float_t scale,
-                              float_t* __restrict__ output) {
+int decompress_block_fallback(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
 
-    const std::vector<int32_t> block_values = unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(
-        input, elements_per_block);
+    const std::vector<int32_t> block_values = unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, elements_per_block);
 
 #pragma GCC unroll 512
     for (uint32_t i = 0; i < elements_per_block; i++) {
@@ -194,10 +345,21 @@ int decompress_block_fallback(const uint8_t* __restrict__ input, const float_t s
     return 0;
 }
 
+/**
+ * @brief Decompress multiple 512\-bit blocks using fallback scalar implementation.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t scale,
-                               float_t* __restrict__ output, const uint32_t blocks) {
+int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
+                               const uint32_t blocks) {
     const uint8_t* block_input = input;
     float_t* block_output      = output;
 
@@ -210,54 +372,88 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t 
     return 0;
 }
 
+/**
+ * @brief Decompress a single 512-bit block using fallback scalar implementation.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ */
+int decompress_block_fallback(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int decompress_block_fallback(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                              float_t* __restrict__ output);
+/**
+ * @brief Decompress multiple 512-bit blocks using fallback scalar implementation.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ */
+int decompress_blocks_fallback(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                               uint32_t blocks);
 
-int decompress_blocks_fallback(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                               float_t* __restrict__ output, uint32_t blocks);
-
+/**
+ * @brief Decompress a single 512-bit block using the specified implementation.
+ *
+ * @param implementation the available implementation to use for decompression.
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ */
 int decompress_blocks(AvailableImplementations implementation, uint8_t bit_width, const uint8_t* input, float_t scale, float_t* output,
                       uint32_t blocks);
 
+/**
+ * @brief Decompress multiple 512-bit blocks using the specified implementation.
+ *
+ * @param implementation the available implementation to use for decompression.
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ */
 int decompress_block(AvailableImplementations implementation, uint8_t bit_width, const uint8_t* input, float_t scale, float_t* output);
-} // namespace libcompression
+}  // namespace libcompression
 
 #ifdef __cplusplus
 extern "C" {
-#endif // __cplusplus
+#endif  // __cplusplus
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
-int mm256_decompress_block_bmi2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                  float_t* __restrict__ output);
+int mm256_decompress_block_bmi2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int mm256_decompress_blocks_bmi2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                   float_t* __restrict__ output, uint32_t blocks);
+int mm256_decompress_blocks_bmi2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                   uint32_t blocks);
 
-int mm256_decompress_block_avx2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                  float_t* __restrict__ output);
+int mm256_decompress_block_avx2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int mm256_decompress_blocks_avx2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                   float_t* __restrict__ output, uint32_t blocks);
-#endif // LIBCOMPRESSION_AVX2_ENABLED
+int mm256_decompress_blocks_avx2_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                   uint32_t blocks);
+#endif  // LIBCOMPRESSION_AVX2_ENABLED
 
 #ifdef LIBCOMPRESSION_AVX512_VBMI_ENABLED
 
-int mm512_decompress_block_avx512vbmi_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                        float_t* __restrict__ output);
+int mm512_decompress_block_avx512vbmi_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int mm512_decompress_blocks_avx512vbmi_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                         float_t* __restrict__ output, uint32_t blocks);
+int mm512_decompress_blocks_avx512vbmi_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                         uint32_t blocks);
 
-#endif // LIBCOMPRESSION_AVX512_VBMI_ENABLED
+#endif  // LIBCOMPRESSION_AVX512_VBMI_ENABLED
 
-int decompress_block_fallback_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                float_t* __restrict__ output);
+int decompress_block_fallback_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
-int decompress_blocks_fallback_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale,
-                                 float_t* __restrict__ output, uint32_t blocks);
+int decompress_blocks_fallback_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                 uint32_t blocks);
 
 #ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #endif  // LIBCOMPRESSION_DECOMPRESSION_H

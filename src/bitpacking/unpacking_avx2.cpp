@@ -31,14 +31,14 @@ auto mm_unpack_epi32_avx2(const uint8_t bit_width, const uint8_t* __restrict__ i
         BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 14, true)
         BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 15, true)
         BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 16, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 17, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 18, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 19, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 20, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 21, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 22, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 23, true)
-        BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 24, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 17, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 18, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 19, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 20, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 21, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 22, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 23, true)
+        // BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_avx2, 24, true)
         default:
             throw std::invalid_argument("Unsupported bit width for AVX2 unpacking");
     }
@@ -71,17 +71,17 @@ auto mm256_unpack_epi32_avx2(const uint8_t bit_width, const uint8_t* __restrict_
         BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 14, true)
         BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 15, true)
         BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 16, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 17, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 18, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 19, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 20, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 21, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 22, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 23, true)
-        BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 24, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 17, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 18, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 19, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 20, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 21, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 22, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 23, true)
+        // BITUNPACKING_SWITCH_CASE(mm256_unpack_epi32_avx2, 24, true)
         default:
             throw std::invalid_argument("Unsupported bit width for AVX2 unpacking");
     }
 }
-}
+}  // namespace libcompression::bitpacking
 #endif  // LIBCOMPRESSION_AVX2_ENABLED

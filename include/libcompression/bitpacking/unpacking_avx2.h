@@ -6,6 +6,7 @@
 #ifdef LIBCOMPRESSION_AVX2_ENABLED
 
 #include <immintrin.h>
+
 #include <cstdint>
 
 #include "unpacking_tables.h"
@@ -32,7 +33,7 @@ __m128i mm_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 16)
 __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     __m128i source;
     if constexpr (BIT_WIDTH <= 8) {
@@ -42,8 +43,7 @@ __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     } else {
         source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(input));
     }
-    const __m128i shuffled = _mm_shuffle_epi8(
-        source, internal::unpack_tables_avx2<BIT_WIDTH, __m128i>::get_shuffle());
+    const __m128i shuffled = _mm_shuffle_epi8(source, internal::unpack_tables_avx2<BIT_WIDTH, __m128i>::get_shuffle());
 
     constexpr uint16_t shift = 32 - BIT_WIDTH;
     __m128i shifted          = _mm_sllv_epi32(shuffled, internal::unpack_tables_avx2<BIT_WIDTH, __m128i>::get_shift());
@@ -77,7 +77,7 @@ __m256i mm256_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 16)
 __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     __m256i source;
     if constexpr (BIT_WIDTH <= 8) {
@@ -87,10 +87,8 @@ __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     } else {
         source = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(input));
     }
-    const __m256i permuted = _mm256_permutevar8x32_epi32(
-        source, internal::unpack_tables_avx2<BIT_WIDTH, __m256i>::get_permute());
-    const __m256i shuffled = _mm256_shuffle_epi8(
-        permuted, internal::unpack_tables_avx2<BIT_WIDTH, __m256i>::get_shuffle());
+    const __m256i permuted = _mm256_permutevar8x32_epi32(source, internal::unpack_tables_avx2<BIT_WIDTH, __m256i>::get_permute());
+    const __m256i shuffled = _mm256_shuffle_epi8(permuted, internal::unpack_tables_avx2<BIT_WIDTH, __m256i>::get_shuffle());
 
     constexpr uint16_t shift = 32 - BIT_WIDTH;
     __m256i shifted          = _mm256_sllv_epi32(shuffled, internal::unpack_tables_avx2<BIT_WIDTH, __m256i>::get_shift());
@@ -110,6 +108,6 @@ auto mm_unpack_epi32_avx2(uint8_t bit_width, const uint8_t* __restrict__ input) 
 auto mm256_unpack_aligned_epi32_avx2(uint8_t bit_width, const uint8_t* __restrict__ input) -> __m256i;
 
 auto mm256_unpack_epi32_avx2(uint8_t bit_width, const uint8_t* __restrict__ input) -> __m256i;
-} // namespace libcompression::bitpacking
+}  // namespace libcompression::bitpacking
 #endif  // LIBCOMPRESSION_AVX2_ENABLED
 #endif  // LIBCOMPRESSION_UNPACKING_AVX2_H

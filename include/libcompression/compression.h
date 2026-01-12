@@ -217,20 +217,22 @@ namespace libcompression {
         constexpr uint8_t remaining = elements_per_block - iterations_16 * 16;
 
         const __m512 scale_v = _mm512_set1_ps(scale);
-#pragma GCC unroll 4
         for (uint32_t iter = 0; iter < iterations_16; iter++) {
             const __m512 source = _mm512_loadu_ps(input);
             const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
             const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-            _mm256_storeu_si256(reinterpret_cast<__m256i *>(output), packed);
+            constexpr __mmask32 store_mask = (1ULL << (2 * BIT_WIDTH)) - 1;
+            _mm256_mask_storeu_epi8(output, store_mask, packed);
+
             input += 16;
             output += 2 * BIT_WIDTH;
         }
 
+
         if constexpr (remaining) {
-            const __m512 source = _mm512_loadu_ps(input);
-            const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
-            const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+            // const __m512 source = _mm512_loadu_ps(input);
+            // const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+            // const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
             // _mm256_storeu_si256(reinterpret_cast<__m256i *>(output), packed);
         }
 

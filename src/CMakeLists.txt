@@ -1,11 +1,10 @@
 file(GLOB_RECURSE
-        SOURCE_FILES
+        LIBCOMPRESSION_SOURCES
         *.cpp
         ${PROJECT_SOURCE_DIR}/include/libcompression/*.h
 )
 
-add_library(libcompression STATIC ${SOURCE_FILES}
-        compression.cpp)
+add_library(libcompression STATIC ${LIBCOMPRESSION_SOURCES})
 set_target_properties(libcompression PROPERTIES
         OUTPUT_NAME "libcompression"
         VERSION ${NORMALIZED_VERSION}

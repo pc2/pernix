@@ -316,8 +316,13 @@ namespace libcompression {
     int compress_block_fallback(const float_t *__restrict__ input, const float_t scale, uint8_t *__restrict__ output) {
         constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
 
-        // const auto packed = pack_epi32_fallback<BIT_WIDTH>();
+        std::vector<uint32_t> block_values(elements_per_block);
+#pragma GCC unroll 512
+        for (uint32_t i = 0; i < elements_per_block; i++) {
+            block_values[i] = static_cast<uint32_t>(quantize_ps_epi32(input[i], scale));
+        }
 
+        pack_epi32_fallback<BIT_WIDTH>(block_values, output);
         return 0;
     }
 

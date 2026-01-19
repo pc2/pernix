@@ -40,7 +40,7 @@ namespace libcompression {
             const __m256 source = _mm256_loadu_ps(input);
             const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v);
             const __m256i packed = mm256_pack_epi32_bmi2<BIT_WIDTH>(quantized);
-            _mm256_storeu_si256(reinterpret_cast<__m256i *>(output), packed);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(output), _mm256_castsi256_si128(packed));
             input += 8;
             output += BIT_WIDTH;
         }

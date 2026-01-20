@@ -225,40 +225,42 @@ namespace libcompression {
     int mm512_compress_block_avx512vbmi(const float_t *__restrict__ input, const float_t scale,
                                         uint8_t *__restrict__ output) {
         constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
-        constexpr uint32_t iterations_16 = elements_per_block / 16;
-        constexpr uint32_t iterations_8 = (elements_per_block - iterations_16 * 16) / 8;
-        constexpr uint8_t remaining = elements_per_block - iterations_16 * 16 - iterations_8 * 8;
+        constexpr uint32_t iterations_32 = elements_per_block / 32;
+        constexpr uint8_t remaining = elements_per_block - iterations_32 * 32;
 
         const __m512 scale_v = _mm512_set1_ps(scale);
         const __m256 scale_v256 = _mm256_set1_ps(scale);
-#pragma GCC unroll 4
-        for (uint32_t iter = 0; iter < iterations_16; iter++) {
-            const __m512 source = _mm512_loadu_ps(input);
-            const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
-            const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+#pragma GCC unroll 2
+        for (uint32_t iter = 0; iter < iterations_32; iter++) {
+            const __m512 source1 = _mm512_loadu_ps(input);
+            const __m512 source2 = _mm512_loadu_ps(input + 16);
+            const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
+            const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
+            const __m512i packed = mm1024_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized1, quantized2);
             if constexpr (BIT_WIDTH == 8) {
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(output), _mm256_castsi256_si128(packed));
+                _mm256_storeu_si256(reinterpret_cast<__m256i *>(output), _mm512_castsi512_si256(packed));
             } else {
-                _mm256_storeu_si256(reinterpret_cast<__m256i *>(output), packed);
+                _mm512_storeu_si512(reinterpret_cast<__m512i *>(output), packed);
             }
 
             input += 16;
             output += 2 * BIT_WIDTH;
         }
 
-        if constexpr (iterations_8) {
-            const __m256 source = _mm256_loadu_ps(input);
-            const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
-            const __m128i packed = mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(output), packed);
-            input += 8;
-            output += BIT_WIDTH;
-        }
-
-
-        if constexpr (remaining) {
-            // const __mmask16 load_mask = (1U << remaining) - 1;
-            const __mmask16 store_mask = (1U << ((remaining * BIT_WIDTH) / 8)) - 1;
+        constexpr __mmask16 store_mask = (1U << ((remaining * BIT_WIDTH) / 8)) - 1;
+        if constexpr (remaining > 16) {
+            const __m512 source1 = _mm512_loadu_ps(input);
+            const __m512 source2 = _mm512_loadu_ps(input + 16);
+            const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
+            const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
+            const __m512i packed = mm1024_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized1, quantized2);
+            _mm512_mask_storeu_epi8(reinterpret_cast<__m512i *>(output), store_mask, packed);
+        } else if constexpr (remaining > 8) {
+            const __m512 source = _mm512_loadu_ps(input);
+            const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+            const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+            _mm256_mask_storeu_epi8(reinterpret_cast<__m256i *>(output), store_mask, packed);
+        } else if constexpr (remaining > 0) {
             const __m256 source = _mm256_loadu_ps(input);
             const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
             const __m128i packed = mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
@@ -281,7 +283,10 @@ namespace libcompression {
      *
      * @note This function requires AVX-512 and AVX-512-VBMI support.
      */
-    template<uint8_t BIT_WIDTH>
+    template
+    <
+        uint8_t BIT_WIDTH
+    >
         requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
     int mm512_compress_blocks_avx512vbmi(const float_t *__restrict__ input, const float_t scale,
                                          uint8_t *__restrict__ output,

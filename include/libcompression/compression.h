@@ -226,28 +226,43 @@ namespace libcompression {
                                         uint8_t *__restrict__ output) {
         constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
         constexpr uint32_t iterations_16 = elements_per_block / 16;
-        constexpr uint8_t remaining = elements_per_block - iterations_16 * 16;
+        constexpr uint32_t iterations_8 = (elements_per_block - iterations_16 * 16) / 8;
+        constexpr uint8_t remaining = elements_per_block - iterations_16 * 16 - iterations_8 * 8;
 
         const __m512 scale_v = _mm512_set1_ps(scale);
+        const __m256 scale_v256 = _mm256_set1_ps(scale);
+#pragma GCC unroll 4
         for (uint32_t iter = 0; iter < iterations_16; iter++) {
             const __m512 source = _mm512_loadu_ps(input);
             const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
             const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-            constexpr __mmask32 store_mask = (1ULL << (2 * BIT_WIDTH)) - 1;
-            _mm256_mask_storeu_epi8(output, store_mask, packed);
+            if constexpr (BIT_WIDTH == 8) {
+                _mm_storeu_si128(reinterpret_cast<__m128i *>(output), _mm256_castsi256_si128(packed));
+            } else {
+                _mm256_storeu_si256(reinterpret_cast<__m256i *>(output), packed);
+            }
 
             input += 16;
             output += 2 * BIT_WIDTH;
         }
 
+        if constexpr (iterations_8) {
+            const __m256 source = _mm256_loadu_ps(input);
+            const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
+            const __m128i packed = mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(output), packed);
+            input += 8;
+            output += BIT_WIDTH;
+        }
+
 
         if constexpr (remaining) {
-            const __mmask16 load_mask = (1U << remaining) - 1;
-            const __mmask32 store_mask = (1ULL << (remaining * BIT_WIDTH)) - 1;
-            const __m512 source = _mm512_maskz_loadu_ps(load_mask, input);
-            const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
-            const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-            // _mm256_mask_storeu_epi8(reinterpret_cast<__m256i *>(output), store_mask, packed);
+            // const __mmask16 load_mask = (1U << remaining) - 1;
+            const __mmask16 store_mask = (1U << ((remaining * BIT_WIDTH) / 8)) - 1;
+            const __m256 source = _mm256_loadu_ps(input);
+            const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
+            const __m128i packed = mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+            _mm_mask_storeu_epi8(reinterpret_cast<__m128i *>(output), store_mask, packed);
         }
 
         return 0;

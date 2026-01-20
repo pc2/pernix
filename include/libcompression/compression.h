@@ -247,7 +247,7 @@ namespace libcompression {
             const __m512 source = _mm512_maskz_loadu_ps(load_mask, input);
             const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
             const __m256i packed = mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-            _mm256_mask_storeu_epi8(reinterpret_cast<__m256i *>(output), store_mask, packed);
+            // _mm256_mask_storeu_epi8(reinterpret_cast<__m256i *>(output), store_mask, packed);
         }
 
         return 0;

@@ -1,10 +1,10 @@
-#include <libcompression/bitpacking/packing_avx2.h>
+#include <pernix/bitpacking/packing_avx2.h>
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#ifdef PERNIX_AVX2_ENABLED
 
 #include <stdexcept>
 
-namespace libcompression::bitpacking {
+namespace pernix::bitpacking {
 auto mm_pack_aligned_epi32_avx2(const uint8_t bit_width, __m128i& input) -> __m128i {
     switch (bit_width) {
         BITPACKING_SWITCH_CASE(mm_pack_aligned_epi32_avx2, 8)
@@ -84,6 +84,6 @@ auto mm256_pack_epi32_avx2(const uint8_t bit_width, __m256i& input) -> __m256i {
             throw std::invalid_argument("Unsupported bit width for AVX2 packing");
     }
 }
-}
+}  // namespace pernix::bitpacking
 
-#endif // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // PERNIX_AVX2_ENABLED

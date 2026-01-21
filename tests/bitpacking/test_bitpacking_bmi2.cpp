@@ -1,8 +1,8 @@
-#include <libcompression/helper.h>
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#include <pernix/helper.h>
+#ifdef PERNIX_AVX2_ENABLED
 
 #include <gtest/gtest.h>
-#include <libcompression/bitpacking/unpacking_bmi2.h>
+#include <pernix/bitpacking/unpacking_bmi2.h>
 
 #include <algorithm>
 #include <array>
@@ -10,10 +10,10 @@
 #include <cstdint>
 #include <random>
 
-#include "bitpacking_testset.h"
 #include "bitpacking_macros.h"
+#include "bitpacking_testset.h"
 
-using namespace libcompression::bitpacking;
+using namespace pernix::bitpacking;
 
 using BMI2Unpacking = testing::TestWithParam<int>;
 
@@ -29,4 +29,4 @@ TEST_P(BMI2Unpacking, test_mm256_unpack_epi32_bmi2) {
 }
 
 INSTANTIATE_TEST_SUITE_P(BMI2, BMI2Unpacking, testing::Range(1, 25));
-#endif  // LIBCOMPRESSION_AVX2_ENABLED)
+#endif  // PERNIX_AVX2_ENABLED)

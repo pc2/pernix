@@ -2,7 +2,7 @@
 program main
     use iso_c_binding, only : c_int8_t, c_int32_t, c_float, c_loc, c_ptr
     use iso_fortran_env, only : real64, int64
-    use libcompression
+    use pernix
     use omp_lib
     implicit none
 

@@ -1,12 +1,13 @@
-#ifndef LIBCOMPRESSION_PACKING_TESTSET_H
-#define LIBCOMPRESSION_PACKING_TESTSET_H
+#ifndef PERNIX_PACKING_TESTSET_H
+#define PERNIX_PACKING_TESTSET_H
+
+#include <gtest/gtest.h>
 
 #include <array>
 #include <cstdint>
 #include <random>
 #include <type_traits>
 #include <vector>
-#include <gtest/gtest.h>
 
 template <bool SIGNED, uint32_t SIZE>
 class TestSet {
@@ -19,10 +20,8 @@ public:
     explicit TestSet(const uint8_t bit_width) {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<IntType> dis(
-            SIGNED ? -(1 << (bit_width - 1)) : 0,
-            SIGNED ? (1 << (bit_width - 1)) - 1 : (1 << bit_width) - 1
-            );
+        std::uniform_int_distribution<IntType> dis(SIGNED ? -(1 << (bit_width - 1)) : 0,
+                                                   SIGNED ? (1 << (bit_width - 1)) - 1 : (1 << bit_width) - 1);
 
         for (auto& value : unpacked_data) {
             value = dis(gen);
@@ -63,24 +62,16 @@ public:
 
     void validate_packed(const std::vector<uint8_t>& test_data) const {
         for (size_t i = 0; i < packed_data.size(); ++i) {
-            ASSERT_EQ(test_data[i], packed_data[i])
-                << "Mismatch at byte index " << i << ": expected " << static_cast<int>(packed_data[i])
-                << ", got " << static_cast<int>(test_data[i]);
+            ASSERT_EQ(test_data[i], packed_data[i]) << "Mismatch at byte index " << i << ": expected " << static_cast<int>(packed_data[i])
+                                                    << ", got " << static_cast<int>(test_data[i]);
         }
     }
 
-    [[nodiscard]] auto get_unpacked_data() const -> const std::array<IntType, SIZE>& {
-        return unpacked_data;
-    }
+    [[nodiscard]] auto get_unpacked_data() const -> const std::array<IntType, SIZE>& { return unpacked_data; }
 
-    [[nodiscard]] auto get_packed_data() const -> const std::vector<uint8_t>& {
-        return packed_data;
-    }
+    [[nodiscard]] auto get_packed_data() const -> const std::vector<uint8_t>& { return packed_data; }
 
-    [[nodiscard]] static constexpr auto get_size() noexcept -> uint32_t {
-        return SIZE;
-    }
+    [[nodiscard]] static constexpr auto get_size() noexcept -> uint32_t { return SIZE; }
 };
 
-
-#endif //LIBCOMPRESSION_PACKING_TESTSET_H
+#endif  // PERNIX_PACKING_TESTSET_H

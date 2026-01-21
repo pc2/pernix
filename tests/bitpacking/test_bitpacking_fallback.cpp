@@ -1,9 +1,9 @@
-#include <libcompression/helper.h>
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#include <pernix/helper.h>
+#ifdef PERNIX_AVX2_ENABLED
 
 #include <gtest/gtest.h>
-#include <libcompression/bitpacking/unpacking_fallback.h>
-#include <libcompression/bitpacking/packing_fallback.h>
+#include <pernix/bitpacking/packing_fallback.h>
+#include <pernix/bitpacking/unpacking_fallback.h>
 
 #include <algorithm>
 #include <array>
@@ -11,10 +11,10 @@
 #include <cstdint>
 #include <random>
 
-#include "bitpacking_testset.h"
 #include "bitpacking_macros.h"
+#include "bitpacking_testset.h"
 
-using namespace libcompression::bitpacking;
+using namespace pernix::bitpacking;
 
 using FallbackUnpacking = testing::TestWithParam<int>;
 using FallbackPacking   = testing::TestWithParam<int>;
@@ -57,4 +57,4 @@ TEST_P(FallbackPacking, test_pack_epi32_fallback) {
 
 INSTANTIATE_TEST_SUITE_P(Fallback, FallbackUnpacking, testing::Range(1, 25));
 INSTANTIATE_TEST_SUITE_P(Fallback, FallbackPacking, testing::Range(1, 25));
-#endif  // LIBCOMPRESSION_AVX2_ENABLED)
+#endif  // PERNIX_AVX2_ENABLED)

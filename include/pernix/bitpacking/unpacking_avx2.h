@@ -1,9 +1,9 @@
-#ifndef LIBCOMPRESSION_UNPACKING_AVX2_H
-#define LIBCOMPRESSION_UNPACKING_AVX2_H
+#ifndef PERNIX_UNPACKING_AVX2_H
+#define PERNIX_UNPACKING_AVX2_H
 
-#include <libcompression/helper.h>
+#include <pernix/helper.h>
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#ifdef PERNIX_AVX2_ENABLED
 
 #include <immintrin.h>
 
@@ -11,7 +11,7 @@
 
 #include "unpacking_tables.h"
 
-namespace libcompression::bitpacking {
+namespace pernix::bitpacking {
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __m128i mm_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
@@ -108,6 +108,6 @@ auto mm_unpack_epi32_avx2(uint8_t bit_width, const uint8_t* __restrict__ input) 
 auto mm256_unpack_aligned_epi32_avx2(uint8_t bit_width, const uint8_t* __restrict__ input) -> __m256i;
 
 auto mm256_unpack_epi32_avx2(uint8_t bit_width, const uint8_t* __restrict__ input) -> __m256i;
-}  // namespace libcompression::bitpacking
-#endif  // LIBCOMPRESSION_AVX2_ENABLED
-#endif  // LIBCOMPRESSION_UNPACKING_AVX2_H
+}  // namespace pernix::bitpacking
+#endif  // PERNIX_AVX2_ENABLED
+#endif  // PERNIX_UNPACKING_AVX2_H

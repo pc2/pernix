@@ -1,16 +1,16 @@
-#ifndef LIBCOMPRESSION_PACK_AVX2_BMI2_H
-#define LIBCOMPRESSION_PACK_AVX2_BMI2_H
+#ifndef PERNIX_PACK_AVX2_BMI2_H
+#define PERNIX_PACK_AVX2_BMI2_H
 
 #include <immintrin.h>
-#include <libcompression/helper.h>
+#include <pernix/helper.h>
 
 #include <cstdint>
 #include <cstring>
 #include <limits>
 #include <tuple>
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
-namespace libcompression::bitpacking {
+#ifdef PERNIX_AVX2_ENABLED
+namespace pernix::bitpacking {
 namespace internal {
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 32)
@@ -89,6 +89,6 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
         return result;
     }
 }
-}  // namespace libcompression::bitpacking
-#endif  // LIBCOMPRESSION_AVX2_ENABLED
-#endif  // LIBCOMPRESSION_PACK_AVX2_BMI2_H
+}  // namespace pernix::bitpacking
+#endif  // PERNIX_AVX2_ENABLED
+#endif  // PERNIX_PACK_AVX2_BMI2_H

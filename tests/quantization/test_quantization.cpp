@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <libcompression/helper.h>
-#include <libcompression/quantization/quantization.h>
+#include <pernix/helper.h>
+#include <pernix/quantization/quantization.h>
 
 #include <algorithm>
 #include <array>
@@ -9,7 +9,7 @@
 #include <random>
 #include <type_traits>
 
-using namespace libcompression::quantization;
+using namespace pernix::quantization;
 
 template <std::size_t size, typename T>
     requires(std::is_floating_point_v<T>)
@@ -80,7 +80,7 @@ TEST_P(QuantizationBitWidthTest, QuantizeFallback) {
     test_quantization_fallback(static_cast<uint8_t>(GetParam()));
 }
 
-#ifdef LIBCOMPRESSION_SSE_ENABLED
+#ifdef PERNIX_SSE_ENABLED
 void test_quantization_quantize4(const uint8_t bit_width) {
     auto test_set = create_quantization_test_set<32>(bit_width, -1.0f, 1.0f);
 
@@ -96,9 +96,9 @@ void test_quantization_quantize4(const uint8_t bit_width) {
             << "Mismatch at index " << i << ": expected " << test_set.quantized[i] << ", got " << test_set.result[i];
     }
 }
-#endif  // LIBCOMPRESSION_SSE_ENABLED
+#endif  // PERNIX_SSE_ENABLED
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#ifdef PERNIX_AVX2_ENABLED
 void test_quantization_quantize8(const uint8_t bit_width) {
     auto test_set = create_quantization_test_set<32>(bit_width, -1.0f, 1.0f);
 
@@ -118,9 +118,9 @@ void test_quantization_quantize8(const uint8_t bit_width) {
 TEST_P(QuantizationBitWidthTest, Quantize8) {
     test_quantization_quantize8(static_cast<uint8_t>(GetParam()));
 }
-#endif  // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // PERNIX_AVX2_ENABLED
 
-#ifdef LIBCOMPRESSION_AVX512_ENABLED
+#ifdef PERNIX_AVX512_ENABLED
 void test_quantization_quantize16(const uint8_t bit_width) {
     auto test_set = create_quantization_test_set<32>(bit_width, -1.0f, 1.0f);
 
@@ -140,6 +140,6 @@ void test_quantization_quantize16(const uint8_t bit_width) {
 TEST_P(QuantizationBitWidthTest, Quantize16) {
     test_quantization_quantize16(static_cast<uint8_t>(GetParam()));
 }
-#endif  // LIBCOMPRESSION_AVX512_ENABLED
+#endif  // PERNIX_AVX512_ENABLED
 
 INSTANTIATE_TEST_SUITE_P(AllBitWidths, QuantizationBitWidthTest, testing::Range(1, 25));

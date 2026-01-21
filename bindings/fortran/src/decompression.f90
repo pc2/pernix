@@ -1,4 +1,4 @@
-module libcompression
+module pernix
     use iso_c_binding, only : c_int8_t, c_int32_t, c_float, c_ptr
     implicit none
 
@@ -57,4 +57,4 @@ module libcompression
 
     end interface
 
-end module libcompression
+end module pernix

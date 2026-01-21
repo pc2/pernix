@@ -1,18 +1,18 @@
-#ifndef LIBCOMPRESSION_PACKING_TABLES_H
-#define LIBCOMPRESSION_PACKING_TABLES_H
+#ifndef PERNIX_PACKING_TABLES_H
+#define PERNIX_PACKING_TABLES_H
 
-#include <libcompression/helper.h>
+#include <pernix/helper.h>
 
 #include <array>
 #include <cstdint>
 #include <tuple>
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
-namespace libcompression::bitpacking::internal {
-    template<__uint8_t BIT_WIDTH, typename T>
-        requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
-    struct pack_tables_avx2_16 {
-        alignas(64) inline static constexpr std::array<int8_t, 32> permute1 = [] {
+#ifdef PERNIX_AVX2_ENABLED
+namespace pernix::bitpacking::internal {
+template <__uint8_t BIT_WIDTH, typename T>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
+struct pack_tables_avx2_16 {
+    alignas(64) inline static constexpr std::array<int8_t, 32> permute1 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 9) {
 return std::array<int8_t, 32>{
@@ -100,10 +100,10 @@ return std::array<int8_t, 32>{
 };
 }
 return std::array<int8_t, 32>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int8_t, 32> permute2 = [] {
+    alignas(64) inline static constexpr std::array<int8_t, 32> permute2 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 9) {
 return std::array<int8_t, 32>{
@@ -191,10 +191,10 @@ return std::array<int8_t, 32>{
 };
 }
 return std::array<int8_t, 32>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int8_t, 32> permute3 = [] {
+    alignas(64) inline static constexpr std::array<int8_t, 32> permute3 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 9) {
 return std::array<int8_t, 32>{
@@ -246,10 +246,10 @@ return std::array<int8_t, 32>{
 };
 }
 return std::array<int8_t, 32>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<uint16_t, 16> shift1 = [] {
+    alignas(64) inline static constexpr std::array<uint16_t, 16> shift1 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 9) {
 return std::array<uint16_t, 16>{
@@ -288,10 +288,10 @@ return std::array<uint16_t, 16>{
 };
 }
 return std::array<uint16_t, 16>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<uint16_t, 16> shift2 = [] {
+    alignas(64) inline static constexpr std::array<uint16_t, 16> shift2 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 9) {
 return std::array<uint16_t, 16>{
@@ -330,10 +330,10 @@ return std::array<uint16_t, 16>{
 };
 }
 return std::array<uint16_t, 16>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<uint16_t, 16> shift3 = [] {
+    alignas(64) inline static constexpr std::array<uint16_t, 16> shift3 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 9) {
 return std::array<uint16_t, 16>{
@@ -357,68 +357,68 @@ return std::array<uint16_t, 16>{
 };
 }
 return std::array<uint16_t, 16>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
     __always_inline static T get_permute1() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute1.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute1.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute1.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute1.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_permute2() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute2.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute2.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute2.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute2.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_permute3() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute3.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute3.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute3.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute3.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift1() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift1.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift1.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift1.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift1.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift2() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift2.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift2.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift2.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift2.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift3() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift3.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift3.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift3.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift3.data()));
         }
-    };
+        return T{};
+    }
+};
 
-    template<__uint8_t BIT_WIDTH, typename T>
-        requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
-    struct pack_tables_avx2_32 {
-        alignas(64) inline static constexpr std::array<int32_t, 8> permute1 = [] {
+template <__uint8_t BIT_WIDTH, typename T>
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
+struct pack_tables_avx2_32 {
+    alignas(64) inline static constexpr std::array<int32_t, 8> permute1 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 17) {
 return std::array<int32_t, 8>{
@@ -454,10 +454,10 @@ return std::array<int32_t, 8>{
 };
 }
 return std::array<int32_t, 8>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int32_t, 8> permute2 = [] {
+    alignas(64) inline static constexpr std::array<int32_t, 8> permute2 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 17) {
 return std::array<int32_t, 8>{
@@ -493,10 +493,10 @@ return std::array<int32_t, 8>{
 };
 }
 return std::array<int32_t, 8>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int32_t, 8> permute3 = [] {
+    alignas(64) inline static constexpr std::array<int32_t, 8> permute3 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 17) {
 return std::array<int32_t, 8>{
@@ -528,10 +528,10 @@ return std::array<int32_t, 8>{
 };
 }
 return std::array<int32_t, 8>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<uint32_t, 8> shift1 = [] {
+    alignas(64) inline static constexpr std::array<uint32_t, 8> shift1 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 17) {
 return std::array<uint32_t, 8>{
@@ -567,10 +567,10 @@ return std::array<uint32_t, 8>{
 };
 }
 return std::array<uint32_t, 8>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<uint32_t, 8> shift2 = [] {
+    alignas(64) inline static constexpr std::array<uint32_t, 8> shift2 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 17) {
 return std::array<uint32_t, 8>{
@@ -606,10 +606,10 @@ return std::array<uint32_t, 8>{
 };
 }
 return std::array<uint32_t, 8>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<uint32_t, 8> shift3 = [] {
+    alignas(64) inline static constexpr std::array<uint32_t, 8> shift3 = [] {
         // clang-format off
 if constexpr (BIT_WIDTH == 17) {
 return std::array<uint32_t, 8>{
@@ -641,68 +641,68 @@ return std::array<uint32_t, 8>{
 };
 }
 return std::array<uint32_t, 8>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
     __always_inline static T get_permute1() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute1.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute1.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute1.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute1.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_permute2() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute2.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute2.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute2.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute2.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_permute3() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute3.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute3.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute3.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute3.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift1() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift1.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift1.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift1.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift1.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift2() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift2.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift2.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift2.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift2.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift3() {
-            if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift3.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift3.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift3.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift3.data()));
         }
-    };
+        return T{};
+    }
+};
 
-    template<__uint8_t N, typename T>
-        requires(N >= 8 && N <= 16)
-    struct pack_tables_avx512 {
-        alignas(64) inline static constexpr std::array<int16_t, 32> permute1 = [] {
+template <__uint8_t N, typename T>
+    requires(N >= 8 && N <= 16)
+struct pack_tables_avx512 {
+    alignas(64) inline static constexpr std::array<int16_t, 32> permute1 = [] {
         // clang-format off
 if constexpr (N == 9) {
 return std::array<int16_t, 32>{
@@ -789,10 +789,10 @@ return std::array<int16_t, 32>{
 30, 31, -1, -1
 };
 }
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int16_t, 32> permute2 = [] {
+    alignas(64) inline static constexpr std::array<int16_t, 32> permute2 = [] {
         // clang-format off
 if constexpr (N == 9) {
 return std::array<int16_t, 32>{
@@ -879,10 +879,10 @@ return std::array<int16_t, 32>{
 29, 30, -1, -1
 };
 }
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int16_t, 32> permute3 = [] {
+    alignas(64) inline static constexpr std::array<int16_t, 32> permute3 = [] {
         // clang-format off
 if constexpr (N == 9) {
 return std::array<int16_t, 32>{
@@ -934,10 +934,10 @@ return std::array<int16_t, 32>{
 };
 }
 return std::array<int16_t, 32>{};
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int16_t, 32> shift1 = [] {
+    alignas(64) inline static constexpr std::array<int16_t, 32> shift1 = [] {
         // clang-format off
 if constexpr (N == 9) {
 return std::array<int16_t, 32>{
@@ -1024,10 +1024,10 @@ return std::array<int16_t, 32>{
 2, 1, -1, -1
 };
 }
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int16_t, 32> shift2 = [] {
+    alignas(64) inline static constexpr std::array<int16_t, 32> shift2 = [] {
         // clang-format off
 if constexpr (N == 9) {
 return std::array<int16_t, 32>{
@@ -1114,10 +1114,10 @@ return std::array<int16_t, 32>{
 13, 14, -1, -1
 };
 }
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        alignas(64) inline static constexpr std::array<int16_t, 32> shift3 = [] {
+    alignas(64) inline static constexpr std::array<int16_t, 32> shift3 = [] {
         // clang-format off
 if constexpr (N == 9) {
 return std::array<int16_t, 32>{
@@ -1168,10 +1168,10 @@ return std::array<int16_t, 32>{
 -1, -1, -1, -1
 };
 }
-            // clang-format on
-        }();
+        // clang-format on
+    }();
 
-        __always_inline static constexpr std::tuple<__mmask32, __mmask32, __mmask32> get_permute_masks() {
+    __always_inline static constexpr std::tuple<__mmask32, __mmask32, __mmask32> get_permute_masks() {
         // clang-format off
 if constexpr (N == 9) {
 return {
@@ -1199,78 +1199,78 @@ return {
 };
 }
 return {0, 0, 0};
-            // clang-format on
-        }
+        // clang-format on
+    }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
     __always_inline static T get_permute1() {
-            if constexpr (std::is_same_v<T, __m512i>) {
-                return _mm512_load_si512(permute1.data());
-            } else if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute1.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute1.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m512i>) {
+            return _mm512_load_si512(permute1.data());
+        } else if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute1.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute1.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_permute2() {
-            if constexpr (std::is_same_v<T, __m512i>) {
-                return _mm512_load_si512(permute2.data());
-            } else if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute2.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute2.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m512i>) {
+            return _mm512_load_si512(permute2.data());
+        } else if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute2.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute2.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_permute3() {
-            if constexpr (std::is_same_v<T, __m512i>) {
-                return _mm512_load_si512(permute3.data());
-            } else if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(permute3.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(permute3.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m512i>) {
+            return _mm512_load_si512(permute3.data());
+        } else if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute3.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(permute3.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift1() {
-            if constexpr (std::is_same_v<T, __m512i>) {
-                return _mm512_load_si512(shift1.data());
-            } else if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift1.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift1.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m512i>) {
+            return _mm512_load_si512(shift1.data());
+        } else if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift1.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift1.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift2() {
-            if constexpr (std::is_same_v<T, __m512i>) {
-                return _mm512_load_si512(shift2.data());
-            } else if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift2.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift2.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m512i>) {
+            return _mm512_load_si512(shift2.data());
+        } else if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift2.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift2.data()));
         }
+        return T{};
+    }
 
     __always_inline static T get_shift3() {
-            if constexpr (std::is_same_v<T, __m512i>) {
-                return _mm512_load_si512(shift3.data());
-            } else if constexpr (std::is_same_v<T, __m256i>) {
-                return _mm256_load_si256(reinterpret_cast<const __m256i *>(shift3.data()));
-            } else if constexpr (std::is_same_v<T, __m128i>) {
-                return _mm_load_si128(reinterpret_cast<const __m128i *>(shift3.data()));
-            }
-            return T{};
+        if constexpr (std::is_same_v<T, __m512i>) {
+            return _mm512_load_si512(shift3.data());
+        } else if constexpr (std::is_same_v<T, __m256i>) {
+            return _mm256_load_si256(reinterpret_cast<const __m256i*>(shift3.data()));
+        } else if constexpr (std::is_same_v<T, __m128i>) {
+            return _mm_load_si128(reinterpret_cast<const __m128i*>(shift3.data()));
         }
+        return T{};
+    }
 #pragma GCC diagnostic pop
-    };
-} // namespace libcompression::bitpacking::internal
-#endif  // LIBCOMPRESSION_AVX2_ENABLED
-#endif  // LIBCOMPRESSION_PACKING_TABLES_H
+};
+}  // namespace pernix::bitpacking::internal
+#endif  // PERNIX_AVX2_ENABLED
+#endif  // PERNIX_PACKING_TABLES_H

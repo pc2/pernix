@@ -1,14 +1,14 @@
-#ifndef LIBCOMPRESSION_TABLES_H
-#define LIBCOMPRESSION_TABLES_H
+#ifndef PERNIX_TABLES_H
+#define PERNIX_TABLES_H
 
 #include <immintrin.h>
-#include <libcompression/helper.h>
+#include <pernix/helper.h>
 
 #include <array>
 #include <cstdint>
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
-namespace libcompression::bitpacking::internal {
+#ifdef PERNIX_AVX2_ENABLED
+namespace pernix::bitpacking::internal {
 template <uint8_t BIT_WIDTH, typename T>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
 struct unpack_tables_avx2 {
@@ -453,11 +453,11 @@ struct unpack_tables_avx2 {
         }
     }
 };
-} // namespace libcompression::bitpacking::internal
-#endif  // LIBCOMPRESSION_AVX2_ENABLED
+}  // namespace pernix::bitpacking::internal
+#endif  // PERNIX_AVX2_ENABLED
 
-#ifdef LIBCOMPRESSION_AVX512_ENABLED
-namespace libcompression::bitpacking::internal {
+#ifdef PERNIX_AVX512_ENABLED
+namespace pernix::bitpacking::internal {
 template <uint8_t BIT_WIDTH, typename T>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 8 && (std::is_same_v<T, __m512i> || std::is_same_v<T, __m256i> || std::is_same_v<T, __m128i>))
 struct unpack_tables_avx512_8 {
@@ -1133,6 +1133,6 @@ struct unpack_tables_avx512_24 {
         }
     }
 };
-} // namespace libcompression::bitpacking::internal
-#endif  // LIBCOMPRESSION_AVX512_ENABLED
-#endif  // LIBCOMPRESSION_TABLES_H
+}  // namespace pernix::bitpacking::internal
+#endif  // PERNIX_AVX512_ENABLED
+#endif  // PERNIX_TABLES_H

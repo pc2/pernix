@@ -1,5 +1,5 @@
-#ifndef LIBCOMPRESSION_PACKING_FALLBACK_H
-#define LIBCOMPRESSION_PACKING_FALLBACK_H
+#ifndef PERNIX_PACKING_FALLBACK_H
+#define PERNIX_PACKING_FALLBACK_H
 
 #include <array>
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <span>
 #include <vector>
 
-namespace libcompression::bitpacking {
+namespace pernix::bitpacking {
 namespace internal {
 template <typename T, uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
@@ -62,6 +62,6 @@ void pack_epi32_fallback(const std::vector<uint32_t>& input, uint8_t* __restrict
 }
 
 void pack_epi32_fallback(uint8_t bit_width, const std::vector<uint32_t>& input, uint8_t* __restrict__ destination);
-}  // namespace libcompression::bitpacking
+}  // namespace pernix::bitpacking
 
-#endif  // LIBCOMPRESSION_PACKING_FALLBACK_H
+#endif  // PERNIX_PACKING_FALLBACK_H

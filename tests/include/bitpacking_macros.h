@@ -1,9 +1,9 @@
-#ifndef LIBCOMPRESSION_BITPACKING_MACROS_H
-#define LIBCOMPRESSION_BITPACKING_MACROS_H
+#ifndef PERNIX_BITPACKING_MACROS_H
+#define PERNIX_BITPACKING_MACROS_H
 
 // clang-format off
 #define TEST_UNPACK_MM_EPI32(method)                                                    \
-void test_##method(const uint8_t bit_width) {                                           \
+void test_## method(const uint8_t bit_width) {                                           \
     constexpr uint32_t test_sets = 1 << 8;                                              \
                                                                                         \
     for (uint32_t i = 0; i < test_sets; i++) {                                          \
@@ -19,7 +19,7 @@ void test_##method(const uint8_t bit_width) {                                   
 }
 
 #define TEST_UNPACK_MM256_EPI32(method)                                                                             \
-void test_##method(const uint8_t bit_width) {                                                                       \
+void test_## method(const uint8_t bit_width) {                                                                       \
     constexpr uint32_t test_sets = 1 << 8;                                                                          \
                                                                                                                     \
     for (uint32_t i = 0; i < test_sets; i++) {                                                                      \
@@ -37,7 +37,7 @@ void test_##method(const uint8_t bit_width) {                                   
 }
 
 #define TEST_UNPACK_MM512_EPI32(method)                                                                             \
-void test_##method(const uint8_t bit_width) {                                                                       \
+void test_## method(const uint8_t bit_width) {                                                                       \
     constexpr uint32_t test_sets = 1 << 8;                                                                          \
                                                                                                                     \
     for (uint32_t i = 0; i < test_sets; i++) {                                                                      \
@@ -55,4 +55,4 @@ void test_##method(const uint8_t bit_width) {                                   
 }
 // clang-format on
 
-#endif //LIBCOMPRESSION_BITPACKING_MACROS_H
+#endif  // PERNIX_BITPACKING_MACROS_H

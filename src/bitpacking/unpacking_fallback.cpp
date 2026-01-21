@@ -1,10 +1,10 @@
-#include <libcompression/bitpacking/unpacking_fallback.h>
+#include <pernix/bitpacking/unpacking_fallback.h>
 
-#define FALLBACK_SWITCH_CASE(BIT_WIDTH, SIGNED)                             \
-    case BIT_WIDTH:                                                         \
+#define FALLBACK_SWITCH_CASE(BIT_WIDTH, SIGNED) \
+    case BIT_WIDTH:                             \
         return unpack_epi32_fallback<BIT_WIDTH, SIGNED>(input, elements);
 
-namespace libcompression::bitpacking {
+namespace pernix::bitpacking {
 auto unpack_epi32_fallback(const uint8_t bit_width, const uint8_t* __restrict__ input, const std::size_t elements) -> std::vector<int32_t> {
     switch (bit_width) {
         FALLBACK_SWITCH_CASE(1, true)
@@ -35,4 +35,4 @@ auto unpack_epi32_fallback(const uint8_t bit_width, const uint8_t* __restrict__ 
             throw std::invalid_argument("Unsupported bit width for fallback unpacking");
     }
 }
-}
+}  // namespace pernix::bitpacking

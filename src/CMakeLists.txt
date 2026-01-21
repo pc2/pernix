@@ -1,19 +1,19 @@
 file(GLOB_RECURSE
-        LIBCOMPRESSION_SOURCES
+        PERNIX_SOURCES
         *.cpp
-        ${PROJECT_SOURCE_DIR}/include/libcompression/*.h
+        ${PROJECT_SOURCE_DIR}/include/pernix/*.h
 )
 
-add_library(libcompression STATIC ${LIBCOMPRESSION_SOURCES})
-set_target_properties(libcompression PROPERTIES
-        OUTPUT_NAME "libcompression"
+add_library(pernix SHARED ${PERNIX_SOURCES})
+set_target_properties(pernix PROPERTIES
+        OUTPUT_NAME "pernix"
         VERSION ${NORMALIZED_VERSION}
 )
-target_include_directories(libcompression PUBLIC
+target_include_directories(pernix PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 )
 
-if (LIBCOMPRESSION_ENABLE_DOXYGEN)
+if (PERNIX_ENABLE_DOXYGEN)
     message(STATUS "Doxygen documentation enabled")
     find_package(Doxygen REQUIRED)
     set(DOXYGEN_QUIET YES)
@@ -28,7 +28,7 @@ if (LIBCOMPRESSION_ENABLE_DOXYGEN)
     set(DOXYGEN_BINARY_TOC YES)
     set(DOXYGEN_TOC_EXPAND YES)
     # set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "index.md")
-    doxygen_add_docs(libcompression_docs
+    doxygen_add_docs(pernix_docs
             #             docs
             include
             src

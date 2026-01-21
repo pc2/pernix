@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <libcompression/helper.h>
-#include <libcompression/quantization/dequantization.h>
+#include <pernix/helper.h>
+#include <pernix/quantization/dequantization.h>
 
 #include <algorithm>
 #include <array>
@@ -9,7 +9,7 @@
 #include <random>
 #include <type_traits>
 
-using namespace libcompression::quantization;
+using namespace pernix::quantization;
 
 template <std::size_t size, typename T, typename F>
     requires(std::is_integral_v<T> && std::is_floating_point_v<F>)
@@ -91,7 +91,7 @@ TEST_P(DequantizationBitWidthTest, DequantizeFallback) {
     test_dequantization_fallback(static_cast<uint8_t>(GetParam()));
 }
 
-#ifdef LIBCOMPRESSION_SSE_ENABLED
+#ifdef PERNIX_SSE_ENABLED
 void test_dequantization_dequantize4(const uint8_t bit_width) {
     auto test_set = create_signed_dequantization_test_set<32>(bit_width, -1.0f, 1.0f);
 
@@ -108,9 +108,9 @@ void test_dequantization_dequantize4(const uint8_t bit_width) {
 TEST_P(DequantizationBitWidthTest, DequantizeSSE) {
     test_dequantization_dequantize4(static_cast<uint8_t>(GetParam()));
 }
-#endif  // LIBCOMPRESSION_SSE_ENABLED
+#endif  // PERNIX_SSE_ENABLED
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#ifdef PERNIX_AVX2_ENABLED
 void test_dequantization_dequantize8(const uint8_t bit_width) {
     auto test_set = create_signed_dequantization_test_set<32>(bit_width, -1.0f, 1.0f);
 
@@ -127,9 +127,9 @@ void test_dequantization_dequantize8(const uint8_t bit_width) {
 TEST_P(DequantizationBitWidthTest, DequantizeAVX2) {
     test_dequantization_dequantize8(static_cast<uint8_t>(GetParam()));
 }
-#endif  // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // PERNIX_AVX2_ENABLED
 
-#ifdef LIBCOMPRESSION_AVX512_ENABLED
+#ifdef PERNIX_AVX512_ENABLED
 void test_dequantization_dequantize16(const uint8_t bit_width) {
     auto test_set = create_signed_dequantization_test_set<32>(bit_width, -1.0f, 1.0f);
 
@@ -146,6 +146,6 @@ void test_dequantization_dequantize16(const uint8_t bit_width) {
 TEST_P(DequantizationBitWidthTest, DequantizeAVX512) {
     test_dequantization_dequantize16(static_cast<uint8_t>(GetParam()));
 }
-#endif  // LIBCOMPRESSION_AVX512_ENABLED
+#endif  // PERNIX_AVX512_ENABLED
 
 INSTANTIATE_TEST_SUITE_P(AllBitWidths, DequantizationBitWidthTest, testing::Range(1, 25));

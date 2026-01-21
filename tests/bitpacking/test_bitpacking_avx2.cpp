@@ -1,9 +1,9 @@
-#include <libcompression/helper.h>
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#include <pernix/helper.h>
+#ifdef PERNIX_AVX2_ENABLED
 
 #include <gtest/gtest.h>
-#include <libcompression/bitpacking/packing_avx2.h>
-#include <libcompression/bitpacking/unpacking_avx2.h>
+#include <pernix/bitpacking/packing_avx2.h>
+#include <pernix/bitpacking/unpacking_avx2.h>
 
 #include <algorithm>
 #include <array>
@@ -14,7 +14,7 @@
 #include "bitpacking_macros.h"
 #include "bitpacking_testset.h"
 
-using namespace libcompression::bitpacking;
+using namespace pernix::bitpacking;
 
 using AVX2Unpacking        = testing::TestWithParam<int>;
 using AVX2UnpackingAligned = testing::TestWithParam<int>;
@@ -82,7 +82,7 @@ void test_mm256_pack_epi32_avx2(const uint8_t bit_width) {
 
             const auto packed = mm256_pack_epi32_avx2(bit_width, input_data);
             _mm256_maskstore_epi32(reinterpret_cast<int*>(result.data() + (offset * bit_width)),
-                                   libcompression::internal::mm256_convert_vmask_epi32((1 << (32 - bit_width)) - 1), packed);
+                                   pernix::internal::mm256_convert_vmask_epi32((1 << (32 - bit_width)) - 1), packed);
 
             // _mm_storeu_si128(reinterpret_cast<__m128i*>(dst_ptr), _mm256_castsi256_si128(unpacked));
             // _mm_storeu_si128(reinterpret_cast<__m128i*>(dst_ptr + N), _mm256_extracti128_si256(unpacked, 1));
@@ -110,4 +110,4 @@ TEST_P(AVX2Packing, test_mm256_pack_epi32_avx2) {
 
 INSTANTIATE_TEST_SUITE_P(AVX2, AVX2Packing, testing::Range(6, 7));
 INSTANTIATE_TEST_SUITE_P(AVX2, AVX2PackingAligned, testing::Values(8, 16));
-#endif  // LIBCOMPRESSION_AVX2_ENABLED)
+#endif  // PERNIX_AVX2_ENABLED)

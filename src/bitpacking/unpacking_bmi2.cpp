@@ -1,8 +1,8 @@
-#include <libcompression/bitpacking/unpacking_bmi2.h>
+#include <pernix/bitpacking/unpacking_bmi2.h>
 
-#ifdef LIBCOMPRESSION_AVX2_ENABLED
+#ifdef PERNIX_AVX2_ENABLED
 
-namespace libcompression::bitpacking {
+namespace pernix::bitpacking {
 auto mm_unpack_epi32_bmi2(const uint8_t bit_width, const uint8_t* __restrict__ input) -> __m128i {
     switch (bit_width) {
         BITUNPACKING_SWITCH_CASE(mm_unpack_epi32_bmi2, 1, true)
@@ -64,6 +64,6 @@ auto mm256_unpack_epi32_bmi2(const uint8_t bit_width, const uint8_t* __restrict_
             throw std::invalid_argument("Unsupported bit width for BMI2 unpacking");
     }
 }
-}
+}  // namespace pernix::bitpacking
 
-#endif // LIBCOMPRESSION_AVX2_ENABLED
+#endif  // PERNIX_AVX2_ENABLED

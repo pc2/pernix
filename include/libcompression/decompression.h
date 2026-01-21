@@ -237,8 +237,8 @@ namespace libcompression {
      */
     template<uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
         requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-    int mm512_decompress_block_avx512vbmi(const uint8_t *__restrict__ input, const float_t scale,
-                                          float_t *__restrict__ output) {
+    __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t *__restrict__ input, const float_t scale,
+                                                          float_t *__restrict__ output) {
         constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
         constexpr uint32_t iterations_16 = elements_per_block / 16;
         constexpr uint32_t iterations_8 = (elements_per_block % 16) / 8;
@@ -274,6 +274,12 @@ namespace libcompression {
         }
 
         if (remaining > 0) {
+            // const __m256 scale_v256 = _mm256_set1_ps(scale);
+            // constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
+            // const __m256i unpacked = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+            // const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v256);
+            // _mm256_mask_storeu_ps(output, remaining_mask, dequantized);
+
             const std::vector<int32_t> block_values = unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
 
 #pragma GCC unroll 3

@@ -280,11 +280,37 @@ namespace libcompression {
             // const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v256);
             // _mm256_mask_storeu_ps(output, remaining_mask, dequantized);
 
-            const std::vector<int32_t> block_values = unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
+            //             const std::vector<int32_t> block_values = unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
+            //
+            // #pragma GCC unroll 4
+            //             for (uint32_t i = 0; i < remaining; i++) {
+            //                 output[i] = dequantize_epi32(block_values[i], scale);
+            //             }
+
+            std::size_t idx = 0;
+            uint8_t bits_in_buffer = 16;
+            auto buffer = static_cast<uint64_t>(input[idx++]);
+            constexpr uint16_t bitmask =
+                    BIT_WIDTH == 16 ? std::numeric_limits<uint16_t>::max() : (1U << BIT_WIDTH) - 1U;
 
 #pragma GCC unroll 3
             for (uint32_t i = 0; i < remaining; i++) {
-                output[i] = dequantize_epi32(block_values[i], scale);
+                if (BIT_WIDTH > bits_in_buffer) {
+                    const auto next_value = static_cast<uint64_t>(input[idx++]) << bits_in_buffer;
+                    buffer |= next_value;
+                    bits_in_buffer += 16;
+                }
+
+                const auto raw_value = static_cast<uint16_t>(buffer & bitmask);
+                if constexpr (SIGN_VALUES) {
+                    constexpr uint32_t shift = 32 - BIT_WIDTH;
+                    output[i] = (static_cast<int32_t>(raw_value) << shift) >> shift;
+                } else {
+                    output[i] = raw_value;
+                }
+
+                buffer >>= BIT_WIDTH;
+                bits_in_buffer -= BIT_WIDTH;
             }
         }
 

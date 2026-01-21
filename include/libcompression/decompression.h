@@ -241,7 +241,9 @@ namespace libcompression {
                                           float_t *__restrict__ output) {
         constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
         constexpr uint32_t iterations_16 = elements_per_block / 16;
-        constexpr uint8_t remaining = elements_per_block - iterations_16 * 16;
+        constexpr uint32_t iterations_8 = (elements_per_block % 16) / 8;
+        constexpr uint32_t iterations_4 = (elements_per_block % 8) / 4;
+        constexpr uint8_t remaining = elements_per_block - iterations_16 * 16 - iterations_8 * 8 - iterations_4 * 4;
 
         const __m512 scale_v = _mm512_set1_ps(scale);
 #pragma GCC unroll 4
@@ -253,16 +255,31 @@ namespace libcompression {
             output += 16;
         }
 
-        constexpr __mmask16 remaining_mask = (1 << remaining) - 1;
-        if constexpr (remaining > 8) {
-            const __m512i unpacked = mm512_unpack_epi32_avx512vbmi<BIT_WIDTH, SIGN_VALUES>(input);
-            const __m512 dequantized = mm512_dequantize_epi32(unpacked, scale_v);
-            _mm512_mask_storeu_ps(output, remaining_mask, dequantized);
-        } else if constexpr (remaining > 0) {
+        if (iterations_8 > 0) {
             const __m256 scale_v256 = _mm256_set1_ps(scale);
             const __m256i unpacked = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
             const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v256);
-            _mm256_maskstore_ps(output, internal::mm256_convert_vmask_epi32(remaining_mask), dequantized);
+            _mm256_storeu_ps(output, dequantized);
+            input += BIT_WIDTH;
+            output += 8;
+        }
+
+        if (iterations_4 > 0) {
+            const __m128 scale_v128 = _mm_set1_ps(scale);
+            const __m128i unpacked = mm_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+            const __m128 dequantized = mm_dequantize_epi32(unpacked, scale_v128);
+            _mm_storeu_ps(output, dequantized);
+            input += BIT_WIDTH / 2;
+            output += 4;
+        }
+
+        if (remaining > 0) {
+            const std::vector<int32_t> block_values = unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
+
+#pragma GCC unroll 3
+            for (uint32_t i = 0; i < remaining; i++) {
+                output[i] = dequantize_epi32(block_values[i], scale);
+            }
         }
 
         return 0;

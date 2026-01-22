@@ -129,6 +129,43 @@ int mm256_decompress_blocks_avx2(const uint8_t bit_width, const uint8_t* input, 
 }
 #endif  // PERNIX_AVX2_ENABLED
 
+#ifdef PERNIX_AVX512_VBMI_ENABLED
+
+int mm512_decompress_block_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output) {
+    switch (bit_width) {
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 8, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 9, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 10, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 11, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 12, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 13, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 14, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 15, true)
+        COMPRESSION_BLOCK_SWITCH_CASE(mm512_decompress_block_avx512vbmi, 16, true)
+        default:
+            return -1;
+    }
+}
+
+int mm512_decompress_blocks_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                       uint32_t blocks) {
+    switch (bit_width) {
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 8, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 9, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 10, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 11, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 12, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 13, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 14, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 15, true)
+        COMPRESSION_BLOCKS_SWITCH_CASE(mm512_decompress_blocks_avx512vbmi, 16, true)
+        default:
+            return -1;
+    }
+}
+
+#endif
+
 int decompress_block_fallback(const uint8_t bit_width, const uint8_t* input, const float_t scale, float_t* output) {
     switch (bit_width) {
         COMPRESSION_BLOCK_SWITCH_CASE(decompress_block_fallback, 1, true)
@@ -261,6 +298,19 @@ int mm256_decompress_blocks_avx2_c(const uint8_t bit_width, const uint8_t* input
     return pernix::mm256_decompress_blocks_avx2(bit_width, input, scale, output, blocks);
 }
 #endif  // PERNIX_AVX2_ENABLED
+
+#ifdef PERNIX_AVX512_VBMI_ENABLED
+
+int mm512_decompress_block_avx512vbmi_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output) {
+    return pernix::mm512_decompress_block_avx512vbmi(bit_width, input, scale, output);
+}
+
+int mm512_decompress_blocks_avx512vbmi_c(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                         uint32_t blocks) {
+    return pernix::mm512_decompress_blocks_avx512vbmi(bit_width, input, scale, output, blocks);
+}
+
+#endif  // PERNIX_AVX512_VBMI_ENABLED
 
 int decompress_block_fallback_c(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale,
                                 float_t* __restrict__ output) {

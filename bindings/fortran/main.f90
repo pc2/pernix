@@ -2,7 +2,8 @@
 program main
     use iso_c_binding, only : c_int8_t, c_int32_t, c_float, c_loc, c_ptr
     use iso_fortran_env, only : real64, int64
-    use pernix
+    use pernix_decompression
+    use pernix_compression
     use omp_lib
     implicit none
 
@@ -25,7 +26,7 @@ program main
         end do
 
         ! call the C-binding Fortran subroutine using C pointers
-        call mm256_decompress_block_bmi2_c(bit_width, c_loc(input_data), scale, c_loc(output_data))
+        call mm512_decompress_block_avx512vbmi(bit_width, c_loc(input_data), scale, c_loc(output_data))
     end do
     t1 = omp_get_wtime()
     diff = t1 - t0

@@ -199,6 +199,21 @@ int mm256_compress_blocks_avx2(const float_t* __restrict__ input, const float_t 
  */
 int mm256_compress_block_avx2(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output);
 
+/**
+ * @brief Compress multiple 512-bit blocks using AVX2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of 512-bit blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+int mm256_compress_blocks_avx2(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output,
+                               uint32_t blocks);
+
 #endif  // PERNIX_AVX2_ENABLED
 
 #ifdef PERNIX_AVX512_VBMI_ENABLED
@@ -362,6 +377,15 @@ int compress_block_fallback(const float_t* __restrict__ input, const float_t sca
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
 int compress_blocks_fallback(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
+    const float_t* block_input = input;
+    uint8_t* block_output      = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        compress_block_fallback<BIT_WIDTH>(block_input, scale, block_output);
+        block_input += 512 / BIT_WIDTH;
+        block_output += (BIT_WIDTH * 512) / 8;
+    }
+
     return 0;
 }
 

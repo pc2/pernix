@@ -97,13 +97,21 @@ enum class AvailableImplementations : uint8_t {
     case BIT_WIDTH:                                         \
         return METHOD<BIT_WIDTH, SIGNED>(input);
 
-#define COMPRESSION_BLOCK_SWITCH_CASE(METHOD, BIT_WIDTH, SIGNED) \
-    case BIT_WIDTH:                                              \
+#define DECOMPRESSION_BLOCK_SWITCH_CASE(METHOD, BIT_WIDTH, SIGNED) \
+    case BIT_WIDTH:                                                \
         return METHOD<BIT_WIDTH, SIGNED>(input, scale, output);
 
-#define COMPRESSION_BLOCKS_SWITCH_CASE(METHOD, BIT_WIDTH, SIGNED) \
-    case BIT_WIDTH:                                               \
+#define DECOMPRESSION_BLOCKS_SWITCH_CASE(METHOD, BIT_WIDTH, SIGNED) \
+    case BIT_WIDTH:                                                 \
         return METHOD<BIT_WIDTH, SIGNED>(input, scale, output, blocks);
+
+#define COMPRESSION_BLOCK_SWITCH_CASE(METHOD, BIT_WIDTH) \
+    case BIT_WIDTH:                                      \
+        return METHOD<BIT_WIDTH>(input, scale, output);
+
+#define COMPRESSION_BLOCKS_SWITCH_CASE(METHOD, BIT_WIDTH) \
+    case BIT_WIDTH:                                       \
+        return METHOD<BIT_WIDTH>(input, scale, output, blocks);
 }  // namespace pernix
 
 #endif  // PERNIX_HELPER_H

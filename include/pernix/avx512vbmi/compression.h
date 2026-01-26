@@ -272,27 +272,25 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
     }
 
     if constexpr (iterations_16 > 0) {
-        constexpr __mmask32 store_mask = (1U << (2 * BIT_WIDTH)) - 1;
-        const __m512 source            = _mm512_loadu_ps(input);
-        const __m512i quantized        = internal::mm512_quantize_ps_epi32(source, scale_v);
-        const __m256i packed           = internal::mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-        _mm256_mask_storeu_epi8(output, store_mask, packed);
+        const __m512 source     = _mm512_loadu_ps(input);
+        const __m512i quantized = internal::mm512_quantize_ps_epi32(source, scale_v);
+        const __m256i packed    = internal::mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+        _mm256_storeu_epi8(output, packed);
         input += 16;
         output += 2 * BIT_WIDTH;
     }
 
     if constexpr (iterations_8 > 0) {
-        constexpr __mmask16 store_mask = (1U << BIT_WIDTH) - 1;
-        const __m256 source            = _mm256_loadu_ps(input);
-        const __m256i quantized        = internal::mm256_quantize_ps_epi32(source, scale_v256);
-        const __m128i packed           = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-        _mm_mask_storeu_epi8(output, store_mask, packed);
+        const __m256 source     = _mm256_loadu_ps(input);
+        const __m256i quantized = internal::mm256_quantize_ps_epi32(source, scale_v256);
+        const __m128i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+        _mm_storeu_epi8(output, packed);
         input += 8;
         output += BIT_WIDTH;
     }
 
     if constexpr (remaining > 0) {
-        constexpr __mmask16 store_mask = (1U << remaining) - 1;
+        constexpr __mmask16 store_mask = (1U << (remaining * BIT_WIDTH) / 8) - 1;
         const __m256 source            = _mm256_loadu_ps(input);
         const __m256i quantized        = internal::mm256_quantize_ps_epi32(source, scale_v256);
         const __m128i packed           = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);

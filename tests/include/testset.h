@@ -104,8 +104,7 @@ public:
 
     TestSet<BitWidth> testSet;
 
-    // CompressionTest() : testSet(1u << 10) {}
-    CompressionTest() : testSet(1) {}
+    CompressionTest() : testSet(1u << 10) {}
 };
 
 template <typename BitWidthT>

@@ -486,7 +486,7 @@ struct pack_tables_avx512 {
         // clang-format on
     }();
 
-    __always_inline static constexpr std::tuple<__mmask8, __mmask8, __mmask8> get_permute_masks() {
+    __always_inline static constexpr std::tuple<__mmask32, __mmask32, __mmask32> get_permute_masks() {
         // clang-format off
         if constexpr (N == 9) {
             return {

@@ -12,6 +12,7 @@ set_target_properties(pernix PROPERTIES
 target_include_directories(pernix PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 )
+set_target_properties(pernix PROPERTIES LINKER_LANGUAGE CXX)
 
 if (PERNIX_ENABLE_DOXYGEN)
     message(STATUS "Doxygen documentation enabled")

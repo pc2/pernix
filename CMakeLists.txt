@@ -4,14 +4,15 @@ project(pernix VERSION 0.1.0 LANGUAGES CXX C)
 option(PERNIX_ENABLE_TESTS "Enable tests for pernix" on)
 option(PERNIX_ENABLE_CODE_COVERAGE "Enable code coverage for pernix (requires lcov/genhtml)" off)
 option(PERNIX_ENABLE_LTO "Enable Link Time Optimization (LTO)" off)
+option(PERNIX_ENABLE_INSTALL "Enable installation of pernix" on)
+option(PERNIX_ENABLE_DOXYGEN "Build documentation with Doxygen." off)
+option(PERNIX_INSTALL_DOCS "Install documentation with pernix" off)
 
 option(PERNIX_DISABLE_BMI2 "Enable BMI2 optimizations" on)
 option(PERNIX_DISABLE_AVX2 "Enable AVX2 optimizations" off)
 option(PERNIX_DISABLE_AVX512 "Enable AVX512 optimizations" off)
 
 option(PERNIX_ENABLE_FORTRAN_BINDINGS "Build Fortran bindings for pernix" off)
-
-option(PERNIX_ENABLE_DOXYGEN "Build documentation with Doxygen." off)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 

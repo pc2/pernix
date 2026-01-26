@@ -1,19 +1,17 @@
-#ifndef PERNIX_UNPACKING_AVX2_BMI2_H
-#define PERNIX_UNPACKING_AVX2_BMI2_H
-
-#include <pernix/helper.h>
-
-#ifdef PERNIX_AVX2_ENABLED
+#ifndef PERNIX_BMI2_DECOMPRESSION_H
+#define PERNIX_BMI2_DECOMPRESSION_H
 
 #include <immintrin.h>
+#include <pernix/avx2/decompression.h>
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <limits>
-#include <stdexcept>
 #include <tuple>
 
-namespace pernix::bitpacking {
+namespace pernix {
+
 namespace internal {
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
@@ -30,7 +28,6 @@ __m256i mm256_sign_extend32(__m256i source) {
     source                   = _mm256_slli_epi32(source, shift);
     return _mm256_srai_epi32(source, shift);
 }
-}  // namespace internal
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH > 0 && BIT_WIDTH <= 24)
@@ -97,8 +94,8 @@ __m256i mm256_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
         result = _mm256_cvtepi8_epi32(source);
     } else if constexpr (BIT_WIDTH > 8 && BIT_WIDTH <= 16) {
         constexpr uint64_t pdep_mask = 0x0001000100010001ULL * mask;
-        constexpr uint32_t shift1    = BIT_WIDTH * 4;
-        constexpr uint32_t shift2    = 64 - shift1;
+        constexpr uint64_t shift1    = BIT_WIDTH * 4;
+        constexpr uint64_t shift2    = 64 - shift1;
 
         alignas(16) uint64_t temp_values[2];
         std::memcpy(temp_values, input, 2 * sizeof(uint64_t));
@@ -133,10 +130,114 @@ __m256i mm256_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
     }
     return result;
 }
+}  // namespace internal
 
-auto mm_unpack_epi32_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input) -> __m128i;
+/**
+ * @brief Decompress a single 512\-bit block using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
+    constexpr uint32_t iterations_8       = elements_per_block / 8;
+    constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
 
-auto mm256_unpack_epi32_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input) -> __m256i;
-}  // namespace pernix::bitpacking
-#endif  // PERNIX_AVX2_ENABLED
-#endif  // PERNIX_UNPACKING_AVX2_BMI2_H
+    const __m256 scale_v = _mm256_set1_ps(scale);
+#pragma GCC unroll 4
+    for (uint32_t iter = 0; iter < iterations_8; iter++) {
+        const __m256i unpacked   = internal::mm256_unpack_epi32_bmi2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_storeu_ps(output, dequantized);
+        input += BIT_WIDTH;
+        output += 8;
+    }
+
+    constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
+    if constexpr (remaining > 0) {
+        const __m256i unpacked   = internal::mm256_unpack_epi32_bmi2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_maskstore_ps(output, internal::mm256_convert_vmask_epi32(remaining_mask), dequantized);
+    }
+
+    return 0;
+}
+
+/**
+ * @brief Decompress multiple 512\-bit blocks using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
+                                 const uint32_t blocks) {
+    const uint8_t* block_input = input;
+    float_t* block_output      = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        mm256_decompress_block_bmi2<BIT_WIDTH, SIGN_VALUES>(block_input, scale, block_output);
+        block_input += 64;
+        block_output += 512 / BIT_WIDTH;
+    }
+
+    return 0;
+}
+}  // namespace pernix
+
+#ifdef __cplusplus
+namespace pernix {
+extern "C" {
+#endif
+/**
+ * @brief Decompress a single 512-bit block using AVX2 and BMI2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+int mm256_decompress_block_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
+
+/**
+ * @brief Decompress multiple 512-bit blocks using AVX2 and BMI2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+int mm256_decompress_blocks_bmi2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
+                                 uint32_t blocks);
+
+#ifdef __cplusplus
+}
+}  // namespace pernix
+#endif
+
+#endif  // PERNIX_BMI2_DECOMPRESSION_H

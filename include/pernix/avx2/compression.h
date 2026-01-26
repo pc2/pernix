@@ -1,17 +1,29 @@
-#ifndef PERNIX_PACKING_AVX2_H
-#define PERNIX_PACKING_AVX2_H
-
-#include <pernix/helper.h>
-
-#ifdef PERNIX_AVX2_ENABLED
+#ifndef PERNIX_AVX2_COMPRESSION_H
+#define PERNIX_AVX2_COMPRESSION_H
 
 #include <immintrin.h>
-#include <pernix/bitpacking/packing_tables.h>
+#include <pernix/avx2/tables.h>
+#include <pernix/fallback/compression.h>
 
+#include <cmath>
 #include <cstdint>
+#include <vector>
 
-namespace pernix::bitpacking {
+namespace pernix {
+
 namespace internal {
+__always_inline __m128i mm_quantize_ps_epi32(const __m128& input, const __m128& scale) {
+    const __m128 scaled  = _mm_mul_ps(input, scale);
+    const __m128 rounded = _mm_round_ps(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+    return _mm_cvtps_epi32(rounded);
+}
+
+__always_inline __m256i mm256_quantize_ps_epi32(const __m256& input, const __m256& scale) {
+    const __m256 scaled  = _mm256_mul_ps(input, scale);
+    const __m256 rounded = _mm256_round_ps(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+    return _mm256_cvtps_epi32(rounded);
+}
+
 __always_inline static __m128i _mm_sllv_epi16(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi32(0xffff0000);
     const __m128i low_half  = _mm_sllv_epi32(a, _mm_andnot_si128(mask, count));
@@ -140,7 +152,6 @@ __always_inline auto mm256_pack_epi32_avx2_9to16(const __m256i& input) -> __m256
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 4 && BIT_WIDTH <= 8)
 __always_inline auto mm256_pack_epi32_avx2_4to8(const __m256i& input) -> __m256i {
-    // using tables              = pack_tables_avx2_16<BIT_WIDTH, __m128i>;
     constexpr uint8_t bitmask = (1 << BIT_WIDTH) - 1;
 
     const __m128i packed = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
@@ -185,7 +196,6 @@ __always_inline auto mm256_pack_epi32_avx2_17to24(const __m256i& input) -> __m25
 
     return combined;
 }
-}  // namespace internal
 
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
@@ -198,12 +208,14 @@ auto mm_pack_aligned_epi32_avx2(__m128i& input) -> __m128i {
 }
 
 template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
 auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
         // TODO: implementation for 1-3 bits
         return _mm_setzero_si128();
     } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH <= 8) {
+        // TODO: implementation for 4-8 bits
+        return _mm_setzero_si128();
     } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 16) {
         return internal::mm_pack_epi32_avx2_9to16<BIT_WIDTH>(input);
     } else {
@@ -213,10 +225,10 @@ auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
 
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-auto mm256_pack_aligned_epi32_avx2(const __m256i& input) -> __m256i {
+__m256i mm256_pack_aligned_epi32_avx2(const __m256i& input) {
     if constexpr (BIT_WIDTH == 8) {
         const __m128i packed16 = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
-        const __m128i packed8  = _mm_unpacklo_epi32(packed16, _mm_setzero_si128());
+        const __m128i packed8  = _mm_packs_epi16(packed16, _mm_setzero_si128());
         return _mm256_castsi128_si256(packed8);
     } else {
         return _mm256_castsi128_si256(_mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1)));
@@ -224,31 +236,136 @@ auto mm256_pack_aligned_epi32_avx2(const __m256i& input) -> __m256i {
 }
 
 template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
-auto mm256_pack_epi32_avx2(const __m256i& input) -> __m256i {
-    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
-        // TODO: implementation for 1-3 bits
-        return _mm256_setzero_si256();
-    } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH < 8) {
-        return internal::mm256_pack_epi32_avx2_4to8<BIT_WIDTH>(input);
-    } else if constexpr (BIT_WIDTH == 8) {
-        return mm256_pack_aligned_epi32_avx2<BIT_WIDTH>(input);
-    } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH < 16) {
-        return internal::mm256_pack_epi32_avx2_9to16<BIT_WIDTH>(input);
-    } else if constexpr (BIT_WIDTH == 16) {
-        return mm256_pack_aligned_epi32_avx2<BIT_WIDTH>(input);
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+__m256i mm256_pack_epi32_avx2(const __m256i& input) {
+    if constexpr (BIT_WIDTH == 8 || BIT_WIDTH == 16) {
+        return internal::mm256_pack_aligned_epi32_avx2<BIT_WIDTH>(input);
     } else {
-        return internal::mm256_pack_epi32_avx2_17to24<BIT_WIDTH>(input);
+        if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
+            // TODO: implementation for 1-3 bits
+            return _mm256_setzero_si256();
+        } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH <= 7) {
+            return internal::mm256_pack_epi32_avx2_4to8<BIT_WIDTH>(input);
+        } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 15) {
+            return internal::mm256_pack_epi32_avx2_9to16<BIT_WIDTH>(input);
+        } else if constexpr (BIT_WIDTH >= 17 && BIT_WIDTH <= 24) {
+            return internal::mm256_pack_epi32_avx2_17to24<BIT_WIDTH>(input);
+        }
     }
+    return _mm256_setzero_si256();
 }
 
-auto mm_pack_aligned_epi32_avx2(uint8_t bit_width, __m128i& input) -> __m128i;
+}  // namespace internal
 
-auto mm_pack_epi32_avx2(uint8_t bit_width, __m128i& input) -> __m128i;
+/**
+ * @brief Compress a single 512-bit block using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ *
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+int mm256_compress_block_avx2(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
+    constexpr uint32_t iterations_8       = elements_per_block / 8;
+    constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
 
-auto mm256_pack_aligned_epi32_avx2(uint8_t bit_width, __m256i& input) -> __m256i;
+    const __m256 scale_v = _mm256_set1_ps(scale);
+#pragma GCC unroll 8
+    for (uint32_t iter = 0; iter < iterations_8; iter++) {
+        const __m256 source     = _mm256_loadu_ps(input);
+        const __m256i quantized = internal::mm256_quantize_ps_epi32(source, scale_v);
+        const __m256i packed    = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(quantized);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
+        input += 8;
+        output += BIT_WIDTH;
+    }
 
-auto mm256_pack_epi32_avx2(uint8_t bit_width, __m256i& input) -> __m256i;
-}  // namespace pernix::bitpacking
-#endif  // PERNIX_AVX2_ENABLED
-#endif  // PERNIX_PACKING_AVX2_H
+    if constexpr (remaining) {
+        std::vector<uint32_t> block_values(remaining);
+#pragma GCC unroll 8
+        for (uint32_t i = 0; i < remaining; i++) {
+            block_values[i] = static_cast<uint32_t>(internal::quantize_ps_epi32(input[i], scale));
+        }
+
+        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+    }
+
+    return 0;
+}
+
+/**
+ * @brief Compress multiple 512-bit blocks using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ *
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of 512-bit blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+int mm256_compress_blocks_avx2(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output,
+                               const uint32_t blocks) {
+    const float_t* block_input = input;
+    uint8_t* block_output      = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        mm256_compress_block_avx2<BIT_WIDTH>(block_input, scale, block_output);
+        block_input += 512 / BIT_WIDTH;
+        block_output += 64;
+    }
+
+    return 0;
+}
+}  // namespace pernix
+
+#ifdef __cplusplus
+namespace pernix {
+extern "C" {
+#endif
+
+/**
+ * @brief Compress a single 512-bit block using AVX2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
+int mm256_compress_block_avx2(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output);
+
+/**
+ * @brief Compress multiple 512-bit blocks using AVX2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of 512-bit blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
+int mm256_compress_blocks_avx2(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output,
+                               uint32_t blocks);
+
+#ifdef __cplusplus
+}
+}  // namespace pernix
+#endif
+
+#endif  // PERNIX_AVX2_COMPRESSION_H

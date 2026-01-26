@@ -1,4 +1,4 @@
-#include <pernix/compression.h>
+#include <../../include/pernix/pernix.h>
 #include <testset.h>
 
 #ifdef PERNIX_AVX2_ENABLED

@@ -19,5 +19,8 @@ $$x_{i,N} = \mathrm{ANINT}\left(x_i\cdot\varepsilon^{-1}\right)$$
     * `cmake --build "build" --config Release`
 3. `libpernix.so` will be in `build/src`
 
+## Benchmarking
+A benchmark framework for PERNIX can be found at https://github.com/pc2/pernix-benchmark.
+
 ## Usage with Bindings
 Bindings and examples can be found in the subdirectory `bindings`.

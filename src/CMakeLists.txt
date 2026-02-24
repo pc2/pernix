@@ -2,7 +2,7 @@ include(GNUInstallDirs)
 
 file(GLOB_RECURSE
         PERNIX_SOURCES
-        *.cpp
+        ./*.cpp
         ${PROJECT_SOURCE_DIR}/include/pernix/*.h
 )
 

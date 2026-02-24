@@ -82,6 +82,23 @@ module pernix_compression
             integer(c_int32_t), value :: blocks
         end subroutine
 
+        subroutine compress_block(bit_width, input_ptr, scale, output_ptr) bind(C, name = "compress_block")
+            import :: c_int8_t, c_float, c_ptr
+            integer(c_int8_t), value :: bit_width
+            type(c_ptr), value :: input_ptr
+            real(c_float), value :: scale
+            type(c_ptr), value :: output_ptr
+        end subroutine
+
+        subroutine compress_blocks(bit_width, input_ptr, scale, output_ptr, blocks) bind(C, name = "compress_blocks")
+            import :: c_int8_t, c_int32_t, c_float, c_ptr
+            integer(c_int8_t), value :: bit_width
+            type(c_ptr), value :: input_ptr
+            real(c_float), value :: scale
+            type(c_ptr), value :: output_ptr
+            integer(c_int32_t), value :: blocks
+        end subroutine
+
     end interface
 
 end module pernix_compression

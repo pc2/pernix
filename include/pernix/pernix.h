@@ -28,7 +28,6 @@
 #include <pernix/fallback/decompression.h>
 
 namespace pernix {
-
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 int compress_block(const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output);
@@ -121,6 +120,12 @@ int decompress_blocks(const uint8_t* __restrict__ input, const float_t scale, fl
     return fallback_decompress_blocks<BIT_WIDTH>(input, scale, output, blocks);
 }
 #endif
+}  // namespace pernix
+
+#ifdef __cplusplus
+namespace pernix {
+extern "C" {
+#endif
 
 int compress_block(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output);
 int compress_blocks(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output, uint32_t blocks);
@@ -128,6 +133,9 @@ int compress_blocks(uint8_t bit_width, const float_t* __restrict__ input, float_
 int decompress_block(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 int decompress_blocks(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output, uint32_t blocks);
 
+#ifdef __cplusplus
+}
 }  // namespace pernix
+#endif
 
 #endif  // PERNIX_H

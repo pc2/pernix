@@ -1,6 +1,9 @@
 #include <pernix/pernix.h>
 
+#ifdef __cplusplus
 namespace pernix {
+extern "C" {
+#endif
 
 // Use the best available implementation based on detected CPU features at compile time
 #ifdef PERNIX_AVX2_ENABLED
@@ -61,4 +64,7 @@ int decompress_blocks(const uint8_t bit_width, const uint8_t* __restrict__ input
 }
 #endif
 
+#ifdef __cplusplus
+}
 }  // namespace pernix
+#endif  // __cplusplus

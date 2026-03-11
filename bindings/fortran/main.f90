@@ -26,7 +26,7 @@ program main
         end do
 
         ! call the C-binding Fortran subroutine using C pointers
-        call mm512_decompress_block_avx512vbmi(bit_width, c_loc(input_data), scale, c_loc(output_data))
+        call decompress_block(bit_width, c_loc(input_data), scale, c_loc(output_data))
     end do
     t1 = omp_get_wtime()
     diff = t1 - t0

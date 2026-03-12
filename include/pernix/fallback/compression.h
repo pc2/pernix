@@ -21,7 +21,7 @@ __always_inline int32_t quantize_ps_epi32(const float input, const float scale) 
     return static_cast<int32_t>(std::lroundf(input * scale));
 }
 
-__always_inline int64_t quantize_ps_epi64(const double_t input, const double_t scale) {
+__always_inline int64_t quantize_pd_epi64(const double_t input, const double_t scale) {
     return std::llround(input * scale);
 }
 
@@ -118,7 +118,7 @@ int compress_block_fallback(const double_t* __restrict__ input, const double_t s
     std::vector<uint32_t> block_values(elements_per_block);
 #pragma GCC unroll 32
     for (uint32_t i = 0; i < elements_per_block; i++) {
-        block_values[i] = static_cast<uint32_t>(internal::quantize_ps_epi64(input[i], scale));
+        block_values[i] = static_cast<uint32_t>(internal::quantize_pd_epi64(input[i], scale));
     }
 
     internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);

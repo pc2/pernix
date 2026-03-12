@@ -21,6 +21,10 @@ __always_inline int32_t quantize_ps_epi32(const float input, const float scale) 
     return static_cast<int32_t>(std::lroundf(input * scale));
 }
 
+__always_inline int64_t quantize_ps_epi64(const double_t input, const double_t scale) {
+    return std::llround(input * scale);
+}
+
 template <typename T, uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
 void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t bit_offset, uint8_t* __restrict__ destination) {
@@ -63,6 +67,8 @@ void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t
  * @brief Pack a vector of uint32_t values into a compact byte representation using fallback scalar implementation.
  *
  * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of each block in bytes (default 64 for 512 bits).
+ *
  * @param input vector of uint32_t values to be packed.
  * @param destination pointer to the output buffer where packed bytes will be stored.
  */
@@ -82,17 +88,18 @@ void pack_epi32_fallback(const std::vector<uint32_t>& input, uint8_t* __restrict
 /**
  * @brief Compress a single 512-bit block using fallback scalar implementation.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of each block in bytes (default 64 for 512 bits).
  *
  * @param input pointer to the start of the input float values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.
  * @return int status code (0 for success).
  */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 int compress_block_fallback(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
-    constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     std::vector<uint32_t> block_values(elements_per_block);
 #pragma GCC unroll 64
@@ -104,10 +111,25 @@ int compress_block_fallback(const float_t* __restrict__ input, const float_t sca
     return 0;
 }
 
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+int compress_block_fallback(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    std::vector<uint32_t> block_values(elements_per_block);
+#pragma GCC unroll 32
+    for (uint32_t i = 0; i < elements_per_block; i++) {
+        block_values[i] = static_cast<uint32_t>(internal::quantize_ps_epi64(input[i], scale));
+    }
+
+    internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+    return 0;
+}
+
 /**
  * @brief Compress multiple 512-bit blocks using fallback scalar implementation.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of each block in bytes (default 64 for 512 bits).
  *
  * @param input pointer to the start of the input float values.
  * @param scale scaling factor used during quantization.
@@ -115,18 +137,33 @@ int compress_block_fallback(const float_t* __restrict__ input, const float_t sca
  * @param blocks number of 512-bit blocks to compress.
  * @return int status code (0 for success).
  */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 int compress_blocks_fallback(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
     const float_t* block_input = input;
     uint8_t* block_output      = output;
 
     for (uint32_t block = 0; block < blocks; block++) {
-        compress_block_fallback<BIT_WIDTH>(block_input, scale, block_output);
-        block_input += 512 / BIT_WIDTH;
-        block_output += 64;
+        compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_output += BLOCK_SIZE;
     }
 
+    return 0;
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+int compress_blocks_fallback(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,
+                             const uint32_t blocks) {
+    const double_t* block_input = input;
+    uint8_t* block_output       = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += (64 * 8) / BIT_WIDTH;
+        block_output += BLOCK_SIZE;
+    }
     return 0;
 }
 }  // namespace pernix

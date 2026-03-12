@@ -22,6 +22,10 @@ __always_inline float dequantize_epi32(const int32_t input, const float scale) {
     return static_cast<float>(input) * scale;
 }
 
+__always_inline double_t dequantize_epi64(const int64_t input, const double_t scale) {
+    return static_cast<double_t>(input) * scale;
+}
+
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __always_inline auto sign_extend(const uint32_t value) -> int32_t {
@@ -97,16 +101,31 @@ __always_inline auto unpack_epi32_fallback(const uint8_t* __restrict__ input, co
  * @param output pointer to the output buffer where decompressed float values will be stored.
  * @return int status code (0 for success).
  */
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 int decompress_block_fallback(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
-    constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const std::vector<int32_t> block_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, elements_per_block);
 
 #pragma GCC unroll 512
     for (uint32_t i = 0; i < elements_per_block; i++) {
         output[i] = internal::dequantize_epi32(block_values[i], scale);
+    }
+
+    return 0;
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
+int decompress_block_fallback(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    const std::vector<int32_t> block_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, elements_per_block);
+
+#pragma GCC unroll 512
+    for (uint32_t i = 0; i < elements_per_block; i++) {
+        output[i] = internal::dequantize_epi64(block_values[i], scale);
     }
 
     return 0;
@@ -123,7 +142,7 @@ int decompress_block_fallback(const uint8_t* __restrict__ input, const float_t s
  * @param blocks number of 512-bit blocks to decompress.
  * @return int status code (0 for success).
  */
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
                                const uint32_t blocks) {
@@ -131,13 +150,30 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t 
     float_t* block_output      = output;
 
     for (uint32_t block = 0; block < blocks; block++) {
-        decompress_block_fallback<BIT_WIDTH, SIGN_VALUES>(block_input, scale, block_output);
-        block_input += 64;
-        block_output += 512 / BIT_WIDTH;
+        decompress_block_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += BLOCK_SIZE;
+        block_output += (BLOCK_SIZE * 64) / BIT_WIDTH;
     }
 
     return 0;
 }
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
+int decompress_blocks_fallback(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,
+                               const uint32_t blocks) {
+    const uint8_t* block_input = input;
+    double_t* block_output     = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        decompress_block_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += BLOCK_SIZE;
+        block_output += (BLOCK_SIZE * 64) / BIT_WIDTH;
+    }
+
+    return 0;
+}
+
 }  // namespace pernix
 
 #ifdef __cplusplus

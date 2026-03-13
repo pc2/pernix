@@ -102,10 +102,10 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
  *
  * @note This function requires AVX2 and BMI2 support.
  */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+template <uint8_t BIT_WIDTH, uint16_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
-    constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
     constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
 
@@ -133,6 +133,40 @@ int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t s
     return 0;
 }
 
+template <uint8_t BIT_WIDTH, uint16_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+int mm256_compress_block_bmi2(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr uint32_t iterations_8       = elements_per_block / 8;
+    constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
+
+    const __m256d scale_v = _mm256_set1_pd(scale);
+#pragma GCC unroll 4
+    for (uint32_t iter = 0; iter < iterations_8; iter++) {
+        const __m256d source1    = _mm256_loadu_pd(input);
+        const __m256d source2    = _mm256_loadu_pd(input + 4);
+        const __m128i quantized1 = internal::mm256_quantize_pd_epi32(source1, scale_v);
+        const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
+        __m256i combined         = _mm256_castsi128_si256(quantized1);
+        combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
+        const __m256i packed     = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(combined);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
+        input += 8;
+        output += BIT_WIDTH;
+    }
+
+    if constexpr (remaining) {
+        std::vector<uint32_t> block_values(remaining);
+#pragma GCC unroll 8
+        for (uint32_t i = 0; i < remaining; i++) {
+            block_values[i] = static_cast<uint32_t>(internal::quantize_pd_epi64(input[i], scale));
+        }
+
+        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+    }
+    return 0;
+}
+
 /**
  * @brief Compress multiple 512-bit blocks using AVX2 and BMI2 instructions.
  *
@@ -146,17 +180,33 @@ int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t s
  *
  * @note This function requires AVX2 and BMI2 support.
  */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
+template <uint8_t BIT_WIDTH, uint16_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_blocks_bmi2(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output,
                                const uint32_t blocks) {
     const float_t* block_input = input;
     uint8_t* block_output      = output;
 
     for (uint32_t block = 0; block < blocks; block++) {
-        mm256_compress_block_bmi2<BIT_WIDTH>(block_input, scale, block_output);
-        block_input += 512 / BIT_WIDTH;
-        block_output += 64;
+        mm256_compress_block_bmi2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_output += BLOCK_SIZE;
+    }
+
+    return 0;
+}
+
+template <uint8_t BIT_WIDTH, uint16_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+int mm256_compress_blocks_bmi2(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,
+                               const uint32_t blocks) {
+    const double_t* block_input = input;
+    uint8_t* block_output       = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        mm256_compress_block_bmi2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_output += BLOCK_SIZE;
     }
 
     return 0;

@@ -13,6 +13,13 @@
 namespace pernix {
 
 namespace internal {
+/**
+ * @brief Sign-extend packed values after BMI2 expansion into 32-bit lanes.
+ *
+ * @tparam BIT_WIDTH original encoded bit width.
+ * @param source register containing unpacked values.
+ * @return __m128i sign-extended values.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __m128i mm_sign_extend32(__m128i source) {
@@ -21,6 +28,13 @@ __m128i mm_sign_extend32(__m128i source) {
     return _mm_srai_epi32(source, shift);
 }
 
+/**
+ * @brief Sign-extend packed values after BMI2 expansion into eight 32-bit lanes.
+ *
+ * @tparam BIT_WIDTH original encoded bit width.
+ * @param source register containing unpacked values.
+ * @return __m256i sign-extended values.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __m256i mm256_sign_extend32(__m256i source) {
@@ -29,6 +43,14 @@ __m256i mm256_sign_extend32(__m256i source) {
     return _mm256_srai_epi32(source, shift);
 }
 
+/**
+ * @brief Unpack four values from a BMI2-packed input buffer.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @tparam SIGN_VALUES whether to sign-extend the unpacked values.
+ * @param input pointer to the packed input buffer.
+ * @return __m128i unpacked values.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m128i mm_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
@@ -76,6 +98,14 @@ __m128i mm_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
     return result;
 }
 
+/**
+ * @brief Unpack eight values from a BMI2-packed input buffer.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @tparam SIGN_VALUES whether to sign-extend the unpacked values.
+ * @param input pointer to the packed input buffer.
+ * @return __m256i unpacked values.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __m256i mm256_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
@@ -172,6 +202,18 @@ int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t
     return 0;
 }
 
+/**
+ * @brief Decompress a single block to double values using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
 int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
@@ -245,6 +287,20 @@ int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_
 
     return 0;
 }
+
+/**
+ * @brief Decompress multiple blocks to double values using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @param blocks number of blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 }  // namespace pernix
 
 #ifdef __cplusplus

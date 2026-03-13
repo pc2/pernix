@@ -21,10 +21,27 @@ __always_inline int32_t quantize_ps_epi32(const float input, const float scale) 
     return static_cast<int32_t>(std::lroundf(input * scale));
 }
 
+/**
+ * @brief Quantize a single double value to int64_t using the provided scale.
+ *
+ * @param input input double value to be quantized.
+ * @param scale scaling factor used during quantization.
+ * @return int64_t quantized integer value.
+ */
 __always_inline int64_t quantize_pd_epi64(const double_t input, const double_t scale) {
     return std::llround(input * scale);
 }
 
+/**
+ * @brief Append packed scalar values into an output buffer using the selected
+ * storage width.
+ *
+ * @tparam T unsigned integer type used as the packing word.
+ * @tparam BIT_WIDTH bit width per value in the packed representation.
+ * @param input vector of quantized values to pack.
+ * @param bit_offset starting bit offset in the destination buffer.
+ * @param destination pointer to the output buffer.
+ */
 template <typename T, uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
 void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t bit_offset, uint8_t* __restrict__ destination) {
@@ -111,6 +128,16 @@ int compress_block_fallback(const float_t* __restrict__ input, const float_t sca
     return 0;
 }
 
+/**
+ * @brief Compress a single block of double values using the fallback scalar implementation.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of each block in bytes (default 64 for 512 bits).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 int compress_block_fallback(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
@@ -152,6 +179,17 @@ int compress_blocks_fallback(const float_t* __restrict__ input, const float_t sc
     return 0;
 }
 
+/**
+ * @brief Compress multiple blocks of double values using the fallback scalar implementation.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of each block in bytes (default 64 for 512 bits).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of blocks to compress.
+ * @return int status code (0 for success).
+ */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 int compress_blocks_fallback(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,

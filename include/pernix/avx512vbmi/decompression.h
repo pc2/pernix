@@ -12,26 +12,41 @@
 namespace pernix {
 
 namespace internal {
+/**
+ * @brief Dequantize up to four integer values under a mask.
+ */
 __always_inline __m128 mm_maskz_dequantize_epi32(const __mmask8& mask, const __m128i& input, const __m128& scale) {
     const __m128 converted = _mm_maskz_cvtepi32_ps(mask, input);
     return _mm_maskz_mul_ps(mask, converted, scale);
 }
 
+/**
+ * @brief Dequantize up to eight integer values under a mask.
+ */
 __always_inline __m256 mm256_maskz_dequantize_epi32(const __mmask8& mask, const __m256i& input, const __m256& scale) {
     const __m256 converted = _mm256_maskz_cvtepi32_ps(mask, input);
     return _mm256_maskz_mul_ps(mask, converted, scale);
 }
 
+/**
+ * @brief Dequantize sixteen integer values to floats.
+ */
 __always_inline __m512 mm512_dequantize_epi32(const __m512i& input, const __m512& scale) {
     const __m512 converted = _mm512_cvtepi32_ps(input);
     return _mm512_mul_ps(converted, scale);
 }
 
+/**
+ * @brief Dequantize up to sixteen integer values under a mask.
+ */
 __always_inline __m512 mm512_maskz_dequantize_epi32(const __mmask8& mask, const __m512i& input, const __m512& scale) {
     const __m512 converted = _mm512_maskz_cvtepi32_ps(mask, input);
     return _mm512_maskz_mul_ps(mask, converted, scale);
 }
 
+/**
+ * @brief Unpack four values with the 128-bit VBMI shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m128i mm_unpack_epi32_avx512vbmi_internal(const uint8_t* __restrict__ input) {
@@ -65,6 +80,9 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi_internal(const uint8_t* __res
     }
 }
 
+/**
+ * @brief Unpack eight values with the 256-bit VBMI shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_unpack_epi32_avx512vbmi_internal(const uint8_t* __restrict__ input) {
@@ -99,6 +117,9 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi_internal(const uint8_t* __
     }
 }
 
+/**
+ * @brief Unpack aligned 8-bit or 16-bit values directly into a 512-bit register.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __always_inline __m512i mm512_unpack_aligned_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
@@ -119,6 +140,9 @@ __always_inline __m512i mm512_unpack_aligned_epi32_avx512vbmi(const uint8_t* __r
     }
 }
 
+/**
+ * @brief Unpack sixteen values with the 512-bit VBMI shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m512i mm512_unpack_epi32_avx512vbmi_internal(const uint8_t* __restrict__ input) {
@@ -158,6 +182,9 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi_internal(const uint8_t* __
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 128-bit VBMI unpacker.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m128i mm_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
@@ -168,6 +195,9 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ i
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 256-bit VBMI unpacker.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
@@ -178,6 +208,9 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi(const uint8_t* __restrict_
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 512-bit VBMI unpacker.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m512i mm512_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ input) {

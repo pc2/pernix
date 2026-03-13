@@ -10,35 +10,56 @@
 namespace pernix {
 
 namespace internal {
+/**
+ * @brief Convert an 8-lane mask to the lane representation used by AVX2 float masked stores.
+ */
 __always_inline __m256i mm256_convert_vmask_epi32(const __mmask8 mask8) {
     return _mm256_setr_epi32((mask8 & 0x1) ? -1 : 0, (mask8 & 0x2) ? -1 : 0, (mask8 & 0x4) ? -1 : 0, (mask8 & 0x8) ? -1 : 0,
                              (mask8 & 0x10) ? -1 : 0, (mask8 & 0x20) ? -1 : 0, (mask8 & 0x40) ? -1 : 0, (mask8 & 0x80) ? -1 : 0);
 }
 
+/**
+ * @brief Convert a 4-lane mask to the lane representation used by AVX2 double masked stores.
+ */
 __always_inline __m256i mm256_convert_vmask_epi64(const __mmask8 mask8) {
     return _mm256_setr_epi64x((mask8 & 0x1) ? -1 : 0, (mask8 & 0x2) ? -1 : 0, (mask8 & 0x4) ? -1 : 0, (mask8 & 0x8) ? -1 : 0);
 }
 
+/**
+ * @brief Dequantize four 32-bit integers to floats.
+ */
 __always_inline __m128 mm_dequantize_epi32(const __m128i& input, const __m128& scale) {
     const __m128 converted = _mm_cvtepi32_ps(input);
     return _mm_mul_ps(converted, scale);
 }
 
+/**
+ * @brief Dequantize two 64-bit integers to doubles.
+ */
 __always_inline __m128d mm_dequantize_epi64_pd(const __m128i& input, const __m128d& scale) {
     const __m128d converted = _mm_cvtepi64_pd(input);
     return _mm_mul_pd(converted, scale);
 }
 
+/**
+ * @brief Dequantize eight 32-bit integers to floats.
+ */
 __always_inline __m256 mm256_dequantize_epi32(const __m256i& input, const __m256& scale) {
     const __m256 converted = _mm256_cvtepi32_ps(input);
     return _mm256_mul_ps(converted, scale);
 }
 
+/**
+ * @brief Dequantize four 64-bit integers to doubles.
+ */
 __always_inline __m256d mm256_dequantize_epi64_pd(const __m256i& input, const __m256d& scale) {
     const __m256d converted = _mm256_cvtepi64_pd(input);
     return _mm256_mul_pd(converted, scale);
 }
 
+/**
+ * @brief Unpack four aligned 8-bit or 16-bit values directly from the input buffer.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __m128i mm_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
@@ -59,6 +80,9 @@ __m128i mm_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
     }
 }
 
+/**
+ * @brief Unpack four values using the table-driven AVX2 shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 16)
 __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
@@ -83,6 +107,9 @@ __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     return shifted;
 }
 
+/**
+ * @brief Unpack eight aligned 8-bit or 16-bit values directly from the input buffer.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __m256i mm256_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
@@ -103,6 +130,9 @@ __m256i mm256_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
     }
 }
 
+/**
+ * @brief Unpack eight values using the table-driven AVX2 shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 16)
 __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
@@ -131,7 +161,7 @@ __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
 }  // namespace internal
 
 /**
- * @brief Decompress a single 512\-bit block using AVX2 instructions.
+ * @brief Decompress a single block to float using AVX2 instructions.
  *
  * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam SIGN_VALUES whether the values are signed or unsigned.
@@ -170,6 +200,19 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t
     return 0;
 }
 
+/**
+ * @brief Decompress a single block to double using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
@@ -214,7 +257,7 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const double_
 }
 
 /**
- * @brief Decompress multiple 512\-bit blocks using AVX2 instructions.
+ * @brief Decompress multiple blocks to float using AVX2 instructions.
  *
  * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam SIGN_VALUES whether the values are signed or unsigned.
@@ -222,7 +265,7 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const double_
  * @param input pointer to the start of the compressed data.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where decompressed float values will be stored.
- * @param blocks number of 512-bit blocks to decompress.
+ * @param blocks number of blocks to decompress.
  * @return int status code (0 for success).
  *
  * @note This function requires AVX2 support.
@@ -243,6 +286,20 @@ int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const float_
     return 0;
 }
 
+/**
+ * @brief Decompress multiple blocks to double using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ *
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,

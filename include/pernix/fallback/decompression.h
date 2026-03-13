@@ -22,10 +22,24 @@ __always_inline float dequantize_epi32(const int32_t input, const float scale) {
     return static_cast<float>(input) * scale;
 }
 
+/**
+ * @brief Dequantize a single int64_t value to double using the provided scale.
+ *
+ * @param input input int64_t value to be dequantized.
+ * @param scale scaling factor used during quantization.
+ * @return double_t dequantized double value.
+ */
 __always_inline double_t dequantize_epi64(const int64_t input, const double_t scale) {
     return static_cast<double_t>(input) * scale;
 }
 
+/**
+ * @brief Sign-extend a packed integer value stored in the low bits of a 32-bit word.
+ *
+ * @tparam BIT_WIDTH number of significant bits in the encoded value.
+ * @param value unsigned packed value.
+ * @return int32_t sign-extended value.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __always_inline auto sign_extend(const uint32_t value) -> int32_t {
@@ -33,6 +47,17 @@ __always_inline auto sign_extend(const uint32_t value) -> int32_t {
     return (static_cast<int32_t>(value) << shift) >> shift;
 }
 
+/**
+ * @brief Unpack bit-packed values from a typed input span into signed 32-bit integers.
+ *
+ * @tparam T unsigned integer type used to read the source buffer.
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @tparam SIGN_VALUES whether to sign-extend unpacked values.
+ * @param input pointer to the typed packed input buffer.
+ * @param bit_offset starting bit offset in the first input word.
+ * @param elements number of values to unpack.
+ * @return std::vector<int32_t> unpacked values.
+ */
 template <typename T, uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
 __always_inline auto unpack_epi32_fallback_inner(const T* __restrict__ input, const uint8_t bit_offset, const std::size_t elements)
@@ -116,6 +141,16 @@ int decompress_block_fallback(const uint8_t* __restrict__ input, const float_t s
     return 0;
 }
 
+/**
+ * @brief Decompress a single block to double values using the fallback scalar implementation.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @return int status code (0 for success).
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 int decompress_block_fallback(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
@@ -158,6 +193,17 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t 
     return 0;
 }
 
+/**
+ * @brief Decompress multiple blocks to double values using the fallback scalar implementation.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @param blocks number of blocks to decompress.
+ * @return int status code (0 for success).
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 int decompress_blocks_fallback(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,

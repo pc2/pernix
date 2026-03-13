@@ -7,28 +7,43 @@
 namespace pernix {
 
 namespace internal {
+/**
+ * @brief Quantize up to four float values under a mask.
+ */
 __always_inline __m128i mm_maskz_quantize_ps_epi32(const __mmask8& mask, const __m128& input, const __m128& scale) {
     const __m128 scaled  = _mm_maskz_mul_ps(mask, input, scale);
     const __m128 rounded = _mm_maskz_roundscale_ps(mask, scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
     return _mm_maskz_cvtps_epi32(mask, rounded);
 }
 
+/**
+ * @brief Quantize up to eight float values under a mask.
+ */
 __always_inline __m256i mm256_maskz_quantize_ps_epi32(const __mmask8& mask, const __m256& input, const __m256& scale) {
     const __m256 scaled  = _mm256_maskz_mul_ps(mask, input, scale);
     const __m256 rounded = _mm256_maskz_roundscale_ps(mask, scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
     return _mm256_maskz_cvtps_epi32(mask, rounded);
 }
 
+/**
+ * @brief Quantize sixteen float values to 32-bit integers.
+ */
 __always_inline __m512i mm512_quantize_ps_epi32(const __m512& input, const __m512& scale) {
     const __m512 scaled = _mm512_mul_ps(input, scale);
     return _mm512_cvt_roundps_epi32(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
 }
 
+/**
+ * @brief Quantize up to sixteen float values under a mask.
+ */
 __always_inline __m512i mm512_maskz_quantize_ps_epi32(const __mmask16& mask, const __m512& input, const __m512& scale) {
     const __m512 scaled = _mm512_maskz_mul_ps(mask, input, scale);
     return _mm512_maskz_cvt_roundps_epi32(mask, scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
 }
 
+/**
+ * @brief Pack eight 32-bit values for bit widths 9 through 15 using VBMI.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm256_pack_epi32_avx512vbmi_9to15(const __m256i& input) -> __m128i {
@@ -71,12 +86,18 @@ __always_inline auto mm256_pack_epi32_avx512vbmi_9to15(const __m256i& input) -> 
     }
 }
 
+/**
+ * @brief Pack four 32-bit values for bit widths 9 through 15 using VBMI.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm_pack_epi32_avx512vbmi_9to15(const __m128i& input) -> __m128i {
     return mm256_pack_epi32_avx512vbmi_9to15<BIT_WIDTH>(_mm256_castsi128_si256(input));
 }
 
+/**
+ * @brief Pack sixteen 32-bit values for bit widths 9 through 15 using VBMI.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm512_pack_epi32_avx512vbmi_9to15(const __m512i& input) -> __m256i {
@@ -111,6 +132,9 @@ __always_inline auto mm512_pack_epi32_avx512vbmi_9to15(const __m512i& input) -> 
     }
 }
 
+/**
+ * @brief Pack thirty-two 32-bit values for bit widths 9 through 15 using VBMI.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm1024_pack_epi32_avx512vbmi_9to15(const __m512i& input) -> __m512i {
@@ -143,6 +167,9 @@ __always_inline auto mm1024_pack_epi32_avx512vbmi_9to15(const __m512i& input) ->
     }
 }
 
+/**
+ * @brief Pack aligned 8-bit or 16-bit values from four 32-bit lanes using AVX-512 narrowing instructions.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __always_inline auto mm_pack_aligned_epi32_avx512(const __m128i& input) -> __m128i {
@@ -153,6 +180,9 @@ __always_inline auto mm_pack_aligned_epi32_avx512(const __m128i& input) -> __m12
     }
 }
 
+/**
+ * @brief Pack aligned 8-bit or 16-bit values from eight 32-bit lanes.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __always_inline auto mm256_pack_aligned_epi32_avx512(const __m256i& input) -> __m128i {
@@ -163,6 +193,9 @@ __always_inline auto mm256_pack_aligned_epi32_avx512(const __m256i& input) -> __
     }
 }
 
+/**
+ * @brief Pack aligned 8-bit or 16-bit values from sixteen 32-bit lanes.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __always_inline auto mm512_pack_aligned_epi32_avx512(const __m512i& input) -> __m256i {
@@ -173,6 +206,9 @@ __always_inline auto mm512_pack_aligned_epi32_avx512(const __m512i& input) -> __
     }
 }
 
+/**
+ * @brief Pack aligned 8-bit or 16-bit values from thirty-two 32-bit lanes.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __always_inline auto mm1024_pack_aligned_epi32_avx512(const __m512i& input) -> __m512i {
@@ -183,6 +219,9 @@ __always_inline auto mm1024_pack_aligned_epi32_avx512(const __m512i& input) -> _
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 128-bit VBMI packer.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm_pack_epi32_avx512vbmi(const __m128i& input) -> __m128i {
@@ -193,6 +232,9 @@ __always_inline auto mm_pack_epi32_avx512vbmi(const __m128i& input) -> __m128i {
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 256-bit VBMI packer.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm256_pack_epi32_avx512vbmi(const __m256i& input) -> __m128i {
@@ -203,6 +245,9 @@ __always_inline auto mm256_pack_epi32_avx512vbmi(const __m256i& input) -> __m128
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 512-bit VBMI packer.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm512_pack_epi32_avx512vbmi(const __m512i& input) -> __m256i {
@@ -213,6 +258,9 @@ __always_inline auto mm512_pack_epi32_avx512vbmi(const __m512i& input) -> __m256
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate dual-register VBMI packer.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
 __always_inline auto mm1024_pack_epi32_avx512vbmi(const __m512i& input1, const __m512i& input2) -> __m512i {

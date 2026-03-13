@@ -12,6 +12,12 @@
 
 namespace pernix {
 namespace internal {
+/**
+ * @brief Build the masks and shift constants used by the BMI2 packers.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @return std::tuple<uint16_t, uint64_t, uint16_t, uint16_t> mask tuple used by the BMI2 helpers.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 32)
 static constexpr std::tuple<uint16_t, uint64_t, uint16_t, uint16_t> pack_avx2_bmi2_constants() {
@@ -36,6 +42,13 @@ static constexpr std::tuple<uint16_t, uint64_t, uint16_t, uint16_t> pack_avx2_bm
     };
 }
 
+/**
+ * @brief Pack four 32-bit values with BMI2 extract instructions.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @param input SIMD register containing four quantized values.
+ * @return __m128i packed bitstream in the low bytes of the result.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 32)
 static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
@@ -60,6 +73,13 @@ static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
     }
 }
 
+/**
+ * @brief Pack eight 32-bit values with BMI2 extract instructions.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @param input SIMD register containing eight quantized values.
+ * @return __m256i packed bitstream in the low bytes of the result.
+ */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 16)
 static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
@@ -133,6 +153,17 @@ int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t s
     return 0;
 }
 
+/**
+ * @brief Compress a single block of double values using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <uint8_t BIT_WIDTH, uint16_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_block_bmi2(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
@@ -196,6 +227,18 @@ int mm256_compress_blocks_bmi2(const float_t* __restrict__ input, const float_t 
     return 0;
 }
 
+/**
+ * @brief Compress multiple blocks of double values using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <uint8_t BIT_WIDTH, uint16_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_blocks_bmi2(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,

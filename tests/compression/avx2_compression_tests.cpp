@@ -18,7 +18,9 @@ TYPED_TEST(CompressionTest, AVX2CompressBlock) {
         std::vector<uint8_t>& data = compressedData[block];
 
         for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i]) << "Mismatch at block " << block << ", byte " << i;
+            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i])
+                << "Mismatch at block " << block << ", byte " << i << ", element " << static_cast<int>(data[i]) << " vs "
+                << static_cast<int>(this->testSet.getCompressedData()[block][i]);
         }
     }
 }
@@ -38,7 +40,9 @@ TYPED_TEST(CompressionTest64, AVX2CompressBlock) {
         std::vector<uint8_t>& data = compressedData[block];
 
         for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i]) << "Mismatch at block " << block << ", byte " << i;
+            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i])
+                << "Mismatch at block " << block << ", byte " << i << ", element " << static_cast<int>(data[i]) << " vs "
+                << static_cast<int>(this->testSet.getCompressedData()[block][i]);
         }
     }
 }

@@ -15,6 +15,10 @@ __always_inline __m256i mm256_convert_vmask_epi32(const __mmask8 mask8) {
                              (mask8 & 0x10) ? -1 : 0, (mask8 & 0x20) ? -1 : 0, (mask8 & 0x40) ? -1 : 0, (mask8 & 0x80) ? -1 : 0);
 }
 
+__always_inline __m256i mm256_convert_vmask_epi64(const __mmask8 mask8) {
+    return _mm256_setr_epi64x((mask8 & 0x1) ? -1 : 0, (mask8 & 0x2) ? -1 : 0, (mask8 & 0x4) ? -1 : 0, (mask8 & 0x8) ? -1 : 0);
+}
+
 __always_inline __m128 mm_dequantize_epi32(const __m128i& input, const __m128& scale) {
     const __m128 converted = _mm_cvtepi32_ps(input);
     return _mm_mul_ps(converted, scale);
@@ -191,6 +195,20 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const double_
 
     constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
     if constexpr (remaining > 0) {
+        const __m256i unpacked = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256i extend1  = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
+        const __m256i extend2  = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
+
+        const __m256d dequantized1 = internal::mm256_dequantize_epi64_pd(extend1, scale_v);
+        const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
+
+        constexpr auto mask_lo = static_cast<__mmask8>(remaining_mask & 0x0F);
+        _mm256_maskstore_pd(output, internal::mm256_convert_vmask_epi64(mask_lo), dequantized1);
+
+        if constexpr (remaining > 4) {
+            constexpr auto mask_hi = static_cast<__mmask8>((remaining_mask >> 4) & 0x0F);
+            _mm256_maskstore_pd(output + 4, internal::mm256_convert_vmask_epi64(mask_hi), dequantized2);
+        }
     }
     return 0;
 }

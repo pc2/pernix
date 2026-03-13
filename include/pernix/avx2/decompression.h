@@ -20,9 +20,19 @@ __always_inline __m128 mm_dequantize_epi32(const __m128i& input, const __m128& s
     return _mm_mul_ps(converted, scale);
 }
 
+__always_inline __m128d mm_dequantize_epi64_pd(const __m128i& input, const __m128d& scale) {
+    const __m128d converted = _mm_cvtepi64_pd(input);
+    return _mm_mul_pd(converted, scale);
+}
+
 __always_inline __m256 mm256_dequantize_epi32(const __m256i& input, const __m256& scale) {
     const __m256 converted = _mm256_cvtepi32_ps(input);
     return _mm256_mul_ps(converted, scale);
+}
+
+__always_inline __m256d mm256_dequantize_epi64_pd(const __m256i& input, const __m256d& scale) {
+    const __m256d converted = _mm256_cvtepi64_pd(input);
+    return _mm256_mul_pd(converted, scale);
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
@@ -129,10 +139,10 @@ __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
  *
  * @note This function requires AVX2 support.
  */
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
-    constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
     constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
 
@@ -156,6 +166,35 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t
     return 0;
 }
 
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr uint32_t iterations_8       = elements_per_block / 8;
+    constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
+    const __m256d scale_v                 = _mm256_set1_pd(scale);
+#pragma GCC unroll 4
+    for (uint32_t iter = 0; iter < iterations_8; iter++) {
+        const __m256i unpacked = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256i extend1  = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
+        const __m256i extend2  = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
+
+        const __m256d dequantized1 = internal::mm256_dequantize_epi64_pd(extend1, scale_v);
+        const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
+
+        _mm256_storeu_pd(output, dequantized1);
+        _mm256_storeu_pd(output + 4, dequantized2);
+
+        input += BIT_WIDTH;
+        output += 8;
+    }
+
+    constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
+    if constexpr (remaining > 0) {
+    }
+    return 0;
+}
+
 /**
  * @brief Decompress multiple 512\-bit blocks using AVX2 instructions.
  *
@@ -170,21 +209,38 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t
  *
  * @note This function requires AVX2 support.
  */
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
                                  const uint32_t blocks) {
     const uint8_t* block_input = input;
     float_t* block_output      = output;
 
     for (uint32_t block = 0; block < blocks; block++) {
-        mm256_decompress_block_avx2<BIT_WIDTH, SIGN_VALUES>(block_input, scale, block_output);
-        block_input += 64;
-        block_output += 512 / BIT_WIDTH;
+        mm256_decompress_block_avx2<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += BLOCK_SIZE;
+        block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
     return 0;
 }
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,
+                                 const uint32_t blocks) {
+    const uint8_t* block_input = input;
+    double_t* block_output     = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        mm256_decompress_block_avx2<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += BLOCK_SIZE;
+        block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
+    }
+
+    return 0;
+}
+
 }  // namespace pernix
 
 #ifdef __cplusplus

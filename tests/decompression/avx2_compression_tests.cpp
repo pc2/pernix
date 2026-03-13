@@ -22,4 +22,23 @@ TYPED_TEST(DecompressionTest, AVX2DecompressBlock) {
     }
 }
 
+TYPED_TEST(DecompressionTest64, AVX2DecompressBlock) {
+    std::vector<std::vector<double_t>> decompressedData(this->testSet.numberOfBlocks);
+
+    for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
+        decompressedData[block].resize(this->testSet.elementsPerBlock);
+
+        pernix::mm256_decompress_block_avx2<this->BitWidth>(this->testSet.getCompressedData()[block].data(),
+                                                            this->testSet.getScales()[block], decompressedData[block].data());
+    }
+
+    for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
+        std::vector<double_t>& data = decompressedData[block];
+
+        for (uint32_t i = 0; i < data.size(); i++) {
+            ASSERT_NEAR(decompressedData[block][i], decompressedData[block][i], this->testSet.getScales()[block] / 2);
+        }
+    }
+}
+
 #endif  // PERNIX_AVX2_ENABLED

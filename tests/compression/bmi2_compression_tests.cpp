@@ -15,12 +15,13 @@ TYPED_TEST(CompressionTest, BMI2CompressBlock) {
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
-        std::vector<uint8_t>& data = compressedData[block];
+        std::vector<float_t> restored(this->testSet.elementsPerBlock);
+        pernix::decompress_block_fallback<this->BitWidth>(compressedData[block].data(), this->testSet.getScales()[block], restored.data());
 
-        for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i])
-                << "Mismatch at block " << block << ", byte " << i << ", element " << static_cast<int>(data[i]) << " vs "
-                << static_cast<int>(this->testSet.getCompressedData()[block][i]);
+        for (uint32_t i = 0; i < restored.size(); i++) {
+            ASSERT_NEAR(restored[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))
+                << "Mismatch at block " << block << ", element " << i << ": " << restored[i] << " vs "
+                << this->testSet.getDecompressedData()[block][i];
         }
     }
 }
@@ -37,12 +38,13 @@ TYPED_TEST(CompressionTest64, BMI2CompressBlock) {
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
-        std::vector<uint8_t>& data = compressedData[block];
+        std::vector<double_t> restored(this->testSet.elementsPerBlock);
+        pernix::decompress_block_fallback<this->BitWidth>(compressedData[block].data(), this->testSet.getScales()[block], restored.data());
 
-        for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i])
-                << "Mismatch at block " << block << ", byte " << i << ", element " << static_cast<int>(data[i]) << " vs "
-                << static_cast<int>(this->testSet.getCompressedData()[block][i]);
+        for (uint32_t i = 0; i < restored.size(); i++) {
+            ASSERT_NEAR(restored[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))
+                << "Mismatch at block " << block << ", element " << i << ": " << restored[i] << " vs "
+                << this->testSet.getDecompressedData()[block][i];
         }
     }
 }

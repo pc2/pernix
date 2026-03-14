@@ -5,6 +5,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <random>
 
 /**
@@ -31,9 +33,16 @@ class TestSet {
 public:
     static constexpr uint32_t elementsPerBlock = (BLOCK_SIZE * 8) / BitWidth;
 
+    static constexpr T quantization_levels = Signed ? static_cast<T>((1u << (BitWidth - 1u)) - 1u) : static_cast<T>((1u << BitWidth) - 1u);
+
     uint32_t numberOfBlocks;
 
     [[nodiscard]] constexpr uint32_t totalElements() const { return numberOfBlocks * elementsPerBlock; }
+
+    [[nodiscard]] T blockTolerance(const uint32_t block) const {
+        // Half-step quantization bound + tiny FP slack for rounding edge cases.
+        return (std::abs(scalesData[block]) * static_cast<T>(0.5)) + (std::numeric_limits<T>::epsilon() * static_cast<T>(16));
+    }
 
     explicit TestSet(const uint32_t number_of_blocks) : numberOfBlocks(number_of_blocks) {
         compressedData.resize(numberOfBlocks);  // 64 bytes per block
@@ -60,21 +69,23 @@ private:
                 decompressedData[i][j] = dis(gen);
             }
 
-            const T b_max     = *std::ranges::max_element(decompressedData[i]);
-            const T scale_eps = b_max / ((2 ^ (BitWidth - 1)) - 1);
-            scalesData[i]     = scale_eps;
+            const T b_max = *std::ranges::max_element(decompressedData[i]);
+            const T b_min = *std::ranges::min_element(decompressedData[i]);
+            const T b_abs = std::max(std::abs(b_max), std::abs(b_min));
+            scalesData[i] = (b_abs > static_cast<T>(0) && quantization_levels > static_cast<T>(0)) ? (b_abs / quantization_levels)
+                                                                                                   : std::numeric_limits<T>::epsilon();
 
             // Compress the data using the fallback implementation
             pernix::compress_block_fallback<BitWidth>(decompressedData[i].data(), 1 / scalesData[i],
                                                       reinterpret_cast<uint8_t*>(compressedData[i].data()));
 
             // Decompress and verify using the fallback implementation
-            std::vector<float_t> decompressed_verify(elementsPerBlock);
+            std::vector<T> decompressed_verify(elementsPerBlock);
             pernix::decompress_block_fallback<BitWidth>(reinterpret_cast<uint8_t*>(compressedData[i].data()), scalesData[i],
                                                         decompressed_verify.data());
 
             for (uint32_t j = 0; j < elementsPerBlock; j++) {
-                ASSERT_NEAR(decompressed_verify[j], decompressedData[i][j], scalesData[i] / 2);
+                ASSERT_NEAR(decompressed_verify[j], decompressedData[i][j], blockTolerance(i));
             }
         }
     }

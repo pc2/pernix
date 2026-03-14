@@ -208,7 +208,7 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t
  *
  * @param input pointer to the start of the compressed block.
  * @param scale scaling factor used during quantization.
- * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
  * @return int status code (0 for success).
  *
  * @note This function requires AVX2 support.
@@ -324,7 +324,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Decompress a single 512-bit block using AVX2 instructions.
+ * @brief Decompress a single 512-bit block to float using AVX2 instructions.
  *
  * @param bit_width bit width per value in the packed representation (1 to 24).
  * @param input pointer to the start of the compressed block.
@@ -335,6 +335,19 @@ extern "C" {
  * @note This function requires AVX2 support.
  */
 int mm256_decompress_block_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
+
+/**
+ * @brief Decompress a single 512-bit block to double using AVX2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
+int mm256_decompress_block_f64_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, double_t scale, double_t* __restrict__ output);
 
 /**
  * @brief Decompress multiple 512-bit blocks using AVX2 instructions.
@@ -350,6 +363,21 @@ int mm256_decompress_block_avx2(uint8_t bit_width, const uint8_t* __restrict__ i
  */
 int mm256_decompress_blocks_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
                                  uint32_t blocks);
+
+/**
+ * @brief Decompress multiple 512-bit blocks to double using AVX2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
+int mm256_decompress_blocks_f64_avx2(uint8_t bit_width, const uint8_t* __restrict__ input, double_t scale, double_t* __restrict__ output,
+                                     uint32_t blocks);
 
 #ifdef __cplusplus
 }

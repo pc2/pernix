@@ -226,6 +226,7 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const double_t
 namespace pernix {
 extern "C" {
 #endif
+
 /**
  * @brief Decompress a single 512-bit block using fallback scalar implementation.
  *
@@ -236,6 +237,17 @@ extern "C" {
  * @return int status code (0 for success).
  */
 int decompress_block_fallback(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
+
+/**
+ * @brief Decompress a single 512-bit block using fallback scalar implementation.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @return int status code (0 for success).
+ */
+int decompress_block_fallback_f64(uint8_t bit_width, const uint8_t* __restrict__ input, double_t scale, double_t* __restrict__ output);
 
 /**
  * @brief Decompress multiple 512-bit blocks using fallback scalar implementation.
@@ -249,6 +261,19 @@ int decompress_block_fallback(uint8_t bit_width, const uint8_t* __restrict__ inp
  */
 int decompress_blocks_fallback(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
                                uint32_t blocks);
+
+/**
+ * @brief Decompress multiple 512-bit blocks using fallback scalar implementation.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed float values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ */
+int decompress_blocks_fallback_f64(uint8_t bit_width, const uint8_t* __restrict__ input, double_t scale, double_t* __restrict__ output,
+                                   uint32_t blocks);
 
 #ifdef __cplusplus
 }

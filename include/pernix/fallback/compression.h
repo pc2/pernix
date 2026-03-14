@@ -223,6 +223,17 @@ extern "C" {
 int compress_block_fallback(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output);
 
 /**
+ * @brief Compress a single 512-bit block using fallback scalar implementation.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ */
+int compress_block_fallback_f64(uint8_t bit_width, const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output);
+
+/**
  * @brief Compress multiple 512-bit blocks using fallback scalar implementation.
  *
  * @param bit_width bit width per value in the packed representation (1 to 16).
@@ -234,6 +245,19 @@ int compress_block_fallback(uint8_t bit_width, const float_t* __restrict__ input
  */
 int compress_blocks_fallback(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output,
                              uint32_t blocks);
+
+/**
+ * @brief Compress multiple 512-bit blocks using fallback scalar implementation.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of 512-bit blocks to compress.
+ * @return int status code (0 for success).
+ */
+int compress_blocks_fallback_f64(uint8_t bit_width, const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output,
+                                 uint32_t blocks);
 
 #ifdef __cplusplus
 }

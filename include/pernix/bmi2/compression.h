@@ -276,10 +276,37 @@ extern "C" {
 int mm256_compress_block_bmi2(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output);
 
 /**
+ * @brief Compress a single 512-bit block using AVX2 and BMI2 instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @n
+int mm256_compress_block_f64_bmi2(uint8_t bit_width, const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output);
+
+/**
+* @brief Compress multiple 512-bit blocks using AVX2 and BMI2 instructions.
+*
+* @param bit_width bit width per value in the packed representation (1 to 16).
+* @param input pointer to the start of the input float values.
+* @param scale scaling factor used during quantization.
+* @param output pointer to the output buffer where compressed bytes will be stored.
+* @param blocks number of 512-bit blocks to compress.
+* @return int status code (0 for success).
+*
+* @note This function requires AVX2 and BMI2 support.
+*/
+int mm256_compress_blocks_bmi2(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output,
+                               uint32_t blocks);
+
+/**
  * @brief Compress multiple 512-bit blocks using AVX2 and BMI2 instructions.
  *
  * @param bit_width bit width per value in the packed representation (1 to 16).
- * @param input pointer to the start of the input float values.
+ * @param input pointer to the start of the input double values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.
  * @param blocks number of 512-bit blocks to compress.
@@ -287,8 +314,8 @@ int mm256_compress_block_bmi2(uint8_t bit_width, const float_t* __restrict__ inp
  *
  * @note This function requires AVX2 and BMI2 support.
  */
-int mm256_compress_blocks_bmi2(uint8_t bit_width, const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output,
-                               uint32_t blocks);
+int mm256_compress_blocks_f64_bmi2(uint8_t bit_width, const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output,
+                                   uint32_t blocks);
 
 #ifdef __cplusplus
 }

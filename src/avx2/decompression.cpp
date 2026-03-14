@@ -39,8 +39,56 @@ int mm256_decompress_block_avx2(const uint8_t bit_width, const uint8_t* __restri
     }
 }
 
-int mm256_decompress_blocks_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
-                                 const uint32_t blocks) {
+int mm256_decompress_block_f64_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
+                                    double_t* __restrict__ output) {
+    switch (bit_width) {
+        PERNIX_DECOMPRESS_BLOCK_CASE(1)
+        PERNIX_DECOMPRESS_BLOCK_CASE(2)
+        PERNIX_DECOMPRESS_BLOCK_CASE(3)
+        PERNIX_DECOMPRESS_BLOCK_CASE(4)
+        PERNIX_DECOMPRESS_BLOCK_CASE(5)
+        PERNIX_DECOMPRESS_BLOCK_CASE(6)
+        PERNIX_DECOMPRESS_BLOCK_CASE(7)
+        PERNIX_DECOMPRESS_BLOCK_CASE(8)
+        PERNIX_DECOMPRESS_BLOCK_CASE(9)
+        PERNIX_DECOMPRESS_BLOCK_CASE(10)
+        PERNIX_DECOMPRESS_BLOCK_CASE(11)
+        PERNIX_DECOMPRESS_BLOCK_CASE(12)
+        PERNIX_DECOMPRESS_BLOCK_CASE(13)
+        PERNIX_DECOMPRESS_BLOCK_CASE(14)
+        PERNIX_DECOMPRESS_BLOCK_CASE(15)
+        PERNIX_DECOMPRESS_BLOCK_CASE(16)
+        default:
+            return -1;
+    }
+}
+
+int mm256_decompress_blocks_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale,
+                                 float_t* __restrict__ output, const uint32_t blocks) {
+    switch (bit_width) {
+        PERNIX_DECOMPRESS_BLOCKS_CASE(1)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(2)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(3)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(4)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(5)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(6)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(7)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(8)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(9)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(10)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(11)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(12)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(13)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(14)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(15)
+        PERNIX_DECOMPRESS_BLOCKS_CASE(16)
+        default:
+            return -1;
+    }
+}
+
+int mm256_decompress_blocks_f64_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
+                                     double_t* __restrict__ output, const uint32_t blocks) {
     switch (bit_width) {
         PERNIX_DECOMPRESS_BLOCKS_CASE(1)
         PERNIX_DECOMPRESS_BLOCKS_CASE(2)

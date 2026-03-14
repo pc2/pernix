@@ -10,6 +10,9 @@
 
 namespace pernix::internal {
 
+// VBMI-specific lookup tables for the byte/word permute stages used by the
+// AVX-512 packers and unpackers. Keeping these as constexpr arrays avoids
+// rebuilding masks in the hot path.
 template <__uint8_t N, typename T>
     requires(N >= 8 && N <= 16)
 struct pack_tables_avx512 {
@@ -742,6 +745,8 @@ struct unpack_tables_avx512_8 {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
+    // Materialize the constexpr arrays as vector registers with the width
+    // requested by the caller.
     __always_inline static T get_shuffle() {
         if constexpr (std::is_same_v<T, __m128i>) {
             return _mm_load_si128(reinterpret_cast<const __m128i*>(shuffle.data()));

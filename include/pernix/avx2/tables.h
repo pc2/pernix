@@ -8,6 +8,9 @@
 #include <type_traits>
 
 namespace pernix::internal {
+// Lookup tables for the AVX2 shuffle/permute-based bit packers and unpackers.
+// The values are generated as compile-time constants so the hot paths only need
+// aligned loads when materializing the masks.
 template <__uint8_t BIT_WIDTH, typename T>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
 struct pack_tables_avx2_16 {
@@ -1132,6 +1135,8 @@ struct unpack_tables_avx2 {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
+    // The table storage is laid out as plain arrays to keep the constant
+    // expressions readable; these helpers materialize them as vector registers.
     __always_inline static __m256i get_permute() { return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute.data())); }
 
     __always_inline static T get_shuffle() {

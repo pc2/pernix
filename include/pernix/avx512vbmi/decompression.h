@@ -12,26 +12,41 @@
 namespace pernix {
 
 namespace internal {
+/**
+ * @brief Dequantize up to four integer values under a mask.
+ */
 __always_inline __m128 mm_maskz_dequantize_epi32(const __mmask8& mask, const __m128i& input, const __m128& scale) {
     const __m128 converted = _mm_maskz_cvtepi32_ps(mask, input);
     return _mm_maskz_mul_ps(mask, converted, scale);
 }
 
+/**
+ * @brief Dequantize up to eight integer values under a mask.
+ */
 __always_inline __m256 mm256_maskz_dequantize_epi32(const __mmask8& mask, const __m256i& input, const __m256& scale) {
     const __m256 converted = _mm256_maskz_cvtepi32_ps(mask, input);
     return _mm256_maskz_mul_ps(mask, converted, scale);
 }
 
+/**
+ * @brief Dequantize sixteen integer values to floats.
+ */
 __always_inline __m512 mm512_dequantize_epi32(const __m512i& input, const __m512& scale) {
     const __m512 converted = _mm512_cvtepi32_ps(input);
     return _mm512_mul_ps(converted, scale);
 }
 
+/**
+ * @brief Dequantize up to sixteen integer values under a mask.
+ */
 __always_inline __m512 mm512_maskz_dequantize_epi32(const __mmask8& mask, const __m512i& input, const __m512& scale) {
     const __m512 converted = _mm512_maskz_cvtepi32_ps(mask, input);
     return _mm512_maskz_mul_ps(mask, converted, scale);
 }
 
+/**
+ * @brief Unpack four values with the 128-bit VBMI shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m128i mm_unpack_epi32_avx512vbmi_internal(const uint8_t* __restrict__ input) {
@@ -65,6 +80,9 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi_internal(const uint8_t* __res
     }
 }
 
+/**
+ * @brief Unpack eight values with the 256-bit VBMI shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_unpack_epi32_avx512vbmi_internal(const uint8_t* __restrict__ input) {
@@ -99,6 +117,9 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi_internal(const uint8_t* __
     }
 }
 
+/**
+ * @brief Unpack aligned 8-bit or 16-bit values directly into a 512-bit register.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __always_inline __m512i mm512_unpack_aligned_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
@@ -119,6 +140,9 @@ __always_inline __m512i mm512_unpack_aligned_epi32_avx512vbmi(const uint8_t* __r
     }
 }
 
+/**
+ * @brief Unpack sixteen values with the 512-bit VBMI shuffle path.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m512i mm512_unpack_epi32_avx512vbmi_internal(const uint8_t* __restrict__ input) {
@@ -158,6 +182,9 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi_internal(const uint8_t* __
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 128-bit VBMI unpacker.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m128i mm_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
@@ -168,6 +195,9 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ i
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 256-bit VBMI unpacker.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
@@ -178,6 +208,9 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi(const uint8_t* __restrict_
     }
 }
 
+/**
+ * @brief Dispatch to the appropriate 512-bit VBMI unpacker.
+ */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __always_inline __m512i mm512_unpack_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
@@ -202,11 +235,11 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi(const uint8_t* __restrict_
  *
  * @note This function requires AVX-512 and AVX-512-VBMI support.
  */
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict__ input, const float_t scale,
                                                       float_t* __restrict__ output) {
-    constexpr uint32_t elements_per_block = 512 / BIT_WIDTH;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr uint32_t iterations_16      = elements_per_block / 16;
     constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
     constexpr uint32_t iterations_4       = (elements_per_block % 8) / 4;
@@ -231,49 +264,149 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
         output += 8;
     }
 
-    if (iterations_4 > 0) {
+    constexpr uint32_t base_remaining = elements_per_block - iterations_16 * 16 - iterations_8 * 8 - iterations_4 * 4;
+    constexpr bool use_vec4           = (BIT_WIDTH % 2 == 0) && (iterations_4 > 0);
+    constexpr uint32_t tail_elements  = base_remaining + ((BIT_WIDTH % 2 == 0) ? 0 : (iterations_4 * 4));
+
+    if constexpr (use_vec4) {
         const __m128 scale_v128  = _mm_set1_ps(scale);
         const __m128i unpacked   = internal::mm_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
         const __m128 dequantized = internal::mm_dequantize_epi32(unpacked, scale_v128);
         _mm_storeu_ps(output, dequantized);
-        input += BIT_WIDTH / 2;
+        input += BIT_WIDTH / 2;  // valid only for even BIT_WIDTH
         output += 4;
     }
 
-    if (remaining > 0) {
-        // const __m256 scale_v256 = _mm256_set1_ps(scale);
-        // constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
-        // const __m256i unpacked = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
-        // const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v256);
-        // _mm256_mask_storeu_ps(output, remaining_mask, dequantized);
-
-        //             const std::vector<int32_t> block_values = unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
-        //
-        // #pragma GCC unroll 4
-        //             for (uint32_t i = 0; i < remaining; i++) {
-        //                 output[i] = dequantize_epi32(block_values[i], scale);
-        //             }
-
+    if constexpr (tail_elements > 0) {
         std::size_t idx            = 0;
-        uint8_t bits_in_buffer     = 16;
-        auto buffer                = static_cast<uint64_t>(input[idx++]);
-        constexpr uint16_t bitmask = BIT_WIDTH == 16 ? std::numeric_limits<uint16_t>::max() : (1U << BIT_WIDTH) - 1U;
+        uint32_t bits_in_buffer    = 0;
+        uint64_t buffer            = 0;
+        constexpr uint32_t bitmask = (1u << BIT_WIDTH) - 1u;
 
-#pragma GCC unroll 3
-        for (uint32_t i = 0; i < remaining; i++) {
-            if (BIT_WIDTH > bits_in_buffer) {
-                const auto next_value = static_cast<uint64_t>(input[idx++]) << bits_in_buffer;
-                buffer |= next_value;
-                bits_in_buffer += 16;
+#pragma GCC unroll 7
+        for (uint32_t i = 0; i < tail_elements; i++) {
+            while (bits_in_buffer < BIT_WIDTH) {
+                buffer |= static_cast<uint64_t>(input[idx++]) << bits_in_buffer;
+                bits_in_buffer += 8;
             }
 
-            const auto raw_value = static_cast<uint16_t>(buffer & bitmask);
+            const uint32_t raw_value = static_cast<uint32_t>(buffer) & bitmask;
+            int32_t unpacked_value;
             if constexpr (SIGN_VALUES) {
                 constexpr uint32_t shift = 32 - BIT_WIDTH;
-                output[i]                = static_cast<float_t>((static_cast<int32_t>(raw_value) << shift) >> shift);
+                unpacked_value           = (static_cast<int32_t>(raw_value) << shift) >> shift;
             } else {
-                output[i] = raw_value;
+                unpacked_value = static_cast<int32_t>(raw_value);
             }
+
+            output[i] = static_cast<float_t>(unpacked_value) * scale;
+
+            buffer >>= BIT_WIDTH;
+            bits_in_buffer -= BIT_WIDTH;
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * @brief Decompress a single block to double values using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @return int status code.
+ */
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+__always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict__ input, const double_t scale,
+                                                      double_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr uint32_t iterations_16      = elements_per_block / 16;
+    constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
+    constexpr uint32_t iterations_4       = (elements_per_block % 8) / 4;
+    const __m256d scale_v                 = _mm256_set1_pd(scale);
+
+#pragma GCC unroll 4
+    for (uint32_t iter = 0; iter < iterations_16; iter++) {
+        const __m512i unpacked = internal::mm512_unpack_epi32_avx512vbmi<BIT_WIDTH, SIGN_VALUES>(input);
+
+        const __m256i unpacked_lo = _mm512_castsi512_si256(unpacked);
+        const __m256i unpacked_hi = _mm512_extracti64x4_epi64(unpacked, 1);
+
+        const __m256i extend1 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked_lo));
+        const __m256i extend2 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked_lo, 1));
+        const __m256i extend3 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked_hi));
+        const __m256i extend4 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked_hi, 1));
+
+        const __m256d dequantized1 = internal::mm256_dequantize_epi64_pd(extend1, scale_v);
+        const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
+        const __m256d dequantized3 = internal::mm256_dequantize_epi64_pd(extend3, scale_v);
+        const __m256d dequantized4 = internal::mm256_dequantize_epi64_pd(extend4, scale_v);
+
+        _mm256_storeu_pd(output, dequantized1);
+        _mm256_storeu_pd(output + 4, dequantized2);
+        _mm256_storeu_pd(output + 8, dequantized3);
+        _mm256_storeu_pd(output + 12, dequantized4);
+
+        input += 2 * BIT_WIDTH;
+        output += 16;
+    }
+
+    if (iterations_8 > 0) {
+        const __m256i unpacked = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256i extend1  = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
+        const __m256i extend2  = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
+
+        const __m256d dequantized1 = internal::mm256_dequantize_epi64_pd(extend1, scale_v);
+        const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
+
+        _mm256_storeu_pd(output, dequantized1);
+        _mm256_storeu_pd(output + 4, dequantized2);
+
+        input += BIT_WIDTH;
+        output += 8;
+    }
+
+    constexpr uint32_t base_remaining = elements_per_block - iterations_16 * 16 - iterations_8 * 8 - iterations_4 * 4;
+    constexpr bool use_vec4           = (BIT_WIDTH % 2 == 0) && (iterations_4 > 0);
+    constexpr uint32_t tail_elements  = base_remaining + ((BIT_WIDTH % 2 == 0) ? 0 : (iterations_4 * 4));
+
+    if constexpr (use_vec4) {
+        const __m128i unpacked = internal::mm_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256i extend   = _mm256_cvtepi32_epi64(unpacked);
+        const __m256d dequantized = internal::mm256_dequantize_epi64_pd(extend, scale_v);
+
+        _mm256_storeu_pd(output, dequantized);
+        input += BIT_WIDTH / 2;  // valid only for even BIT_WIDTH
+        output += 4;
+    }
+
+    if constexpr (tail_elements > 0) {
+        std::size_t idx            = 0;
+        uint32_t bits_in_buffer    = 0;
+        uint64_t buffer            = 0;
+        constexpr uint32_t bitmask = (1u << BIT_WIDTH) - 1u;
+
+#pragma GCC unroll 7
+        for (uint32_t i = 0; i < tail_elements; i++) {
+            while (bits_in_buffer < BIT_WIDTH) {
+                buffer |= static_cast<uint64_t>(input[idx++]) << bits_in_buffer;
+                bits_in_buffer += 8;
+            }
+
+            const uint32_t raw_value = static_cast<uint32_t>(buffer) & bitmask;
+            int32_t unpacked_value;
+            if constexpr (SIGN_VALUES) {
+                constexpr uint32_t shift = 32 - BIT_WIDTH;
+                unpacked_value           = (static_cast<int32_t>(raw_value) << shift) >> shift;
+            } else {
+                unpacked_value = static_cast<int32_t>(raw_value);
+            }
+
+            output[i] = static_cast<double_t>(unpacked_value) * scale;
 
             buffer >>= BIT_WIDTH;
             bits_in_buffer -= BIT_WIDTH;
@@ -297,19 +430,45 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
  *
  * @note This function requires AVX-512 and AVX-512-VBMI support.
  */
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
                                        const uint32_t blocks) {
     const uint8_t* block_input = input;
     float_t* block_output      = output;
 
     for (uint32_t block = 0; block < blocks; block++) {
-        mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES>(block_input, scale, block_output);
-        block_input += 64;
-        block_output += 512 / BIT_WIDTH;
+        mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += BLOCK_SIZE;
+        block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
+    return 0;
+}
+
+/**
+ * @brief Decompress multiple blocks to double values using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam SIGN_VALUES whether the values are signed or unsigned.
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @param blocks number of blocks to decompress.
+ * @return int status code.
+ */
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,
+                                       const uint32_t blocks) {
+    const uint8_t* block_input = input;
+    double_t* block_output     = output;
+
+    for (uint32_t block = 0; block < blocks; block++) {
+        mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
+        block_input += BLOCK_SIZE;
+        block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
+    }
     return 0;
 }
 }  // namespace pernix
@@ -332,6 +491,20 @@ extern "C" {
 int mm512_decompress_block_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output);
 
 /**
+ * @brief Decompress a single 512-bit block using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed block.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX-512 and AVX-512-VBMI support.
+ */
+int mm512_decompress_block_f64_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, double_t scale,
+                                          double_t* __restrict__ output);
+
+/**
  * @brief Decompress multiple 512-bit blocks using AVX-512 and AVX-512-VBMI instructions.
  *
  * @param bit_width bit width per value in the packed representation (1 to 24).
@@ -345,6 +518,21 @@ int mm512_decompress_block_avx512vbmi(uint8_t bit_width, const uint8_t* __restri
  */
 int mm512_decompress_blocks_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, float_t scale, float_t* __restrict__ output,
                                        uint32_t blocks);
+
+/**
+ * @brief Decompress multiple 512-bit blocks using AVX-512 and AVX-512-VBMI instructions.
+ *
+ * @param bit_width bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the compressed data.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where decompressed double values will be stored.
+ * @param blocks number of 512-bit blocks to decompress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX-512 and AVX-512-VBMI support.
+ */
+int mm512_decompress_blocks_f64_avx512vbmi(uint8_t bit_width, const uint8_t* __restrict__ input, double_t scale,
+                                           double_t* __restrict__ output, uint32_t blocks);
 
 #ifdef __cplusplus
 }

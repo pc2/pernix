@@ -31,6 +31,14 @@ int compress_block_fallback(const uint8_t bit_width, const float_t* __restrict__
         PERNIX_COMPRESS_BLOCK_CASE(14)
         PERNIX_COMPRESS_BLOCK_CASE(15)
         PERNIX_COMPRESS_BLOCK_CASE(16)
+        PERNIX_COMPRESS_BLOCK_CASE(17)
+        PERNIX_COMPRESS_BLOCK_CASE(18)
+        PERNIX_COMPRESS_BLOCK_CASE(19)
+        PERNIX_COMPRESS_BLOCK_CASE(20)
+        PERNIX_COMPRESS_BLOCK_CASE(21)
+        PERNIX_COMPRESS_BLOCK_CASE(22)
+        PERNIX_COMPRESS_BLOCK_CASE(23)
+        PERNIX_COMPRESS_BLOCK_CASE(24)
         default:
             return -1;
     }
@@ -55,6 +63,14 @@ int compress_block_fallback_f64(const uint8_t bit_width, const double_t* __restr
         PERNIX_COMPRESS_BLOCK_CASE(14)
         PERNIX_COMPRESS_BLOCK_CASE(15)
         PERNIX_COMPRESS_BLOCK_CASE(16)
+        PERNIX_COMPRESS_BLOCK_CASE(17)
+        PERNIX_COMPRESS_BLOCK_CASE(18)
+        PERNIX_COMPRESS_BLOCK_CASE(19)
+        PERNIX_COMPRESS_BLOCK_CASE(20)
+        PERNIX_COMPRESS_BLOCK_CASE(21)
+        PERNIX_COMPRESS_BLOCK_CASE(22)
+        PERNIX_COMPRESS_BLOCK_CASE(23)
+        PERNIX_COMPRESS_BLOCK_CASE(24)
         default:
             return -1;
     }
@@ -79,6 +95,14 @@ int compress_blocks_fallback(const uint8_t bit_width, const float_t* __restrict_
         PERNIX_COMPRESS_BLOCKS_CASE(14)
         PERNIX_COMPRESS_BLOCKS_CASE(15)
         PERNIX_COMPRESS_BLOCKS_CASE(16)
+        PERNIX_COMPRESS_BLOCKS_CASE(17)
+        PERNIX_COMPRESS_BLOCKS_CASE(18)
+        PERNIX_COMPRESS_BLOCKS_CASE(19)
+        PERNIX_COMPRESS_BLOCKS_CASE(20)
+        PERNIX_COMPRESS_BLOCKS_CASE(21)
+        PERNIX_COMPRESS_BLOCKS_CASE(22)
+        PERNIX_COMPRESS_BLOCKS_CASE(23)
+        PERNIX_COMPRESS_BLOCKS_CASE(24)
         default:
             return -1;
     }
@@ -103,6 +127,14 @@ int compress_blocks_fallback_f64(const uint8_t bit_width, const double_t* __rest
         PERNIX_COMPRESS_BLOCKS_CASE(14)
         PERNIX_COMPRESS_BLOCKS_CASE(15)
         PERNIX_COMPRESS_BLOCKS_CASE(16)
+        PERNIX_COMPRESS_BLOCKS_CASE(17)
+        PERNIX_COMPRESS_BLOCKS_CASE(18)
+        PERNIX_COMPRESS_BLOCKS_CASE(19)
+        PERNIX_COMPRESS_BLOCKS_CASE(20)
+        PERNIX_COMPRESS_BLOCKS_CASE(21)
+        PERNIX_COMPRESS_BLOCKS_CASE(22)
+        PERNIX_COMPRESS_BLOCKS_CASE(23)
+        PERNIX_COMPRESS_BLOCKS_CASE(24)
         default:
             return -1;
     }

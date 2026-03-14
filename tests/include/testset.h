@@ -61,7 +61,7 @@ private:
             }
 
             const T b_max     = *std::ranges::max_element(decompressedData[i]);
-            const T scale_eps = b_max / (2 ^ (BitWidth - 1) - 1);
+            const T scale_eps = b_max / ((2 ^ (BitWidth - 1)) - 1);
             scalesData[i]     = scale_eps;
 
             // Compress the data using the fallback implementation

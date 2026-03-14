@@ -1,8 +1,10 @@
 #ifndef PERNIX_FALLBACK_COMPRESSION_H
 #define PERNIX_FALLBACK_COMPRESSION_H
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <span>
 #include <type_traits>
 #include <vector>
@@ -30,6 +32,22 @@ __always_inline int32_t quantize_ps_epi32(const float input, const float scale) 
  */
 __always_inline int64_t quantize_pd_epi64(const double_t input, const double_t scale) {
     return std::llround(input * scale);
+}
+
+/**
+ * @brief Clamp a signed quantized value to the representable range of BIT_WIDTH bits.
+ */
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+__always_inline int32_t clamp_signed_quantized(const int64_t value) {
+    if constexpr (BIT_WIDTH == 1) {
+        // 1-bit fallback is treated as binary quantization (0/1).
+        return static_cast<int32_t>(std::clamp<int64_t>(value, 0, 1));
+    }
+
+    constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+    constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+    return static_cast<int32_t>(std::clamp<int64_t>(value, min_value, max_value));
 }
 
 /**
@@ -65,7 +83,8 @@ void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t
     for (uint32_t raw_value : input) {
         const uint32_t next_value = raw_value & bitmask;
 
-        buffer |= next_value << bits_in_buffer;
+        // Shift in 64-bit space so values spanning a 32-bit lane are preserved.
+        buffer |= static_cast<uint64_t>(next_value) << bits_in_buffer;
         bits_in_buffer += BIT_WIDTH;
 
         if (bits_in_buffer >= bits_in_type) {
@@ -121,7 +140,8 @@ int compress_block_fallback(const float_t* __restrict__ input, const float_t sca
     std::vector<uint32_t> block_values(elements_per_block);
 #pragma GCC unroll 64
     for (uint32_t i = 0; i < elements_per_block; i++) {
-        block_values[i] = static_cast<uint32_t>(internal::quantize_ps_epi32(input[i], scale));
+        const int32_t quantized = internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i], scale));
+        block_values[i]         = static_cast<uint32_t>(quantized);
     }
 
     internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
@@ -145,7 +165,8 @@ int compress_block_fallback(const double_t* __restrict__ input, const double_t s
     std::vector<uint32_t> block_values(elements_per_block);
 #pragma GCC unroll 32
     for (uint32_t i = 0; i < elements_per_block; i++) {
-        block_values[i] = static_cast<uint32_t>(internal::quantize_pd_epi64(input[i], scale));
+        const int32_t quantized = internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i], scale));
+        block_values[i]         = static_cast<uint32_t>(quantized);
     }
 
     internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
@@ -199,7 +220,7 @@ int compress_blocks_fallback(const double_t* __restrict__ input, const double_t 
 
     for (uint32_t block = 0; block < blocks; block++) {
         compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (64 * 8) / BIT_WIDTH;
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
     return 0;
@@ -214,7 +235,7 @@ extern "C" {
 /**
  * @brief Compress a single 512-bit block using fallback scalar implementation.
  *
- * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param bit_width bit width per value in the packed representation (1 to 24).
  * @param input pointer to the start of the input float values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.
@@ -225,7 +246,7 @@ int compress_block_fallback(uint8_t bit_width, const float_t* __restrict__ input
 /**
  * @brief Compress a single 512-bit block using fallback scalar implementation.
  *
- * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param bit_width bit width per value in the packed representation (1 to 24).
  * @param input pointer to the start of the input double values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.
@@ -236,7 +257,7 @@ int compress_block_fallback_f64(uint8_t bit_width, const double_t* __restrict__ 
 /**
  * @brief Compress multiple 512-bit blocks using fallback scalar implementation.
  *
- * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param bit_width bit width per value in the packed representation (1 to 24).
  * @param input pointer to the start of the input float values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.
@@ -249,7 +270,7 @@ int compress_blocks_fallback(uint8_t bit_width, const float_t* __restrict__ inpu
 /**
  * @brief Compress multiple 512-bit blocks using fallback scalar implementation.
  *
- * @param bit_width bit width per value in the packed representation (1 to 16).
+ * @param bit_width bit width per value in the packed representation (1 to 24).
  * @param input pointer to the start of the input double values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.

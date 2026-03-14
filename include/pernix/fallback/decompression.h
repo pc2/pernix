@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <span>
 #include <type_traits>
 #include <vector>
@@ -43,6 +44,10 @@ __always_inline double_t dequantize_epi64(const int64_t input, const double_t sc
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __always_inline auto sign_extend(const uint32_t value) -> int32_t {
+    if constexpr (BIT_WIDTH == 1) {
+        return static_cast<int32_t>(value & 1U);
+    }
+
     constexpr uint32_t shift = 32 - BIT_WIDTH;
     return (static_cast<int32_t>(value) << shift) >> shift;
 }
@@ -187,7 +192,7 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t 
     for (uint32_t block = 0; block < blocks; block++) {
         decompress_block_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
         block_input += BLOCK_SIZE;
-        block_output += (BLOCK_SIZE * 64) / BIT_WIDTH;
+        block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
     return 0;
@@ -214,7 +219,7 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const double_t
     for (uint32_t block = 0; block < blocks; block++) {
         decompress_block_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
         block_input += BLOCK_SIZE;
-        block_output += (BLOCK_SIZE * 64) / BIT_WIDTH;
+        block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
     return 0;

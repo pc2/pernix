@@ -13,11 +13,11 @@
  * A test set for compression and decompression tests.
  * It generates random float data, compresses it, and verifies the decompression using the fallback implementation.
  *
- * @tparam BitWidth The bit width used for compression (1 to 32).
- * @tparam Signed Indicates whether the values are signed or unsigned.
+ * @tparam BIT_WIDTH The bit width used for compression (1 to 24).
+ * @tparam SIGN_VALUES Indicates whether the values are signed or unsigned.
  */
-template <uint8_t BitWidth, typename T = float_t, uint32_t BLOCK_SIZE = 64, bool Signed = true>
-    requires(BitWidth >= 1 && BitWidth <= 32) && std::is_floating_point_v<T>
+template <uint8_t BIT_WIDTH, typename T = float_t, uint32_t BLOCK_SIZE = 64, bool SIGN_VALUES = true>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && std::is_floating_point_v<T>
 class TestSet {
     // using ValueType = std::conditional_t<Signed, int8_t, uint8_t>;
     using ValueType = uint8_t;
@@ -31,9 +31,10 @@ class TestSet {
     std::uniform_real_distribution<T> dis{};
 
 public:
-    static constexpr uint32_t elementsPerBlock = (BLOCK_SIZE * 8) / BitWidth;
+    static constexpr uint32_t elementsPerBlock = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
-    static constexpr T quantization_levels = Signed ? static_cast<T>((1u << (BitWidth - 1u)) - 1u) : static_cast<T>((1u << BitWidth) - 1u);
+    static constexpr T quantization_levels =
+        SIGN_VALUES ? static_cast<T>(BIT_WIDTH == 1 ? 1u : ((1u << (BIT_WIDTH - 1u)) - 1u)) : static_cast<T>((1u << BIT_WIDTH) - 1u);
 
     uint32_t numberOfBlocks;
 
@@ -76,13 +77,13 @@ private:
                                                                                                    : std::numeric_limits<T>::epsilon();
 
             // Compress the data using the fallback implementation
-            pernix::compress_block_fallback<BitWidth>(decompressedData[i].data(), 1 / scalesData[i],
-                                                      reinterpret_cast<uint8_t*>(compressedData[i].data()));
+            pernix::compress_block_fallback<BIT_WIDTH>(decompressedData[i].data(), 1 / scalesData[i],
+                                                       reinterpret_cast<uint8_t*>(compressedData[i].data()));
 
             // Decompress and verify using the fallback implementation
             std::vector<T> decompressed_verify(elementsPerBlock);
-            pernix::decompress_block_fallback<BitWidth>(reinterpret_cast<uint8_t*>(compressedData[i].data()), scalesData[i],
-                                                        decompressed_verify.data());
+            pernix::decompress_block_fallback<BIT_WIDTH>(reinterpret_cast<uint8_t*>(compressedData[i].data()), scalesData[i],
+                                                         decompressed_verify.data());
 
             for (uint32_t j = 0; j < elementsPerBlock; j++) {
                 ASSERT_NEAR(decompressed_verify[j], decompressedData[i][j], blockTolerance(i));

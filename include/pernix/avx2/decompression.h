@@ -33,11 +33,21 @@ __always_inline __m128 mm_dequantize_epi32(const __m128i& input, const __m128& s
     return _mm_mul_ps(converted, scale);
 }
 
+/* https://stackoverflow.com/questions/41144668/how-to-efficiently-perform-double-int64-conversions-with-sse-avx */
+__always_inline __m128d convert_epi64_pd(const __m128i v) {
+    __m128i xH       = _mm_srai_epi32(v, 16);
+    xH               = _mm_blend_epi16(xH, _mm_setzero_si128(), 0x33);
+    xH               = _mm_add_epi64(xH, _mm_castpd_si128(_mm_set1_pd(442721857769029238784.)));     //  3*2^67
+    const __m128i xL = _mm_blend_epi16(v, _mm_castpd_si128(_mm_set1_pd(0x0010000000000000)), 0x88);  //  2^52
+    const __m128d f  = _mm_sub_pd(_mm_castsi128_pd(xH), _mm_set1_pd(442726361368656609280.));        //  3*2^67 + 2^52
+    return _mm_add_pd(f, _mm_castsi128_pd(xL));
+}
+
 /**
  * @brief Dequantize two 64-bit integers to doubles.
  */
 __always_inline __m128d mm_dequantize_epi64_pd(const __m128i& input, const __m128d& scale) {
-    const __m128d converted = _mm_cvtepi64_pd(input);
+    const __m128d converted = convert_epi64_pd(input);
     return _mm_mul_pd(converted, scale);
 }
 
@@ -49,11 +59,21 @@ __always_inline __m256 mm256_dequantize_epi32(const __m256i& input, const __m256
     return _mm256_mul_ps(converted, scale);
 }
 
+/* https://stackoverflow.com/questions/41144668/how-to-efficiently-perform-double-int64-conversions-with-sse-avx */
+__always_inline __m256d convert_epi64_pd(__m256i v) {
+    __m256i xH       = _mm256_srai_epi32(v, 16);
+    xH               = _mm256_blend_epi16(xH, _mm256_setzero_si256(), 0x33);
+    xH               = _mm256_add_epi64(xH, _mm256_castpd_si256(_mm256_set1_pd(442721857769029238784.)));
+    const __m256i xL = _mm256_blend_epi16(v, _mm256_castpd_si256(_mm256_set1_pd(0x0010000000000000)), 0x88);
+    const __m256d f  = _mm256_sub_pd(_mm256_castsi256_pd(xH), _mm256_set1_pd(442726361368656609280.));
+    return _mm256_add_pd(f, _mm256_castsi256_pd(xL));
+}
+
 /**
  * @brief Dequantize four 64-bit integers to doubles.
  */
 __always_inline __m256d mm256_dequantize_epi64_pd(const __m256i& input, const __m256d& scale) {
-    const __m256d converted = _mm256_cvtepi64_pd(input);
+    const __m256d converted = convert_epi64_pd(input);
     return _mm256_mul_pd(converted, scale);
 }
 

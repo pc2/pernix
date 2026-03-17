@@ -7,11 +7,22 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <tuple>
 
 namespace pernix {
 
 namespace internal {
+template <uint32_t LANES>
+    requires(LANES <= 8)
+consteval __mmask8 lane_mask_8() {
+    if constexpr (LANES == 8) {
+        return static_cast<__mmask8>(0xFF);
+    } else {
+        return static_cast<__mmask8>((1u << LANES) - 1u);
+    }
+}
+
 /**
  * @brief Dequantize up to four integer values under a mask.
  */
@@ -57,7 +68,7 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi_internal(const uint8_t* __res
         __m128i shifted = _mm_sllv_epi16(shuffled, unpack_tables_avx512_8<BIT_WIDTH, __m128i>::get_shift());
 
         constexpr uint16_t shift = 16 - BIT_WIDTH;
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             shifted = _mm_srai_epi16(shifted, shift);
         } else {
             shifted = _mm_srli_epi16(shifted, shift);
@@ -70,7 +81,7 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi_internal(const uint8_t* __res
 
         constexpr uint16_t shift = 32 - BIT_WIDTH;
         __m128i shifted          = _mm_sllv_epi32(shuffled, unpack_tables_avx512_24<BIT_WIDTH, __m128i>::get_shift());
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             shifted = _mm_srai_epi32(shifted, shift);
         } else {
             shifted = _mm_srli_epi32(shifted, shift);
@@ -93,7 +104,7 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi_internal(const uint8_t* __
         __m128i shifted = _mm_sllv_epi16(shuffled, unpack_tables_avx512_8<BIT_WIDTH, __m128i>::get_shift());
 
         constexpr uint16_t shift = 16 - BIT_WIDTH;
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             shifted = _mm_srai_epi16(shifted, shift);
         } else {
             shifted = _mm_srli_epi16(shifted, shift);
@@ -107,7 +118,7 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi_internal(const uint8_t* __
 
         constexpr uint16_t shift = 32 - BIT_WIDTH;
         __m256i shifted          = _mm256_sllv_epi32(shuffled, unpack_tables_avx512_24<BIT_WIDTH, __m256i>::get_shift());
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             shifted = _mm256_srai_epi32(shifted, shift);
         } else {
             shifted = _mm256_srli_epi32(shifted, shift);
@@ -125,14 +136,14 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 __always_inline __m512i mm512_unpack_aligned_epi32_avx512vbmi(const uint8_t* __restrict__ input) {
     if constexpr (BIT_WIDTH == 8) {
         const __m128i source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(input));
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             return _mm512_cvtepi8_epi32(source);
         } else {
             return _mm512_cvtepu8_epi32(source);
         }
     } else {
         const __m256i source = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(input));
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             return _mm512_cvtepi16_epi32(source);
         } else {
             return _mm512_cvtepu16_epi32(source);
@@ -153,7 +164,7 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi_internal(const uint8_t* __
         __m256i shifted = _mm256_sllv_epi16(permuted, unpack_tables_avx512_8<BIT_WIDTH, __m256i>::get_shift());
 
         constexpr uint16_t shift = 16 - BIT_WIDTH;
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             shifted = _mm256_srai_epi16(shifted, shift);
         } else {
             shifted = _mm256_srli_epi16(shifted, shift);
@@ -172,7 +183,7 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi_internal(const uint8_t* __
         __m512i shifted = _mm512_sllv_epi32(permuted, unpack_tables_avx512_24<BIT_WIDTH, __m512i>::get_shift());
 
         constexpr uint16_t shift = 32 - BIT_WIDTH;
-        if constexpr (SIGN_VALUES) {
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
             shifted = _mm512_srai_epi32(shifted, shift);
         } else {
             shifted = _mm512_srli_epi32(shifted, shift);
@@ -245,7 +256,8 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
     constexpr uint32_t iterations_4       = (elements_per_block % 8) / 4;
     constexpr uint8_t remaining           = elements_per_block - iterations_16 * 16 - iterations_8 * 8 - iterations_4 * 4;
 
-    const __m512 scale_v = _mm512_set1_ps(scale);
+    const __m512 scale_v   = _mm512_set1_ps(scale);
+    const __m256 scale_v256 = _mm256_set1_ps(scale);
 #pragma GCC unroll 4
     for (uint32_t iter = 0; iter < iterations_16; iter++) {
         const __m512i unpacked   = internal::mm512_unpack_epi32_avx512vbmi<BIT_WIDTH, SIGN_VALUES>(input);
@@ -256,7 +268,6 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
     }
 
     if (iterations_8 > 0) {
-        const __m256 scale_v256  = _mm256_set1_ps(scale);
         const __m256i unpacked   = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
         const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v256);
         _mm256_storeu_ps(output, dequantized);
@@ -278,32 +289,15 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
     }
 
     if constexpr (tail_elements > 0) {
-        std::size_t idx            = 0;
-        uint32_t bits_in_buffer    = 0;
-        uint64_t buffer            = 0;
-        constexpr uint32_t bitmask = (1u << BIT_WIDTH) - 1u;
+        constexpr __mmask8 tail_mask = internal::lane_mask_8<tail_elements>();
+        constexpr uint32_t tail_bytes = (tail_elements * BIT_WIDTH + 7) / 8;
 
-#pragma GCC unroll 7
-        for (uint32_t i = 0; i < tail_elements; i++) {
-            while (bits_in_buffer < BIT_WIDTH) {
-                buffer |= static_cast<uint64_t>(input[idx++]) << bits_in_buffer;
-                bits_in_buffer += 8;
-            }
+        alignas(16) uint8_t tail_buffer[32] = {};
+        std::memcpy(tail_buffer, input, tail_bytes);
 
-            const uint32_t raw_value = static_cast<uint32_t>(buffer) & bitmask;
-            int32_t unpacked_value;
-            if constexpr (SIGN_VALUES) {
-                constexpr uint32_t shift = 32 - BIT_WIDTH;
-                unpacked_value           = (static_cast<int32_t>(raw_value) << shift) >> shift;
-            } else {
-                unpacked_value = static_cast<int32_t>(raw_value);
-            }
-
-            output[i] = static_cast<float_t>(unpacked_value) * scale;
-
-            buffer >>= BIT_WIDTH;
-            bits_in_buffer -= BIT_WIDTH;
-        }
+        const __m256i unpacked   = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(tail_buffer);
+        const __m256 dequantized = internal::mm256_maskz_dequantize_epi32(tail_mask, unpacked, scale_v256);
+        _mm256_mask_storeu_ps(output, tail_mask, dequantized);
     }
 
     return 0;
@@ -327,7 +321,8 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
     constexpr uint32_t iterations_16      = elements_per_block / 16;
     constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
     constexpr uint32_t iterations_4       = (elements_per_block % 8) / 4;
-    const __m256d scale_v                 = _mm256_set1_pd(scale);
+    const __m256d scale_v     = _mm256_set1_pd(scale);
+    const __m512d scale_v512  = _mm512_set1_pd(scale);
 
 #pragma GCC unroll 4
     for (uint32_t iter = 0; iter < iterations_16; iter++) {
@@ -375,8 +370,8 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
     constexpr uint32_t tail_elements  = base_remaining + ((BIT_WIDTH % 2 == 0) ? 0 : (iterations_4 * 4));
 
     if constexpr (use_vec4) {
-        const __m128i unpacked = internal::mm_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
-        const __m256i extend   = _mm256_cvtepi32_epi64(unpacked);
+        const __m128i unpacked    = internal::mm_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256i extend      = _mm256_cvtepi32_epi64(unpacked);
         const __m256d dequantized = internal::mm256_dequantize_epi64_pd(extend, scale_v);
 
         _mm256_storeu_pd(output, dequantized);
@@ -385,32 +380,16 @@ __always_inline int mm512_decompress_block_avx512vbmi(const uint8_t* __restrict_
     }
 
     if constexpr (tail_elements > 0) {
-        std::size_t idx            = 0;
-        uint32_t bits_in_buffer    = 0;
-        uint64_t buffer            = 0;
-        constexpr uint32_t bitmask = (1u << BIT_WIDTH) - 1u;
+        constexpr __mmask8 tail_mask = internal::lane_mask_8<tail_elements>();
+        constexpr uint32_t tail_bytes = (tail_elements * BIT_WIDTH + 7) / 8;
 
-#pragma GCC unroll 7
-        for (uint32_t i = 0; i < tail_elements; i++) {
-            while (bits_in_buffer < BIT_WIDTH) {
-                buffer |= static_cast<uint64_t>(input[idx++]) << bits_in_buffer;
-                bits_in_buffer += 8;
-            }
+        alignas(16) uint8_t tail_buffer[32] = {};
+        std::memcpy(tail_buffer, input, tail_bytes);
 
-            const uint32_t raw_value = static_cast<uint32_t>(buffer) & bitmask;
-            int32_t unpacked_value;
-            if constexpr (SIGN_VALUES) {
-                constexpr uint32_t shift = 32 - BIT_WIDTH;
-                unpacked_value           = (static_cast<int32_t>(raw_value) << shift) >> shift;
-            } else {
-                unpacked_value = static_cast<int32_t>(raw_value);
-            }
-
-            output[i] = static_cast<double_t>(unpacked_value) * scale;
-
-            buffer >>= BIT_WIDTH;
-            bits_in_buffer -= BIT_WIDTH;
-        }
+        const __m256i unpacked    = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(tail_buffer);
+        const __m512d converted   = _mm512_cvtepi32_pd(unpacked);
+        const __m512d dequantized = _mm512_mul_pd(converted, scale_v512);
+        _mm512_mask_storeu_pd(output, tail_mask, dequantized);
     }
 
     return 0;

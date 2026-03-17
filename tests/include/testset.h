@@ -97,6 +97,13 @@ private:
         static constexpr uint8_t bit_width = N; \
     }
 
+BitWithType(1);
+BitWithType(2);
+BitWithType(3);
+BitWithType(4);
+BitWithType(5);
+BitWithType(6);
+BitWithType(7);
 BitWithType(8);
 BitWithType(9);
 BitWithType(10);
@@ -106,9 +113,19 @@ BitWithType(13);
 BitWithType(14);
 BitWithType(15);
 BitWithType(16);
+BitWithType(17);
+BitWithType(18);
+BitWithType(19);
+BitWithType(20);
+BitWithType(21);
+BitWithType(22);
+BitWithType(23);
+BitWithType(24);
 
 using testing::Types;
-using BitWidthTypes = Types<BitWidth8, BitWidth9, BitWidth10, BitWidth11, BitWidth12, BitWidth13, BitWidth14, BitWidth15, BitWidth16>;
+using BitWidthTypes = Types<BitWidth1, BitWidth2, BitWidth3, BitWidth4, BitWidth5, BitWidth6, BitWidth7, BitWidth8, BitWidth9, BitWidth10,
+                            BitWidth11, BitWidth12, BitWidth13, BitWidth14, BitWidth15, BitWidth16, BitWidth17, BitWidth18, BitWidth19,
+                            BitWidth20, BitWidth21, BitWidth22, BitWidth23, BitWidth24>;
 
 template <typename BitWidthT>
 class CompressionTest : public ::testing::Test {

@@ -104,7 +104,7 @@ __m128i mm_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
  * @brief Unpack four values using the table-driven AVX2 shuffle path.
  */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 16)
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     __m128i source;
     if constexpr (BIT_WIDTH <= 8) {

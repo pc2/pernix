@@ -118,7 +118,7 @@ __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
 
     constexpr uint16_t shift = 32 - BIT_WIDTH;
     __m128i shifted          = _mm_sllv_epi32(shuffled, unpack_tables_avx2<BIT_WIDTH, __m128i>::get_shift());
-    if constexpr (SIGN_VALUES) {
+    if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
         shifted = _mm_srai_epi32(shifted, shift);
     } else {
         shifted = _mm_srli_epi32(shifted, shift);
@@ -154,7 +154,7 @@ __m256i mm256_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
  * @brief Unpack eight values using the table-driven AVX2 shuffle path.
  */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 16)
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     __m256i source;
     if constexpr (BIT_WIDTH <= 8) {
@@ -169,7 +169,7 @@ __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
 
     constexpr uint16_t shift = 32 - BIT_WIDTH;
     __m256i shifted          = _mm256_sllv_epi32(shuffled, unpack_tables_avx2<BIT_WIDTH, __m256i>::get_shift());
-    if constexpr (SIGN_VALUES) {
+    if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
         shifted = _mm256_srai_epi32(shifted, shift);
     } else {
         shifted = _mm256_srli_epi32(shifted, shift);
@@ -258,17 +258,17 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const double_
 
     constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
     if constexpr (remaining > 0) {
-        const __m256i unpacked = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
-        const __m256i extend1  = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
-        const __m256i extend2  = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
-
+        const __m256i unpacked     = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+        const __m256i extend1      = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
         const __m256d dequantized1 = internal::mm256_dequantize_epi64_pd(extend1, scale_v);
-        const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
 
         constexpr auto mask_lo = static_cast<__mmask8>(remaining_mask & 0x0F);
         _mm256_maskstore_pd(output, internal::mm256_convert_vmask_epi64(mask_lo), dequantized1);
 
         if constexpr (remaining > 4) {
+            const __m256i extend2      = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
+            const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
+
             constexpr auto mask_hi = static_cast<__mmask8>((remaining_mask >> 4) & 0x0F);
             _mm256_maskstore_pd(output + 4, internal::mm256_convert_vmask_epi64(mask_hi), dequantized2);
         }

@@ -18,6 +18,13 @@ extern "C" {
 int mm512_compress_block_avx512vbmi(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale,
                                     uint8_t* __restrict__ output) {
     switch (bit_width) {
+        PERNIX_COMPRESS_BLOCK_CASE(1)
+        PERNIX_COMPRESS_BLOCK_CASE(2)
+        PERNIX_COMPRESS_BLOCK_CASE(3)
+        PERNIX_COMPRESS_BLOCK_CASE(4)
+        PERNIX_COMPRESS_BLOCK_CASE(5)
+        PERNIX_COMPRESS_BLOCK_CASE(6)
+        PERNIX_COMPRESS_BLOCK_CASE(7)
         PERNIX_COMPRESS_BLOCK_CASE(8)
         PERNIX_COMPRESS_BLOCK_CASE(9)
         PERNIX_COMPRESS_BLOCK_CASE(10)
@@ -27,6 +34,14 @@ int mm512_compress_block_avx512vbmi(const uint8_t bit_width, const float_t* __re
         PERNIX_COMPRESS_BLOCK_CASE(14)
         PERNIX_COMPRESS_BLOCK_CASE(15)
         PERNIX_COMPRESS_BLOCK_CASE(16)
+        PERNIX_COMPRESS_BLOCK_CASE(17)
+        PERNIX_COMPRESS_BLOCK_CASE(18)
+        PERNIX_COMPRESS_BLOCK_CASE(19)
+        PERNIX_COMPRESS_BLOCK_CASE(20)
+        PERNIX_COMPRESS_BLOCK_CASE(21)
+        PERNIX_COMPRESS_BLOCK_CASE(22)
+        PERNIX_COMPRESS_BLOCK_CASE(23)
+        PERNIX_COMPRESS_BLOCK_CASE(24)
         default:
             return -1;
     }
@@ -35,6 +50,13 @@ int mm512_compress_block_avx512vbmi(const uint8_t bit_width, const float_t* __re
 int mm512_compress_block_f64_avx512vbmi(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale,
                                         uint8_t* __restrict__ output) {
     switch (bit_width) {
+        PERNIX_COMPRESS_BLOCK_CASE(1)
+        PERNIX_COMPRESS_BLOCK_CASE(2)
+        PERNIX_COMPRESS_BLOCK_CASE(3)
+        PERNIX_COMPRESS_BLOCK_CASE(4)
+        PERNIX_COMPRESS_BLOCK_CASE(5)
+        PERNIX_COMPRESS_BLOCK_CASE(6)
+        PERNIX_COMPRESS_BLOCK_CASE(7)
         PERNIX_COMPRESS_BLOCK_CASE(8)
         PERNIX_COMPRESS_BLOCK_CASE(9)
         PERNIX_COMPRESS_BLOCK_CASE(10)
@@ -44,6 +66,14 @@ int mm512_compress_block_f64_avx512vbmi(const uint8_t bit_width, const double_t*
         PERNIX_COMPRESS_BLOCK_CASE(14)
         PERNIX_COMPRESS_BLOCK_CASE(15)
         PERNIX_COMPRESS_BLOCK_CASE(16)
+        PERNIX_COMPRESS_BLOCK_CASE(17)
+        PERNIX_COMPRESS_BLOCK_CASE(18)
+        PERNIX_COMPRESS_BLOCK_CASE(19)
+        PERNIX_COMPRESS_BLOCK_CASE(20)
+        PERNIX_COMPRESS_BLOCK_CASE(21)
+        PERNIX_COMPRESS_BLOCK_CASE(22)
+        PERNIX_COMPRESS_BLOCK_CASE(23)
+        PERNIX_COMPRESS_BLOCK_CASE(24)
         default:
             return -1;
     }
@@ -52,6 +82,13 @@ int mm512_compress_block_f64_avx512vbmi(const uint8_t bit_width, const double_t*
 int mm512_compress_blocks_avx512vbmi(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale,
                                      uint8_t* __restrict__ output, const uint32_t blocks) {
     switch (bit_width) {
+        PERNIX_COMPRESS_BLOCKS_CASE(1)
+        PERNIX_COMPRESS_BLOCKS_CASE(2)
+        PERNIX_COMPRESS_BLOCKS_CASE(3)
+        PERNIX_COMPRESS_BLOCKS_CASE(4)
+        PERNIX_COMPRESS_BLOCKS_CASE(5)
+        PERNIX_COMPRESS_BLOCKS_CASE(6)
+        PERNIX_COMPRESS_BLOCKS_CASE(7)
         PERNIX_COMPRESS_BLOCKS_CASE(8)
         PERNIX_COMPRESS_BLOCKS_CASE(9)
         PERNIX_COMPRESS_BLOCKS_CASE(10)
@@ -61,6 +98,14 @@ int mm512_compress_blocks_avx512vbmi(const uint8_t bit_width, const float_t* __r
         PERNIX_COMPRESS_BLOCKS_CASE(14)
         PERNIX_COMPRESS_BLOCKS_CASE(15)
         PERNIX_COMPRESS_BLOCKS_CASE(16)
+        PERNIX_COMPRESS_BLOCKS_CASE(17)
+        PERNIX_COMPRESS_BLOCKS_CASE(18)
+        PERNIX_COMPRESS_BLOCKS_CASE(19)
+        PERNIX_COMPRESS_BLOCKS_CASE(20)
+        PERNIX_COMPRESS_BLOCKS_CASE(21)
+        PERNIX_COMPRESS_BLOCKS_CASE(22)
+        PERNIX_COMPRESS_BLOCKS_CASE(23)
+        PERNIX_COMPRESS_BLOCKS_CASE(24)
         default:
             return -1;
     }
@@ -69,6 +114,13 @@ int mm512_compress_blocks_avx512vbmi(const uint8_t bit_width, const float_t* __r
 int mm512_compress_blocks_f64_avx512vbmi(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale,
                                          uint8_t* __restrict__ output, const uint32_t blocks) {
     switch (bit_width) {
+        PERNIX_COMPRESS_BLOCKS_CASE(1)
+        PERNIX_COMPRESS_BLOCKS_CASE(2)
+        PERNIX_COMPRESS_BLOCKS_CASE(3)
+        PERNIX_COMPRESS_BLOCKS_CASE(4)
+        PERNIX_COMPRESS_BLOCKS_CASE(5)
+        PERNIX_COMPRESS_BLOCKS_CASE(6)
+        PERNIX_COMPRESS_BLOCKS_CASE(7)
         PERNIX_COMPRESS_BLOCKS_CASE(8)
         PERNIX_COMPRESS_BLOCKS_CASE(9)
         PERNIX_COMPRESS_BLOCKS_CASE(10)
@@ -78,6 +130,14 @@ int mm512_compress_blocks_f64_avx512vbmi(const uint8_t bit_width, const double_t
         PERNIX_COMPRESS_BLOCKS_CASE(14)
         PERNIX_COMPRESS_BLOCKS_CASE(15)
         PERNIX_COMPRESS_BLOCKS_CASE(16)
+        PERNIX_COMPRESS_BLOCKS_CASE(17)
+        PERNIX_COMPRESS_BLOCKS_CASE(18)
+        PERNIX_COMPRESS_BLOCKS_CASE(19)
+        PERNIX_COMPRESS_BLOCKS_CASE(20)
+        PERNIX_COMPRESS_BLOCKS_CASE(21)
+        PERNIX_COMPRESS_BLOCKS_CASE(22)
+        PERNIX_COMPRESS_BLOCKS_CASE(23)
+        PERNIX_COMPRESS_BLOCKS_CASE(24)
         default:
             return -1;
     }

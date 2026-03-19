@@ -9,9 +9,9 @@ TYPED_TEST(CompressionTest, AVX512VBMICompressBlock) {
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         compressedData[block].resize(64u);
 
-        pernix::mm512_compress_block_avx512vbmi<this->BitWidth>(this->testSet.getDecompressedData()[block].data(),
-                                                                1 / this->testSet.getScales()[block],
-                                                                reinterpret_cast<uint8_t*>(compressedData[block].data()));
+        pernix::mm512_compress_block_avx512vbmi<TestFixture::BitWidth>(this->testSet.getDecompressedData()[block].data(),
+                                                                       1 / this->testSet.getScales()[block],
+                                                                       reinterpret_cast<uint8_t*>(compressedData[block].data()));
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
@@ -32,9 +32,9 @@ TYPED_TEST(CompressionTest64, AVX512VBMICompressBlock) {
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         compressedData[block].resize(64u);
 
-        pernix::mm512_compress_block_avx512vbmi<this->BitWidth>(this->testSet.getDecompressedData()[block].data(),
-                                                                1 / this->testSet.getScales()[block],
-                                                                reinterpret_cast<uint8_t*>(compressedData[block].data()));
+        pernix::mm512_compress_block_avx512vbmi<TestFixture::BitWidth>(this->testSet.getDecompressedData()[block].data(),
+                                                                       1 / this->testSet.getScales()[block],
+                                                                       reinterpret_cast<uint8_t*>(compressedData[block].data()));
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {

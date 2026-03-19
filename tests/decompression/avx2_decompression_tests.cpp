@@ -9,8 +9,8 @@ TYPED_TEST(DecompressionTest, AVX2DecompressBlock) {
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         decompressedData[block].resize(this->testSet.elementsPerBlock);
 
-        pernix::mm256_decompress_block_avx2<this->BitWidth>(this->testSet.getCompressedData()[block].data(),
-                                                            this->testSet.getScales()[block], decompressedData[block].data());
+        pernix::mm256_decompress_block_avx2<TestFixture::BitWidth>(this->testSet.getCompressedData()[block].data(),
+                                                                   this->testSet.getScales()[block], decompressedData[block].data());
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
@@ -30,8 +30,8 @@ TYPED_TEST(DecompressionTest64, AVX2DecompressBlock) {
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         decompressedData[block].resize(this->testSet.elementsPerBlock);
 
-        pernix::mm256_decompress_block_avx2<this->BitWidth>(this->testSet.getCompressedData()[block].data(),
-                                                            this->testSet.getScales()[block], decompressedData[block].data());
+        pernix::mm256_decompress_block_avx2<TestFixture::BitWidth>(this->testSet.getCompressedData()[block].data(),
+                                                                   this->testSet.getScales()[block], decompressedData[block].data());
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {

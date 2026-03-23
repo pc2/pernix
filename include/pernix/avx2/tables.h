@@ -8,9 +8,6 @@
 #include <type_traits>
 
 namespace pernix::internal {
-// Lookup tables for the AVX2 shuffle/permute-based bit packers and unpackers.
-// The values are generated as compile-time constants so the hot paths only need
-// aligned loads when materializing the masks.
 template <__uint8_t BIT_WIDTH, typename T>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
 struct pack_tables_avx2_16 {
@@ -422,39 +419,39 @@ struct pack_tables_avx2_16 {
 
 template <__uint8_t BIT_WIDTH, typename T>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
-struct pack_tables_avx2_32 {
+struct pack_tables_avx2_24 {
     alignas(64) inline static constexpr std::array<int32_t, 8> permute1 = [] {
         // clang-format off
         if constexpr (BIT_WIDTH == 17) {
-            return std::array<int32_t, 8>{
+            return std::array{
                 0, 2, 4, 6, 8, 10, 12, 14
             };
         } else if constexpr (BIT_WIDTH == 18) {
-            return std::array<int32_t, 8>{
-                0, 2, 4, 6, 0, 9, 11, 13
+            return std::array{
+                0, 2, 4, 6, 0, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 19) {
-            return std::array<int32_t, 8>{
-                0, 2, 4, 0, 7, 9, 0, 12
+            return std::array{
+                0, 2, 4, 6, 7, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 20) {
-            return std::array<int32_t, 8>{
-                0, 2, 0, 5, 7, 8, 10, 0
+            return std::array{
+                0, 2, 4, 5, 7, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 21) {
-            return std::array<int32_t, 8>{
-                0, 2, 0, 5, 0, 8, 0, 11
+            return std::array{
+                0, 2, 4, 5, 7, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 22) {
-            return std::array<int32_t, 8>{
-                0, 2, 3, 5, 6, 0, 9, 0
+            return std::array{
+                0, 2, 3, 5, 6, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 23) {
-            return std::array<int32_t, 8>{
-                0, 2, 3, 0, 6, 7, 9, 10
+            return std::array{
+                0, 2, 3, 5, 6, 7, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 24) {
-            return std::array<int32_t, 8>{
+            return std::array{
                 1, 2, 3, 5, 6, 7, -1, -1,
             };
         }
@@ -465,35 +462,35 @@ struct pack_tables_avx2_32 {
     alignas(64) inline static constexpr std::array<int32_t, 8> permute2 = [] {
         // clang-format off
         if constexpr (BIT_WIDTH == 17) {
-            return std::array<int32_t, 8>{
+            return std::array{
                 1, 3, 5, 7, 9, 11, 13, 15
             };
         } else if constexpr (BIT_WIDTH == 18) {
-            return std::array<int32_t, 8>{
-                1, 3, 5, 7, 8, 10, 12, 14
+            return std::array{
+                1, 3, 5, 7, 0, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 19) {
-            return std::array<int32_t, 8>{
-                1, 3, 5, 6, 8, 10, 11, 13
+            return std::array{
+                1, 3, 5, 0, 0, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 20) {
-            return std::array<int32_t, 8>{
-                1, 3, 4, 6, 0, 9, 11, 12
+            return std::array{
+                1, 3, 0, 6, 0, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 21) {
-            return std::array<int32_t, 8>{
-                1, 3, 4, 6, 7, 9, 10, 12
+            return std::array{
+                1, 3, 0, 6, 0, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 22) {
-            return std::array<int32_t, 8>{
-                1, 0, 4, 0, 7, 8, 10, 11
+            return std::array{
+                1, 0, 4, 0, 7, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 23) {
-            return std::array<int32_t, 8>{
-                1, 0, 4, 5, 0, 8, 0, 11
+            return std::array{
+                1, 0, 4, 0, 0, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 24) {
-            return std::array<int32_t, 8>{
+            return std::array{
                 0, 1, 2, 4, 5, 6, -1, -1,
             };
         }
@@ -504,32 +501,32 @@ struct pack_tables_avx2_32 {
     alignas(64) inline static constexpr std::array<int32_t, 8> permute3 = [] {
         // clang-format off
         if constexpr (BIT_WIDTH == 17) {
-            return std::array<int32_t, 8>{
+            return std::array{
                 0, 1, 3, 5, 7, 9, 11, 13
             };
         } else if constexpr (BIT_WIDTH == 18) {
-            return std::array<int32_t, 8>{
-                0, 1, 3, 5, 7, 8, 10, 12
+            return std::array{
+                0, 1, 3, 5, 7, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 19) {
-            return std::array<int32_t, 8>{
-                0, 1, 3, 5, 6, 8, 10, 11
+            return std::array{
+                0, 1, 3, 5, 6, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 20) {
-            return std::array<int32_t, 8>{
-                0, 1, 3, 4, 6, 0, 9, 11
+            return std::array{
+                0, 1, 3, 4, 6, 0, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 21) {
-            return std::array<int32_t, 8>{
-                0, 1, 3, 4, 6, 7, 9, 10
+            return std::array{
+                0, 1, 3, 4, 6, 7, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 22) {
-            return std::array<int32_t, 8>{
-                0, 1, 2, 4, 5, 7, 8, 10
+            return std::array{
+                0, 1, 2, 4, 5, 7, 0, 0
             };
         } else if constexpr (BIT_WIDTH == 23) {
-            return std::array<int32_t, 8>{
-                0, 1, 2, 4, 5, 6, 8, 9
+            return std::array{
+                0, 1, 2, 4, 5, 6, 0, 0
             };
         }
         return std::array<int32_t, 8>{};
@@ -544,27 +541,27 @@ struct pack_tables_avx2_32 {
             };
         } else if constexpr (BIT_WIDTH == 18) {
             return std::array<uint32_t, 8>{
-                0, 4, 8, 12, 0, 2, 6, 10
+                0, 4, 8, 12, 32, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 19) {
             return std::array<uint32_t, 8>{
-                0, 6, 12, 0, 5, 11, 0, 4
+                0, 6, 12, 18, 5, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 20) {
             return std::array<uint32_t, 8>{
-                0, 8, 0, 4, 12, 0, 8, 0
+                0, 8, 16, 4, 12, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 21) {
             return std::array<uint32_t, 8>{
-                0, 10, 0, 9, 0, 8, 0, 7
+                0, 10, 20, 9, 19, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 22) {
             return std::array<uint32_t, 8>{
-                0, 12, 2, 14, 4, 0, 6, 0
+                0, 12, 2, 14, 4, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 23) {
             return std::array<uint32_t, 8>{
-                0, 14, 5, 0, 10, 1, 15, 6
+                0, 14, 5, 19, 10, 1, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 24) {
             return std::array<uint32_t, 8>{
@@ -583,27 +580,27 @@ struct pack_tables_avx2_32 {
             };
         } else if constexpr (BIT_WIDTH == 18) {
             return std::array<uint32_t, 8>{
-                18, 22, 26, 30, 16, 20, 24, 28
+                18, 22, 26, 30, 32, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 19) {
             return std::array<uint32_t, 8>{
-                19, 25, 31, 18, 24, 30, 17, 23
+                19, 25, 31, 32, 32, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 20) {
             return std::array<uint32_t, 8>{
-                20, 28, 16, 24, 0, 20, 28, 16
+                20, 28, 32, 24, 32, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 21) {
             return std::array<uint32_t, 8>{
-                21, 31, 20, 30, 19, 29, 18, 28
+                21, 31, 32, 30, 32, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 22) {
             return std::array<uint32_t, 8>{
-                22, 0, 24, 0, 26, 16, 28, 18
+                22, 32, 24, 32, 26, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 23) {
             return std::array<uint32_t, 8>{
-                23, 0, 28, 19, 0, 24, 0, 29
+                23, 32, 28, 32, 32, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 24) {
             return std::array<uint32_t, 8>{
@@ -622,27 +619,27 @@ struct pack_tables_avx2_32 {
             };
         } else if constexpr (BIT_WIDTH == 18) {
             return std::array<uint32_t, 8>{
-                0, 14, 10, 6, 2, 16, 12, 8
+                32, 14, 10, 6, 2, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 19) {
             return std::array<uint32_t, 8>{
-                0, 13, 7, 1, 14, 8, 2, 15
+                32, 13, 7, 1, 14, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 20) {
             return std::array<uint32_t, 8>{
-                0, 12, 4, 16, 8, 0, 12, 4
+                32, 12, 4, 16, 8, 32, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 21) {
             return std::array<uint32_t, 8>{
-                0, 11, 1, 12, 2, 13, 3, 14
+                32, 11, 1, 12, 2, 13, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 22) {
             return std::array<uint32_t, 8>{
-                0, 10, 20, 8, 18, 6, 16, 4
+                32, 10, 20, 8, 18, 6, 32, 32
             };
         } else if constexpr (BIT_WIDTH == 23) {
             return std::array<uint32_t, 8>{
-                0, 9, 18, 4, 13, 22, 8, 17
+                32, 9, 18, 4, 13, 22, 32, 32
             };
         }
         return std::array<uint32_t, 8>{};
@@ -764,8 +761,6 @@ struct unpack_tables_avx2 {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
-    // The table storage is laid out as plain arrays to keep the constant
-    // expressions readable; these helpers materialize them as vector registers.
     __always_inline static __m256i get_permute() { return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute.data())); }
 
     __always_inline static T get_shuffle() {

@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
 namespace pernix {
@@ -161,6 +162,62 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
 }
 
 /**
+ * @brief Pack four 32-bit values for bit widths 1 through 3.
+ */
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 3)
+__always_inline auto mm_pack_epi32_avx2_1to3(__m128i& input) -> __m128i {
+    constexpr uint32_t bitmask = (1U << BIT_WIDTH) - 1U;
+    const __m128i masked       = _mm_and_si128(input, _mm_set1_epi32(static_cast<int32_t>(bitmask)));
+
+    alignas(16) uint32_t lanes[4];
+    _mm_storeu_si128(reinterpret_cast<__m128i*>(lanes), masked);
+
+    const uint32_t packed = (lanes[0] & bitmask) | ((lanes[1] & bitmask) << BIT_WIDTH) | ((lanes[2] & bitmask) << (2 * BIT_WIDTH)) |
+                            ((lanes[3] & bitmask) << (3 * BIT_WIDTH));
+
+    return _mm_cvtsi32_si128(static_cast<int32_t>(packed));
+}
+
+/**
+ * @brief Pack eight 32-bit values for bit widths 1 through 3.
+ */
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 3)
+__always_inline __m256i mm256_pack_epi32_avx2_1to3(const __m256i& input) {
+    constexpr uint32_t bitmask = (1u << BIT_WIDTH) - 1u;
+
+    const __m256i masked = _mm256_and_si256(input, _mm256_set1_epi32(static_cast<int32_t>(bitmask)));
+
+    const __m256i shifts = _mm256_setr_epi32(0 * BIT_WIDTH, 1 * BIT_WIDTH, 2 * BIT_WIDTH, 3 * BIT_WIDTH, 4 * BIT_WIDTH, 5 * BIT_WIDTH,
+                                             6 * BIT_WIDTH, 7 * BIT_WIDTH);
+
+    const __m256i shifted = _mm256_sllv_epi32(masked, shifts);
+
+    __m128i x = _mm_or_si128(_mm256_castsi256_si128(shifted), _mm256_extracti128_si256(shifted, 1));
+
+    x = _mm_or_si128(x, _mm_srli_si128(x, 8));
+    x = _mm_or_si128(x, _mm_srli_si128(x, 4));
+
+    return _mm256_castsi128_si256(x);
+}
+
+__always_inline __m256i mm256_pack_epi32_avx2_4(const __m256i& input) {
+    const __m256i zero = _mm256_setzero_si256();
+
+    const __m256i packed16 = _mm256_packus_epi32(input, zero);
+    const __m256i permuted = _mm256_permute4x64_epi64(packed16, _MM_SHUFFLE(3, 1, 2, 0));
+    const __m256i packed8  = _mm256_packus_epi16(permuted, zero);
+
+    const __m256i combined = _mm256_or_si256(packed8, _mm256_srli_epi16(packed8, 4));
+
+    const __m256i shuffled = _mm256_shuffle_epi8(combined, _mm256_setr_epi8(0, 2, 4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1, 0, 2,
+                                                                            4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1));
+
+    return shuffled;
+}
+
+/**
  * @brief Pack four 32-bit values for bit widths 9 through 16.
  */
 template <uint8_t BIT_WIDTH>
@@ -227,24 +284,22 @@ __always_inline auto mm256_pack_epi32_avx2_9to16(const __m256i& input) -> __m256
     return _mm256_castsi128_si256(combined);
 }
 
-/**
- * @brief Pack eight 32-bit values for bit widths 4 through 8.
- */
 template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 4 && BIT_WIDTH <= 8)
-__always_inline auto mm256_pack_epi32_avx2_4to8(const __m256i& input) -> __m256i {
-    constexpr uint8_t bitmask = (1 << BIT_WIDTH) - 1;
+    requires(BIT_WIDTH >= 5 && BIT_WIDTH <= 7)
+__always_inline auto mm256_pack_epi32_avx2_5to7(const __m256i& input) -> __m256i {
+    const __m256i zero = _mm256_setzero_si256();
 
-    const __m128i packed = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
-    const __m128i masked = _mm_and_si128(packed, _mm_set1_epi16(bitmask));
-    const __m128i half1  = _mm_and_si128(masked, _mm_set_epi64x(0x5555555555555555, 0x5555555555555555));
-    __m128i half2        = _mm_and_si128(masked, _mm_set_epi64x(0xAAAAAAAAAAAAAAAA, 0xAAAAAAAAAAAAAAAA));
+    const __m256i packed16 = _mm256_packus_epi32(input, zero);
+    const __m256i permuted = _mm256_permute4x64_epi64(packed16, _MM_SHUFFLE(3, 1, 2, 0));
+    const __m256i packed8  = _mm256_packus_epi16(permuted, zero);
 
-    half2                  = _mm_srli_epi16(half2, 2);
-    const __m128i combined = _mm_or_si128(half1, half2);
-    const __m256i result   = _mm256_castsi128_si256(_mm_cvtepi16_epi32(combined));
+    const __m256i even = _mm256_and_si256(packed8, _mm256_set1_epi16(0x00FF));
+    const __m256i odd  = _mm256_and_si256(packed8, _mm256_set1_epi16(0xFF00));
 
-    return mm256_pack_epi32_avx2_9to16<12>(result);
+    const __m256i pair16   = _mm256_or_si256(even, _mm256_srli_epi16(odd, 8 - BIT_WIDTH));
+    const __m256i extended = _mm256_cvtepi16_epi32(_mm256_castsi256_si128(pair16));
+
+    return mm256_pack_epi32_avx2_9to16<2 * BIT_WIDTH>(extended);
 }
 
 /**
@@ -253,7 +308,7 @@ __always_inline auto mm256_pack_epi32_avx2_4to8(const __m256i& input) -> __m256i
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
 __always_inline auto mm256_pack_epi32_avx2_17to24(const __m256i& input) -> __m256i {
-    using tables               = pack_tables_avx2_32<BIT_WIDTH, __m256i>;
+    using tables               = pack_tables_avx2_24<BIT_WIDTH, __m256i>;
     constexpr uint32_t bitmask = (1 << BIT_WIDTH) - 1;
     const __m256i masked       = _mm256_and_si256(input, _mm256_set1_epi32(bitmask));
     __m256i combined;
@@ -301,8 +356,7 @@ template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
 auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
-        // TODO: implementation for 1-3 bits
-        return _mm_setzero_si128();
+        return internal::mm_pack_epi32_avx2_1to3<BIT_WIDTH>(input);
     } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH <= 8) {
         // TODO: implementation for 4-8 bits
         return _mm_setzero_si128();
@@ -338,10 +392,11 @@ __m256i mm256_pack_epi32_avx2(const __m256i& input) {
         return internal::mm256_pack_aligned_epi32_avx2<BIT_WIDTH>(input);
     } else {
         if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
-            // TODO: implementation for 1-3 bits
-            return _mm256_setzero_si256();
-        } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH <= 7) {
-            return internal::mm256_pack_epi32_avx2_4to8<BIT_WIDTH>(input);
+            return internal::mm256_pack_epi32_avx2_1to3<BIT_WIDTH>(input);
+        } else if constexpr (BIT_WIDTH == 4) {
+            return mm256_pack_epi32_avx2_4(input);
+        } else if constexpr (BIT_WIDTH >= 5 && BIT_WIDTH <= 7) {
+            return internal::mm256_pack_epi32_avx2_5to7<BIT_WIDTH>(input);
         } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 15) {
             return internal::mm256_pack_epi32_avx2_9to16<BIT_WIDTH>(input);
         } else if constexpr (BIT_WIDTH >= 17 && BIT_WIDTH <= 24) {
@@ -356,7 +411,7 @@ __m256i mm256_pack_epi32_avx2(const __m256i& input) {
 /**
  * @brief Compress a single block of float using AVX2 instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the start of the input float values.
@@ -367,7 +422,7 @@ __m256i mm256_pack_epi32_avx2(const __m256i& input) {
  * @note This function requires AVX2 support.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_block_avx2(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
@@ -379,7 +434,9 @@ int mm256_compress_block_avx2(const float_t* __restrict__ input, const float_t s
         const __m256 source     = _mm256_loadu_ps(input);
         const __m256i quantized = internal::mm256_quantize_ps_epi32(source, scale_v);
         const __m256i packed    = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(quantized);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
+        // _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
+        std::memcpy(output, &packed, BIT_WIDTH);
+
         input += 8;
         output += BIT_WIDTH;
     }
@@ -400,7 +457,7 @@ int mm256_compress_block_avx2(const float_t* __restrict__ input, const float_t s
 /**
  * @brief Compress a single block of double using AVX2 instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the start of the input double values.
@@ -411,7 +468,7 @@ int mm256_compress_block_avx2(const float_t* __restrict__ input, const float_t s
  * @note This function requires AVX2 support.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_block_avx2(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
@@ -427,7 +484,8 @@ int mm256_compress_block_avx2(const double_t* __restrict__ input, const double_t
         __m256i combined         = _mm256_castsi128_si256(quantized1);
         combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
         const __m256i packed     = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(combined);
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
+        // _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
+        std::memcpy(output, &packed, BIT_WIDTH);
         input += 8;
         output += BIT_WIDTH;
     }
@@ -448,7 +506,7 @@ int mm256_compress_block_avx2(const double_t* __restrict__ input, const double_t
 /**
  * @brief Compress multiple blocks using AVX2 instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the start of the input float values.
@@ -460,7 +518,7 @@ int mm256_compress_block_avx2(const double_t* __restrict__ input, const double_t
  * @note This function requires AVX2 support.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_blocks_avx2(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output,
                                const uint32_t blocks) {
     const float_t* block_input = input;
@@ -478,7 +536,7 @@ int mm256_compress_blocks_avx2(const float_t* __restrict__ input, const float_t 
 /**
  * @brief Compress multiple blocks using AVX2 instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the start of the input double values.
@@ -490,7 +548,7 @@ int mm256_compress_blocks_avx2(const float_t* __restrict__ input, const float_t 
  * @note This function requires AVX2 support.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_compress_blocks_avx2(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,
                                const uint32_t blocks) {
     const double_t* block_input = input;

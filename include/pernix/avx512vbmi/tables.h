@@ -4,18 +4,25 @@
 #include <immintrin.h>
 
 #include <array>
-#include <cmath>
 #include <cstdint>
 #include <tuple>
 
 namespace pernix::internal {
 
-// VBMI-specific lookup tables for the byte/word permute stages used by the
-// AVX-512 packers and unpackers. Keeping these as constexpr arrays avoids
-// rebuilding masks in the hot path.
-template <__uint8_t N, typename T>
-    requires(N >= 8 && N <= 16)
-struct pack_tables_avx512 {
+template <typename Vec, typename U>
+[[gnu::always_inline]] static inline Vec load_table(const std::array<U, 16>& table) {
+    if constexpr (std::is_same_v<Vec, __m512i>) {
+        return _mm512_load_si512(static_cast<const void*>(table.data()));
+    } else if constexpr (std::is_same_v<Vec, __m256i>) {
+        return _mm256_load_si256(reinterpret_cast<const __m256i*>(table.data()));
+    } else {
+        return _mm_load_si128(reinterpret_cast<const __m128i*>(table.data()));
+    }
+}
+
+template <uint8_t N, typename T>
+    requires(N >= 9 && N <= 15)
+struct pack_tables_avx512_16 {
     alignas(64) inline static constexpr std::array<int16_t, 32> permute1 = [] {
         // clang-format off
         if constexpr (N == 9) {
@@ -590,6 +597,97 @@ struct pack_tables_avx512 {
 #pragma GCC diagnostic pop
 };
 
+template <std::uint8_t BIT_WIDTH, typename T>
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i> || std::is_same_v<T, __m512i>))
+struct pack_tables_avx512_24 {
+private:
+    struct word_plan {
+        int32_t left_index1  = -1;
+        int32_t left_index2  = -1;
+        int32_t right_index  = -1;
+        uint32_t left_shift1 = 32;
+        uint32_t left_shift2 = 32;
+        uint32_t right_shift = 32;
+    };
+
+    static constexpr word_plan create_plan(const uint32_t idx) {
+        word_plan plan{};
+
+        const uint32_t word_start = idx * 32u;
+        const uint32_t word_end   = word_start + 32u;
+
+        uint32_t left_slot = 0;
+        for (uint32_t input_lane = 0; input_lane < 16; ++input_lane) {
+            const uint32_t input_start = input_lane * BIT_WIDTH;
+            const uint32_t input_end   = input_start + BIT_WIDTH;
+
+            const uint32_t overlap_start = std::max(word_start, input_start);
+            const uint32_t overlap_end   = std::min(word_end, input_end);
+            if (overlap_start >= overlap_end) {
+                continue;
+            }
+
+            const auto output_bit = static_cast<int32_t>(overlap_start - word_start);
+            const auto input_bit  = static_cast<int32_t>(overlap_start - input_start);
+            const int32_t delta   = output_bit - input_bit;
+
+            if (delta >= 0) {
+                if (left_slot == 0) {
+                    plan.left_index1 = static_cast<int32_t>(input_lane);
+                    plan.left_shift1 = static_cast<uint32_t>(delta);
+                    ++left_slot;
+                } else {
+                    plan.left_index2 = static_cast<int32_t>(input_lane);
+                    plan.left_shift2 = static_cast<uint32_t>(delta);
+                }
+            } else {
+                plan.right_index = static_cast<int32_t>(input_lane);
+                plan.right_shift = static_cast<uint32_t>(-delta);
+            }
+        }
+
+        return plan;
+    }
+
+    static inline constexpr std::array<word_plan, 16> word_plans = [] {
+        std::array<word_plan, 16> plans{};
+        for (uint32_t i = 0; i < 16; ++i) {
+            plans[i] = create_plan(i);
+        }
+        return plans;
+    }();
+
+    template <typename U, typename Getter>
+    [[gnu::always_inline]] static constexpr std::array<U, 16> make_table(Getter getter) {
+        std::array<U, 16> values{};
+        for (uint32_t i = 0; i < 16; ++i) {
+            values[i] = getter(word_plans[i]);
+        }
+        return values;
+    }
+
+    alignas(64) static inline constexpr auto permute1 = make_table<int32_t>([](const word_plan& p) { return p.left_index1; });
+
+    alignas(64) static inline constexpr auto permute2 = make_table<int32_t>([](const word_plan& p) { return p.left_index2; });
+
+    alignas(64) static inline constexpr auto permute3 = make_table<int32_t>([](const word_plan& p) { return p.right_index; });
+
+    alignas(64) static inline constexpr auto shift1 = make_table<uint32_t>([](const word_plan& p) { return p.left_shift1; });
+
+    alignas(64) static inline constexpr auto shift2 = make_table<uint32_t>([](const word_plan& p) { return p.left_shift2; });
+
+    alignas(64) static inline constexpr auto shift3 = make_table<uint32_t>([](const word_plan& p) { return p.right_shift; });
+
+public:
+    [[gnu::always_inline]] static inline T get_permute1() { return load_table<T>(permute1); }
+    [[gnu::always_inline]] static inline T get_permute2() { return load_table<T>(permute2); }
+    [[gnu::always_inline]] static inline T get_permute3() { return load_table<T>(permute3); }
+
+    [[gnu::always_inline]] static inline T get_shift1() { return load_table<T>(shift1); }
+    [[gnu::always_inline]] static inline T get_shift2() { return load_table<T>(shift2); }
+    [[gnu::always_inline]] static inline T get_shift3() { return load_table<T>(shift3); }
+};
+
 template <uint8_t BIT_WIDTH, typename T>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 8 && (std::is_same_v<T, __m512i> || std::is_same_v<T, __m256i> || std::is_same_v<T, __m128i>))
 struct unpack_tables_avx512_8 {
@@ -975,28 +1073,6 @@ struct unpack_tables_avx512_24 {
                 27, 28,29, -1,
                 29, 30,31, -1,
                 31, 32,33, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 18) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, -1,
-                4, 5, 6, -1,
-                6, 7, 8, -1,
-
-                9, 10, 11, -1,
-                11,12,13, -1,
-                13,14,15, -1,
-                15,16,17, -1,
-
-                18, 19,20, -1,
-                20, 21,22, -1,
-                22, 23,24, -1,
-                24, 25,26, -1,
-
-                27, 28,29, -1,
-                29, 30,31, -1,
-                31, 32,33, -1,
-                33, 34,35, -1,
             };
         } else if constexpr (BIT_WIDTH == 18) {
             return std::array<int8_t, 64>{

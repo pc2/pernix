@@ -10,7 +10,7 @@ namespace pernix::internal {
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm256_pack_epi16_avx512vbmi_9to15(const __m128i& input) -> __m128i {
+[[gnu::always_inline]] inline __m128i mm256_pack_epi16_avx512vbmi_9to15(const __m128i& input) {
     using tables = pack_tables_avx512_16<BIT_WIDTH, __m128i>;
 
     constexpr uint16_t bit_mask = (1u << BIT_WIDTH) - 1u;
@@ -46,7 +46,7 @@ __always_inline auto mm256_pack_epi16_avx512vbmi_9to15(const __m128i& input) -> 
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm_pack_epi16_avx512vbmi_9to15(const __m128i& input) -> __m128i {
+[[gnu::always_inline]] inline __m128i mm_pack_epi16_avx512vbmi_9to15(const __m128i& input) {
     return mm256_pack_epi16_avx512vbmi_9to15<BIT_WIDTH>(_mm256_castsi128_si256(input));
 }
 
@@ -55,7 +55,7 @@ __always_inline auto mm_pack_epi16_avx512vbmi_9to15(const __m128i& input) -> __m
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm512_pack_epi16_avx512vbmi_9to15(const __m256i& input) -> __m256i {
+[[gnu::always_inline]] inline __m256i mm512_pack_epi16_avx512vbmi_9to15(const __m256i& input) {
     using tables = pack_tables_avx512_16<BIT_WIDTH, __m256i>;
 
     constexpr uint16_t bit_mask = (1u << BIT_WIDTH) - 1u;
@@ -91,7 +91,7 @@ __always_inline auto mm512_pack_epi16_avx512vbmi_9to15(const __m256i& input) -> 
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline auto mm256_pack_epi32_avx512_17to24(const __m256i& input) -> __m256i {
+[[gnu::always_inline]] inline __m256i mm256_pack_epi32_avx512_17to24(const __m256i& input) {
     using tables = pack_tables_avx512_24<BIT_WIDTH, __m256i>;
 
     constexpr uint32_t bitmask = (1u << BIT_WIDTH) - 1u;
@@ -112,7 +112,7 @@ __always_inline auto mm256_pack_epi32_avx512_17to24(const __m256i& input) -> __m
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm512_pack_epi16_avx512vbmi_9to15(const __m512i& input) -> __m512i {
+[[gnu::always_inline]] inline __m512i mm512_pack_epi16_avx512vbmi_9to15(const __m512i& input) {
     using tables                = pack_tables_avx512_16<BIT_WIDTH, __m512i>;
     constexpr uint16_t bit_mask = (1u << BIT_WIDTH) - 1u;
 
@@ -147,7 +147,7 @@ __always_inline auto mm512_pack_epi16_avx512vbmi_9to15(const __m512i& input) -> 
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline __m512i mm512_pack_epi32_avx512_17to24(const __m512i& input) {
+[[gnu::always_inline]] inline __m512i mm512_pack_epi32_avx512_17to24(const __m512i& input) {
     using tables = pack_tables_avx512_24<BIT_WIDTH, __m512i>;
 
     constexpr uint32_t bitmask = (1u << BIT_WIDTH) - 1u;
@@ -168,7 +168,7 @@ __always_inline __m512i mm512_pack_epi32_avx512_17to24(const __m512i& input) {
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm_pack_aligned_epi32_avx512(const __m128i& input) -> __m128i {
+[[gnu::always_inline]] inline __m128i mm_pack_aligned_epi32_avx512(const __m128i& input) {
     if constexpr (BIT_WIDTH == 8) {
         return _mm_cvtepi32_epi8(input);
     } else {
@@ -181,7 +181,7 @@ __always_inline auto mm_pack_aligned_epi32_avx512(const __m128i& input) -> __m12
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm256_pack_aligned_epi32_avx512(const __m256i& input) -> __m128i {
+[[gnu::always_inline]] inline __m128i mm256_pack_aligned_epi32_avx512(const __m256i& input) {
     if constexpr (BIT_WIDTH == 8) {
         return _mm256_cvtepi32_epi8(input);
     } else {
@@ -194,7 +194,7 @@ __always_inline auto mm256_pack_aligned_epi32_avx512(const __m256i& input) -> __
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm512_pack_aligned_epi32_avx512(const __m512i& input) -> __m256i {
+[[gnu::always_inline]] inline __m256i mm512_pack_aligned_epi32_avx512(const __m512i& input) {
     if constexpr (BIT_WIDTH == 8) {
         return _mm256_castsi128_si256(_mm512_cvtepi32_epi8(input));
     } else {
@@ -207,7 +207,7 @@ __always_inline auto mm512_pack_aligned_epi32_avx512(const __m512i& input) -> __
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm512_pack_aligned_epi16_avx512(const __m512i& input) -> __m512i {
+[[gnu::always_inline]] inline __m512i mm512_pack_aligned_epi16_avx512(const __m512i& input) {
     if constexpr (BIT_WIDTH == 8) {
         return _mm512_castsi256_si512(_mm512_cvtepi16_epi8(input));
     } else {
@@ -220,7 +220,7 @@ __always_inline auto mm512_pack_aligned_epi16_avx512(const __m512i& input) -> __
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-__always_inline auto mm_pack_epi32_avx512vbmi(const __m128i& input) -> __m128i {
+[[gnu::always_inline]] inline __m128i mm_pack_epi32_avx512vbmi(const __m128i& input) {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 7) {
         // TODO: Implement complete bitpacking path
 
@@ -242,7 +242,7 @@ __always_inline auto mm_pack_epi32_avx512vbmi(const __m128i& input) -> __m128i {
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-__always_inline auto mm256_pack_epi32_avx512vbmi(const __m256i& input) -> __m256i {
+[[gnu::always_inline]] inline __m256i mm256_pack_epi32_avx512vbmi(const __m256i& input) {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 7) {
         if constexpr (BIT_WIDTH <= 3) {
             // TODO: Implement complete bitpacking path
@@ -273,7 +273,7 @@ __always_inline auto mm256_pack_epi32_avx512vbmi(const __m256i& input) -> __m256
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-__always_inline auto mm512_pack_epi32_avx512vbmi(const __m512i& input) -> __m512i {
+[[gnu::always_inline]] inline __m512i mm512_pack_epi32_avx512vbmi(const __m512i& input) {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 7) {
         // TODO: Implement complete bitpacking path
 
@@ -294,16 +294,14 @@ __always_inline auto mm512_pack_epi32_avx512vbmi(const __m512i& input) -> __m512
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
-__always_inline __m512i mm1024_pack_epi32_avx512vbmi(const __m512i& input1, const __m512i& input2) {
+[[gnu::always_inline]] inline __m512i mm1024_pack_epi32_avx512vbmi(const __m512i& input1, const __m512i& input2) {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 7) {
         const __m128i converted1 = _mm512_cvtepi32_epi8(input1);
         const __m128i converted2 = _mm512_cvtepi32_epi8(input2);
         __m256i packed           = _mm256_castsi128_si256(converted1);
         packed                   = _mm256_inserti128_si256(packed, converted2, 1);
 
-        // TODO: Implement complete bitpacking path
-
-        return _mm512_setzero_si512();
+        return mm256_pack_epi8_avx512vbmi<BIT_WIDTH>(packed);
     } else {
         const __m256i converted1 = _mm512_cvtepi32_epi16(input1);
         const __m256i converted2 = _mm512_cvtepi32_epi16(input2);

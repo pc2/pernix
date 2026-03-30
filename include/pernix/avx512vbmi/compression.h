@@ -87,19 +87,15 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
     }
 
     if constexpr (remaining > 0) {
+        const __m256 source     = _mm256_maskz_loadu_ps((1u << remaining) - 1u, input);
+        const __m256i quantized = internal::mm256_quantize_ps_epi32(source, scale_v256);
+        const __m256i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
+
         constexpr uint32_t tail_bits  = remaining * BIT_WIDTH;
         constexpr uint32_t tail_bytes = (tail_bits + 7u) / 8u;
+        const __mmask32 tail_mask     = (1u << tail_bytes) - 1u;
 
-        std::vector<uint32_t> block_values(remaining);
-#pragma GCC unroll 7
-        for (uint32_t i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<uint32_t>(internal::quantize_ps_epi32(input[i], scale));
-        }
-
-        uint8_t packed_tail[16] = {0};
-        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, packed_tail);
-
-        std::memcpy(output, packed_tail, tail_bytes);
+        _mm256_mask_storeu_epi8(output, tail_mask, packed);
     }
 
     return 0;
@@ -156,18 +152,15 @@ int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, const do
     }
 
     if constexpr (remaining > 0) {
-        std::vector<uint32_t> block_values(remaining);
-#pragma GCC unroll 7
-        for (uint32_t i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<uint32_t>(internal::quantize_pd_epi64(input[i], scale));
-        }
-
-        uint8_t packed_tail[16] = {0};
-        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, packed_tail);
+        const __m512d source    = _mm512_maskz_loadu_pd((1u << remaining) - 1u, input);
+        const __m256i quantized = internal::mm512_quantize_pd_epi32(source, scale_v);
+        const __m256i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
 
         constexpr uint32_t tail_bits  = remaining * BIT_WIDTH;
         constexpr uint32_t tail_bytes = (tail_bits + 7u) / 8u;
-        std::memcpy(output, packed_tail, tail_bytes);
+        const __mmask32 tail_mask     = (1u << tail_bytes) - 1u;
+
+        _mm256_mask_storeu_epi8(output, tail_mask, packed);
     }
 
     return 0;

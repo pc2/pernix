@@ -57,7 +57,7 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
             const __m512i quantized2 = internal::mm512_quantize_ps_epi32(source2, scale_v);
             const __m512i packed     = internal::mm1024_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized1, quantized2);
 
-            std::memcpy(output, &packed, 4u * BIT_WIDTH);
+            _mm512_mask_storeu_epi32(output, (1u << (BIT_WIDTH)) - 1u, packed);
 
             input += 32;
             output += 4u * BIT_WIDTH;
@@ -69,7 +69,7 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
         const __m512i quantized = internal::mm512_quantize_ps_epi32(source, scale_v);
         const __m512i packed    = internal::mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
 
-        std::memcpy(output, &packed, 2u * BIT_WIDTH);
+        _mm512_mask_storeu_epi16(output, (1u << (BIT_WIDTH)) - 1u, packed);
 
         input += 16;
         output += 2 * BIT_WIDTH;
@@ -80,7 +80,7 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
         const __m256i quantized = internal::mm256_quantize_ps_epi32(source, scale_v256);
         const __m256i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
 
-        std::memcpy(output, &packed, BIT_WIDTH);
+        _mm256_mask_storeu_epi8(output, (1u << BIT_WIDTH) - 1u, packed);
 
         input += 8;
         output += BIT_WIDTH;
@@ -99,10 +99,7 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
         uint8_t packed_tail[16] = {0};
         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, packed_tail);
 
-#pragma GCC unroll 14
-        for (uint32_t i = 0; i < tail_bytes; i++) {
-            output[i] = packed_tail[i];
-        }
+        std::memcpy(output, packed_tail, tail_bytes);
     }
 
     return 0;
@@ -121,7 +118,7 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output) {
+int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     // Reuse the scalar fallback packer for widths not representable by the 8/16-lane VBMI register paths.
@@ -141,7 +138,7 @@ int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, double_t
         combined                 = _mm512_inserti64x4(combined, quantized2, 1);
         const __m512i packed     = internal::mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(combined);
 
-        std::memcpy(output, &packed, 2u * BIT_WIDTH);
+        _mm512_mask_storeu_epi16(output, (1u << (BIT_WIDTH)) - 1u, packed);
 
         input += 16;
         output += 2 * BIT_WIDTH;
@@ -152,7 +149,7 @@ int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, double_t
         const __m256i quantized = internal::mm512_quantize_pd_epi32(source, scale_v);
         const __m256i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
 
-        std::memcpy(output, &packed, BIT_WIDTH);
+        _mm256_mask_storeu_epi8(output, (1u << BIT_WIDTH) - 1u, packed);
 
         input += 8;
         output += BIT_WIDTH;
@@ -170,10 +167,7 @@ int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, double_t
 
         constexpr uint32_t tail_bits  = remaining * BIT_WIDTH;
         constexpr uint32_t tail_bytes = (tail_bits + 7u) / 8u;
-#pragma GCC unroll 14
-        for (uint32_t i = 0; i < tail_bytes; i++) {
-            output[i] = packed_tail[i];
-        }
+        std::memcpy(output, packed_tail, tail_bytes);
     }
 
     return 0;

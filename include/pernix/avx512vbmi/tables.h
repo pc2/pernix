@@ -3,14 +3,17 @@
 
 #include <immintrin.h>
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
+#include <ranges>
 #include <tuple>
 
 namespace pernix::internal {
 
-template <typename Vec, typename U>
-[[gnu::always_inline]] static inline Vec load_table(const std::array<U, 16>& table) {
+template <typename Vec, typename U, std::size_t N>
+[[gnu::always_inline]] static inline Vec load_table(const std::array<U, N>& table) {
+    static_assert(sizeof(table) >= sizeof(Vec), "table is smaller than requested SIMD vector");
     if constexpr (std::is_same_v<Vec, __m512i>) {
         return _mm512_load_si512(static_cast<const void*>(table.data()));
     } else if constexpr (std::is_same_v<Vec, __m256i>) {
@@ -875,7 +878,7 @@ struct unpack_tables_avx512_8 {
 
 template <uint8_t BIT_WIDTH, typename T>
     requires(BIT_WIDTH > 8 && BIT_WIDTH <= 24 && (std::is_same_v<T, __m512i> || std::is_same_v<T, __m256i> || std::is_same_v<T, __m128i>))
-struct unpack_tables_avx512_24 {
+struct unpack_tables_avx512_16 {
     alignas(64) inline static constexpr std::array<int8_t, 64> shuffle = [] {
         // clang-format off
         if constexpr (BIT_WIDTH == 9) {
@@ -940,7 +943,9 @@ struct unpack_tables_avx512_24 {
                 15, 16, -1, -1,
 
                 16, 17, -1, -1,
-                17, 18, 19, -1, 19, 20, -1, -1, 20, 21, -1, -1
+                17, 18, 19, -1,
+                19, 20, -1, -1,
+                20, 21, -1, -1
             };
         } else if constexpr (BIT_WIDTH == 12) {
             return std::array<int8_t, 64>{
@@ -1011,12 +1016,12 @@ struct unpack_tables_avx512_24 {
         } else if constexpr (BIT_WIDTH == 15) {
             return std::array<int8_t, 64>{
                 0, 1, -1, -1,
-                1, 2, 3, -1, 3,
-                4, 5, -1, 5, 6,
-                7, -1,
+                1, 2,  3, -1,
+                3, 4,  5, -1,
+                5, 6,  7, -1,
 
-                7, 8, 9, -1,
-                9, 10, 11, -1,
+                7,  8,   9, -1,
+                9,  10, 11, -1,
                 11, 12, 13, -1,
                 13, 14, -1, -1,
 
@@ -1051,182 +1056,6 @@ struct unpack_tables_avx512_24 {
                 26, 27, -1, -1,
                 28, 29, -1, -1,
                 30, 31, -1, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 17) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, -1,
-                4, 5, 6, -1,
-                6, 7, 8, -1,
-
-                8, 9, 10, -1,
-                10,11,12, -1,
-                12,13,14, -1,
-                14,15,16, -1,
-
-                17, 18,19, -1,
-                19, 20,21, -1,
-                21, 22,23, -1,
-                23, 24,25, -1,
-
-                25, 26,27, -1,
-                27, 28,29, -1,
-                29, 30,31, -1,
-                31, 32,33, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 18) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, -1,
-                4, 5, 6, -1,
-                6, 7, 8, -1,
-
-                9, 10, 11, -1,
-                11,12,13, -1,
-                13,14,15, -1,
-                15,16,17, -1,
-
-                18, 19,20, -1,
-                20, 21,22, -1,
-                22, 23,24, -1,
-                24, 25,26, -1,
-
-                27, 28,29, -1,
-                29, 30,31, -1,
-                31, 32,33, -1,
-                33, 34,35, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 19) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, -1,
-                4, 5, 6, 7,
-                7, 8, 9, -1,
-
-                9, 10,11, -1,
-                11,12,13,14,
-                14,15,16, -1,
-                16,17,18, -1,
-
-                19, 20,21, -1,
-                21, 22,23, -1,
-                23, 24,25,26,
-                26,27,28, -1,
-
-                28, 29,30, -1,
-                30, 31,32, 33,
-                33,34,35, -1,
-                35,36,37, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 20) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, -1,
-                5, 6, 7, -1,
-                7, 8, 9, -1,
-
-                10, 11,12, -1,
-                12,13,14, -1,
-                15,16,17, -1,
-                17,18,19, -1,
-
-                20, 21,22, -1,
-                22,23,24, -1,
-                25,26,27, -1,
-                27,28,29, -1,
-
-                30, 31,32, -1,
-                32,33,34, -1,
-                35,36,37, -1,
-                37,38,39, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 21) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, 5,
-                5, 6, 7, -1,
-                7, 8, 9, 10,
-
-                10, 11,12,13,
-                13,14,15, -1,
-                15,16,17,18,
-                18,19,20, -1,
-
-                21, 22,23, -1,
-                23, 24,25,26,
-                26,27,28, -1,
-                28, 29,30,31,
-
-                31, 32,33,34,
-                34,35,36, -1,
-                36,37,38,39,
-                39,40,41, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 22) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, 5,
-                5, 6, 7, 8,
-                8, 9, 10, -1,
-
-                11, 12,13, -1,
-                13,14,15,16,
-                16,17,18,19,
-                19,20,21, -1,
-
-                22, 23,24, -1,
-                24,25,26,27,
-                27,28,29,30,
-                30,31,32, -1,
-
-                33, 34,35, -1,
-                35,36,37,38,
-                38,39,40,41,
-                41,42,43, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 23) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                2, 3, 4, 5,
-                5, 6, 7, 8,
-                8, 9, 10,11,
-
-                11,12,13,14,
-                14,15,16,17,
-                17,18,19,20,
-                20,21,22, -1,
-
-                23, 24,25, -1,
-                25,26,27,28,
-                28,29,30,31,
-                31,32,33,34,
-
-                34,35,36,37,
-                37,38,39,40,
-                40,41,42,43,
-                43,44,45, -1,
-            };
-        } else if constexpr (BIT_WIDTH == 24) {
-            return std::array<int8_t, 64>{
-                0, 1, 2, -1,
-                3, 4, 5, -1,
-                6, 7, 8, -1,
-                9, 10,11, -1,
-
-                12,13,14, -1,
-                15,16,17, -1,
-                18,19,20, -1,
-                21,22,23, -1,
-
-                24, 25,26, -1,
-                27, 28,29, -1,
-                30, 31,32, -1,
-                33, 34,35, -1,
-
-                36, 37,38, -1,
-                39, 40,41, -1,
-                42, 43,44, -1,
-                45, 46,47, -1,
             };
         }
         // clang-format on
@@ -1275,46 +1104,6 @@ struct unpack_tables_avx512_24 {
                 16, 16, 16, 16, 16, 16, 16, 16,
                 16, 16, 16, 16, 16, 16, 16, 16,
             };
-        } else if constexpr (BIT_WIDTH == 17) {
-            return std::array{
-                15, 14, 13, 12, 11, 10, 9, 8,
-                15, 14, 13, 12, 11, 10, 9, 8,
-            };
-        } else if constexpr (BIT_WIDTH == 18) {
-            return std::array{
-                14, 12, 10, 8, 14, 12, 10, 8,
-                14, 12, 10, 8, 14, 12, 10, 8,
-            };
-        } else if constexpr (BIT_WIDTH == 19) {
-            return std::array{
-                13, 10, 7, 12, 9, 6, 11, 8,
-                13, 10, 7, 12, 9, 6, 11, 8,
-            };
-        } else if constexpr (BIT_WIDTH == 20) {
-            return std::array{
-                12, 8, 12, 8, 12, 8, 12, 8,
-                12, 8, 12, 8, 12, 8, 12, 8,
-            };
-        } else if constexpr (BIT_WIDTH == 21) {
-            return std::array{
-                11, 6, 9, 4, 7, 10, 5, 8,
-                11, 6, 9, 4, 7, 10, 5, 8,
-            };
-        } else if constexpr (BIT_WIDTH == 22) {
-            return std::array{
-                10, 4, 6, 8, 10, 4, 6, 8,
-                10, 4, 6, 8, 10, 4, 6, 8,
-            };
-        } else if constexpr (BIT_WIDTH == 23) {
-            return std::array{
-                9, 2, 3, 4, 5, 6, 7, 8,
-                9, 2, 3, 4, 5, 6, 7, 8,
-            };
-        } else if constexpr (BIT_WIDTH == 24) {
-            return std::array{
-                8, 8, 8, 8, 8, 8, 8, 8,
-                8, 8, 8, 8, 8, 8, 8, 8,
-            };
         }
         // clang-format on
         return std::array<int32_t, 16>{};
@@ -1348,6 +1137,127 @@ struct unpack_tables_avx512_24 {
         }
     }
 #pragma GCC diagnostic pop
+};
+
+template <uint8_t BIT_WIDTH, typename Vec>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8 &&
+             (std::is_same_v<Vec, __m512i> || std::is_same_v<Vec, __m256i> || std::is_same_v<Vec, __m128i>))
+struct unpack_tables_avx512_8_new {};
+
+template <uint8_t BIT_WIDTH, typename Vec>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16 &&
+             (std::is_same_v<Vec, __m512i> || std::is_same_v<Vec, __m256i> || std::is_same_v<Vec, __m128i>))
+struct unpack_tables_avx512_16_new {
+    alignas(64) inline static constexpr std::array<int8_t, 64> permute1 = [] {
+        std::array<int8_t, 64> table{};
+        std::ranges::fill(table, -1);
+
+        for (size_t entry = 0; entry < 32; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t first_byte = bit_start / 8;
+            const size_t base       = entry * 2;
+
+            table[base]     = static_cast<int8_t>(first_byte);
+            table[base + 1] = static_cast<int8_t>(first_byte + 1);
+        }
+
+        return table;
+    }();
+
+    alignas(64) inline static constexpr std::array<int8_t, 64> permute2 = [] {
+        std::array<int8_t, 64> table{};
+        std::ranges::fill(table, -1);
+
+        for (size_t entry = 0; entry < 32; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t first_byte = bit_start / 8;
+            const size_t bit_offset = bit_start % 8;
+            const size_t base       = entry * 2;
+
+            if (bit_offset + BIT_WIDTH > 16) {
+                table[base] = static_cast<int8_t>(first_byte + 2);
+            }
+        }
+
+        return table;
+    }();
+
+    alignas(64) inline static constexpr std::array<int16_t, 32> shift1 = [] {
+        std::array<int16_t, 32> table{};
+
+        for (size_t entry = 0; entry < 32; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t bit_offset = bit_start % 8u;
+
+            // Right-shift the 16-bit chunk so the value starts at bit 0.
+            table[entry] = static_cast<int16_t>(bit_offset);
+        }
+
+        return table;
+    }();
+
+    alignas(64) inline static constexpr std::array<int16_t, 32> shift2 = [] {
+        std::array<int16_t, 32> table{};
+        for (size_t entry = 0; entry < 32; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t bit_offset = bit_start % 8u;
+            const size_t spill_bits = (bit_offset + BIT_WIDTH > 16u) ? (bit_offset + BIT_WIDTH - 16u) : 0u;
+
+            // Move spill bits from byte3 to their final bit positions before merge.
+            table[entry] = spill_bits ? static_cast<int16_t>(16u - bit_offset) : 0;
+        }
+
+        return table;
+    }();
+
+public:
+    [[gnu::always_inline]] static inline Vec get_permute1() { return load_table<Vec>(permute1); }
+    [[gnu::always_inline]] static inline Vec get_permute2() { return load_table<Vec>(permute2); }
+
+    [[gnu::always_inline]] static inline Vec get_shift1() { return load_table<Vec>(shift1); }
+    [[gnu::always_inline]] static inline Vec get_shift2() { return load_table<Vec>(shift2); }
+};
+
+template <uint8_t BIT_WIDTH, typename Vec>
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24 &&
+             (std::is_same_v<Vec, __m512i> || std::is_same_v<Vec, __m256i> || std::is_same_v<Vec, __m128i>))
+struct unpack_tables_avx512_24 {
+private:
+    alignas(64) inline static constexpr std::array<int8_t, 64> permute = [] {
+        std::array<int8_t, 64> table{};
+        std::ranges::fill(table, -1);
+
+        for (size_t entry = 0; entry < 16; ++entry) {
+            const size_t bit_start = entry * BIT_WIDTH;
+            const size_t bit_end   = bit_start + BIT_WIDTH - 1;
+
+            const size_t first_byte = bit_start / 8;
+            const size_t last_byte  = bit_end / 8;
+
+            const size_t base = entry * 4;
+
+            for (size_t byte = first_byte; byte <= last_byte; ++byte) {
+                table[base + (byte - first_byte)] = static_cast<int8_t>(byte);
+            }
+        }
+
+        return table;
+    }();
+
+    alignas(64) inline static constexpr std::array<int32_t, 16> shift = [] {
+        std::array<int32_t, 16> table{};
+
+        for (size_t entry = 0; entry < 16; ++entry) {
+            const size_t bit_start = entry * BIT_WIDTH;
+            table[entry]           = static_cast<int32_t>(32u - BIT_WIDTH - (bit_start % 8u));
+        }
+
+        return table;
+    }();
+
+public:
+    [[gnu::always_inline]] static inline Vec get_permute() { return load_table<Vec>(permute); }
+    [[gnu::always_inline]] static inline Vec get_shift() { return load_table<Vec>(shift); }
 };
 
 }  // namespace pernix::internal

@@ -174,7 +174,16 @@ int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t s
     for (uint32_t iter = 0; iter < iterations_8; iter++) {
         const __m256 source     = _mm256_loadu_ps(input);
         const __m256i quantized = internal::mm256_quantize_ps_epi32(source, scale_v);
-        const __m256i packed    = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(quantized);
+        const __m256i packed_input = [&]() {
+            if constexpr (BIT_WIDTH == 24) {
+                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
+            } else {
+                return quantized;
+            }
+        }();
+        const __m256i packed = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(packed_input);
         std::memcpy(output, &packed, BIT_WIDTH);
         input += 8;
         output += BIT_WIDTH;
@@ -184,7 +193,7 @@ int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t s
         std::vector<uint32_t> block_values(remaining);
 #pragma GCC unroll 8
         for (uint32_t i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<uint32_t>(internal::quantize_ps_epi32(input[i], scale));
+            block_values[i] = static_cast<uint32_t>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i], scale)));
         }
 
         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
@@ -230,7 +239,7 @@ int mm256_compress_block_bmi2(const double_t* __restrict__ input, const double_t
         std::vector<uint32_t> block_values(remaining);
 #pragma GCC unroll 8
         for (uint32_t i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<uint32_t>(internal::quantize_pd_epi64(input[i], scale));
+            block_values[i] = static_cast<uint32_t>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i], scale)));
         }
 
         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);

@@ -250,8 +250,17 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_16 > 0) {
         const __m512 source     = _mm512_loadu_ps(input);
         const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m512i packed_input = [&]() {
+            if constexpr (BIT_WIDTH == 24) {
+                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+                return _mm512_min_epi32(_mm512_max_epi32(quantized, _mm512_set1_epi32(min_value)), _mm512_set1_epi32(max_value));
+            } else {
+                return quantized;
+            }
+        }();
 
-        const __m512i packed = m512::mm512_pack_epi32_avx512_17to24<BIT_WIDTH>(quantized);
+        const __m512i packed = m512::mm512_pack_epi32_avx512_17to24<BIT_WIDTH>(packed_input);
         _mm512_mask_storeu_epi16(output, (1ull << BIT_WIDTH) - 1ull, packed);
         input += 16;
         output += 2 * BIT_WIDTH;
@@ -260,8 +269,17 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_8 > 0) {
         const __m256 source     = _mm256_loadu_ps(input);
         const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
+        const __m256i packed_input = [&]() {
+            if constexpr (BIT_WIDTH == 24) {
+                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
+            } else {
+                return quantized;
+            }
+        }();
 
-        const __m256i packed = m256::mm256_pack_epi32_avx512_17to24<BIT_WIDTH>(quantized);
+        const __m256i packed = m256::mm256_pack_epi32_avx512_17to24<BIT_WIDTH>(packed_input);
         _mm256_mask_storeu_epi8(output, (1u << BIT_WIDTH) - 1u, packed);
 
         input += 8;
@@ -271,7 +289,16 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     if constexpr (remaining_elements > 0) {
         const __m256 source     = _mm256_maskz_loadu_ps((1u << remaining_elements) - 1u, input);
         const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
-        const __m256i packed    = m256::mm256_pack_epi32_avx512_17to24<BIT_WIDTH>(quantized);
+        const __m256i packed_input = [&]() {
+            if constexpr (BIT_WIDTH == 24) {
+                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
+            } else {
+                return quantized;
+            }
+        }();
+        const __m256i packed = m256::mm256_pack_epi32_avx512_17to24<BIT_WIDTH>(packed_input);
 
         _mm256_mask_storeu_epi8(output, tail_mask<BIT_WIDTH, remaining_elements>(), packed);
     }

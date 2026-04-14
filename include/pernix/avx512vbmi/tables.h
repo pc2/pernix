@@ -1142,12 +1142,78 @@ struct unpack_tables_avx512_16 {
 template <uint8_t BIT_WIDTH, typename Vec>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8 &&
              (std::is_same_v<Vec, __m512i> || std::is_same_v<Vec, __m256i> || std::is_same_v<Vec, __m128i>))
-struct unpack_tables_avx512_8_new {};
+struct unpack_tables_avx512_8_new {
+private:
+    alignas(64) inline static constexpr std::array<int8_t, 64> permute1 = [] {
+        std::array<int8_t, 64> table{};
+        std::ranges::fill(table, -1);
+        for (size_t entry = 0; entry < 64; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t first_byte = bit_start / 8;
+
+            table[entry] = static_cast<int8_t>(first_byte);
+        }
+
+        return table;
+    }();
+
+    alignas(64) inline static constexpr std::array<int8_t, 64> permute2 = [] {
+        std::array<int8_t, 64> table{};
+        std::ranges::fill(table, -1);
+
+        for (size_t entry = 0; entry < 64; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t first_byte = bit_start / 8;
+            const size_t bit_offset = bit_start % 8;
+
+            if (bit_offset + BIT_WIDTH > 8) {
+                table[entry] = static_cast<int8_t>(first_byte + 1);
+            }
+        }
+
+        return table;
+    }();
+
+    alignas(64) inline static constexpr std::array<int8_t, 64> shift1 = [] {
+        std::array<int8_t, 64> table{};
+
+        for (size_t entry = 0; entry < 64; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t bit_offset = bit_start % 8;
+
+            table[entry] = static_cast<int8_t>(bit_offset);
+        }
+
+        return table;
+    }();
+
+    alignas(64) inline static constexpr std::array<int8_t, 64> shift2 = [] {
+        std::array<int8_t, 64> table{};
+
+        for (size_t entry = 0; entry < 64; ++entry) {
+            const size_t bit_start  = entry * BIT_WIDTH;
+            const size_t bit_offset = bit_start % 8u;
+            const size_t spill_bits = (bit_offset + BIT_WIDTH > 8u) ? (bit_offset + BIT_WIDTH - 8u) : 0u;
+
+            table[entry] = spill_bits ? static_cast<int8_t>(8 - bit_offset) : 0;
+        }
+
+        return table;
+    }();
+
+public:
+    [[gnu::always_inline]] static inline Vec get_permute1() { return load_table<Vec>(permute1); }
+    [[gnu::always_inline]] static inline Vec get_permute2() { return load_table<Vec>(permute2); }
+
+    [[gnu::always_inline]] static inline Vec get_shift1() { return load_table<Vec>(shift1); }
+    [[gnu::always_inline]] static inline Vec get_shift2() { return load_table<Vec>(shift2); }
+};
 
 template <uint8_t BIT_WIDTH, typename Vec>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16 &&
              (std::is_same_v<Vec, __m512i> || std::is_same_v<Vec, __m256i> || std::is_same_v<Vec, __m128i>))
 struct unpack_tables_avx512_16_new {
+private:
     alignas(64) inline static constexpr std::array<int8_t, 64> permute1 = [] {
         std::array<int8_t, 64> table{};
         std::ranges::fill(table, -1);

@@ -30,35 +30,16 @@ static constexpr __mmask32 tail_store_mask() {
 }
 
 /**
- * @brief Dequantize up to four integer values under a mask.
- */
-__always_inline __m128 mm_maskz_dequantize_epi32(const __mmask8& mask, const __m128i& input, const __m128& scale) {
-    const __m128 converted = _mm_maskz_cvtepi32_ps(mask, input);
-    return _mm_maskz_mul_ps(mask, converted, scale);
-}
-
-/**
- * @brief Dequantize up to eight integer values under a mask.
- */
-__always_inline __m256 mm256_maskz_dequantize_epi32(const __mmask8& mask, const __m256i& input, const __m256& scale) {
-    const __m256 converted = _mm256_maskz_cvtepi32_ps(mask, input);
-    return _mm256_maskz_mul_ps(mask, converted, scale);
-}
-
-/**
  * @brief Dequantize sixteen integer values to floats.
  */
-__always_inline __m512 mm512_dequantize_epi32(const __m512i& input, const __m512& scale) {
+[[gnu::always_inline]] inline __m512 mm512_dequantize_epi32(const __m512i& input, const __m512& scale) {
     const __m512 converted = _mm512_cvtepi32_ps(input);
     return _mm512_mul_ps(converted, scale);
 }
 
-/**
- * @brief Dequantize up to sixteen integer values under a mask.
- */
-__always_inline __m512 mm512_maskz_dequantize_epi32(const __mmask8& mask, const __m512i& input, const __m512& scale) {
-    const __m512 converted = _mm512_maskz_cvtepi32_ps(mask, input);
-    return _mm512_maskz_mul_ps(mask, converted, scale);
+[[gnu::always_inline]] inline __m512d mm512_dequantize_epi64(const __m512i& input, const __m512d& scale) {
+    const __m512d converted = _mm512_cvtepi64_pd(input);
+    return _mm512_mul_pd(converted, scale);
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
@@ -157,6 +138,107 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
     const __m512d scale_v = _mm512_set1_pd(scale);
 
+    if constexpr (iterations_64 > 0) {
+        for (uint32_t i = 0; i < iterations_64; ++i) {
+            const __m512i source   = _mm512_maskz_loadu_epi64((1ull << BIT_WIDTH) - 1ull, input);
+            const __m512i unpacked = m512::mm512_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
+
+            const __m128i extracted1 = _mm512_castsi512_si128(unpacked);
+            const __m128i extracted2 = _mm512_extracti64x2_epi64(unpacked, 1);
+            const __m128i extracted3 = _mm512_extracti64x2_epi64(unpacked, 2);
+            const __m128i extracted4 = _mm512_extracti64x2_epi64(unpacked, 3);
+
+            const __m512i converted1 = _mm512_cvtepi8_epi64(extracted1);
+            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted1, 8));
+            const __m512i converted3 = _mm512_cvtepi8_epi64(extracted2);
+            const __m512i converted4 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted2, 8));
+            const __m512i converted5 = _mm512_cvtepi8_epi64(extracted3);
+            const __m512i converted6 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted3, 8));
+            const __m512i converted7 = _mm512_cvtepi8_epi64(extracted4);
+            const __m512i converted8 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted4, 8));
+
+            const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
+            const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
+            const __m512d dequantized3 = mm512_dequantize_epi64(converted3, scale_v);
+            const __m512d dequantized4 = mm512_dequantize_epi64(converted4, scale_v);
+            const __m512d dequantized5 = mm512_dequantize_epi64(converted5, scale_v);
+            const __m512d dequantized6 = mm512_dequantize_epi64(converted6, scale_v);
+            const __m512d dequantized7 = mm512_dequantize_epi64(converted7, scale_v);
+            const __m512d dequantized8 = mm512_dequantize_epi64(converted8, scale_v);
+
+            _mm512_storeu_pd(output, dequantized1);
+            _mm512_storeu_pd(output + 8, dequantized2);
+            _mm512_storeu_pd(output + 16, dequantized3);
+            _mm512_storeu_pd(output + 24, dequantized4);
+            _mm512_storeu_pd(output + 32, dequantized5);
+            _mm512_storeu_pd(output + 40, dequantized6);
+            _mm512_storeu_pd(output + 48, dequantized7);
+            _mm512_storeu_pd(output + 56, dequantized8);
+
+            output += 64;
+            input += 8 * BIT_WIDTH;
+        }
+
+        if constexpr (iterations_32 > 0) {
+            const __m256i source   = _mm256_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
+            const __m256i unpacked = m256::mm256_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
+
+            const __m128i extracted1 = _mm256_castsi256_si128(unpacked);
+            const __m128i extracted2 = _mm256_extracti64x2_epi64(unpacked, 1);
+
+            const __m512i converted1 = _mm512_cvtepi8_epi64(extracted1);
+            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted1, 8));
+            const __m512i converted3 = _mm512_cvtepi8_epi64(extracted2);
+            const __m512i converted4 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted2, 8));
+
+            const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
+            const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
+            const __m512d dequantized3 = mm512_dequantize_epi64(converted3, scale_v);
+            const __m512d dequantized4 = mm512_dequantize_epi64(converted4, scale_v);
+
+            _mm512_storeu_pd(output, dequantized1);
+            _mm512_storeu_pd(output + 8, dequantized2);
+            _mm512_storeu_pd(output + 16, dequantized3);
+            _mm512_storeu_pd(output + 24, dequantized4);
+
+            output += 32;
+            input += 4 * BIT_WIDTH;
+        }
+
+        if constexpr (iterations_16 > 0) {
+            const __m128i source   = _mm_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+            const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
+
+            const __m512i converted1 = _mm512_cvtepi8_epi64(unpacked);
+            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(unpacked, 8));
+
+            const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
+            const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
+
+            _mm512_storeu_pd(output, dequantized1);
+            _mm512_storeu_pd(output + 8, dequantized2);
+        }
+
+        if constexpr (remaining_elements > 0) {
+            const __m128i source   = _mm_maskz_loadu_epi16(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+            const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
+
+            const __m512i converted1 = _mm512_cvtepi8_epi64(unpacked);
+            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(unpacked, 8));
+
+            const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
+            const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
+
+            constexpr __mmask16 store_mask = (1u << remaining_elements) - 1u;
+            // split store mask for double precision
+            // TODO: does this work??
+            const __mmask8 store_mask1 = store_mask & 0xFF;
+            const __mmask8 store_mask2 = (store_mask >> 8) & 0xFF;
+            _mm512_mask_storeu_pd(output, store_mask1, dequantized1);
+            _mm512_mask_storeu_pd(output + 8, store_mask2, dequantized2);
+        }
+    }
+
     return 0;
 }
 
@@ -244,6 +326,71 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     const __m512d scale_v    = _mm512_set1_pd(scale);
     const __m256d scale_v256 = _mm256_set1_pd(scale);
 
+    if constexpr (iterations_32 > 0) {
+        const __m512i source   = _mm512_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
+        const __m512i unpacked = m512::mm512_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const __m512i converted1 = _mm512_cvtepi16_epi64(_mm512_castsi512_si128(unpacked));
+        const __m512i converted2 = _mm512_cvtepi16_epi64(_mm512_extracti64x2_epi64(unpacked, 1));
+        const __m512i converted3 = _mm512_cvtepi16_epi64(_mm512_extracti64x2_epi64(unpacked, 2));
+        const __m512i converted4 = _mm512_cvtepi16_epi64(_mm512_extracti64x2_epi64(unpacked, 3));
+
+        const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
+        const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
+        const __m512d dequantized3 = mm512_dequantize_epi64(converted3, scale_v);
+        const __m512d dequantized4 = mm512_dequantize_epi64(converted4, scale_v);
+
+        _mm512_storeu_pd(output, dequantized1);
+        _mm512_storeu_pd(output + 8, dequantized2);
+        _mm512_storeu_pd(output + 16, dequantized3);
+        _mm512_storeu_pd(output + 24, dequantized4);
+
+        output += 32;
+        input += 4 * BIT_WIDTH;
+    }
+
+    if constexpr (iterations_16 > 0) {
+        const __m256i source   = _mm256_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+        const __m256i unpacked = m256::mm256_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const __m512i converted1 = _mm512_cvtepi16_epi64(_mm256_castsi256_si128(unpacked));
+        const __m512i converted2 = _mm512_cvtepi16_epi64(_mm256_extracti64x2_epi64(unpacked, 1));
+
+        const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
+        const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
+
+        _mm512_storeu_pd(output, dequantized1);
+        _mm512_storeu_pd(output + 8, dequantized2);
+
+        output += 16;
+        input += 2 * BIT_WIDTH;
+    }
+
+    if constexpr (iterations_8 > 0) {
+        const __m128i source   = _mm_maskz_loadu_epi8((1u << BIT_WIDTH) - 1u, input);
+        const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const __m512i converted = _mm512_cvtepi16_epi64(unpacked);
+
+        const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
+
+        _mm512_storeu_pd(output, dequantized);
+
+        output += 8;
+        input += BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        const __m128i source   = _mm_maskz_loadu_epi8(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+        const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const __m512i converted = _mm512_cvtepi16_epi64(unpacked);
+
+        const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
+
+        _mm512_mask_storeu_pd(output, (1u << remaining_elements) - 1u, dequantized);
+    }
+
     return 0;
 }
 
@@ -306,8 +453,49 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
     constexpr uint32_t remaining_elements = elements_per_block - iterations_16 * 16 - iterations_8 * 8;
 
-    const __m512d scale_v    = _mm512_set1_pd(scale);
-    const __m256d scale_v256 = _mm256_set1_pd(scale);
+    const __m512d scale_v = _mm512_set1_pd(scale);
+
+    if constexpr (iterations_16 > 0) {
+        const __m512i source   = _mm512_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+        const __m512i unpacked = m512::mm512_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const __m512i converted1 = _mm512_cvtepi32_epi64(_mm512_castsi512_si256(unpacked));
+        const __m512i converted2 = _mm512_cvtepi32_epi64(_mm512_extracti64x4_epi64(unpacked, 1));
+
+        const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
+        const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
+
+        _mm512_storeu_pd(output, dequantized1);
+        _mm512_storeu_pd(output + 8, dequantized2);
+
+        output += 16;
+        input += 2 * BIT_WIDTH;
+    }
+
+    if constexpr (iterations_8 > 0) {
+        const __m256i source   = _mm256_maskz_loadu_epi8((1u << BIT_WIDTH) - 1u, input);
+        const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const __m512i converted = _mm512_cvtepi32_epi64(unpacked);
+
+        const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
+
+        _mm512_storeu_pd(output, dequantized);
+
+        output += 8;
+        input += BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        const __m256i source   = _mm256_maskz_loadu_epi8(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+        const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const __m512i converted = _mm512_cvtepi32_epi64(unpacked);
+
+        const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
+
+        _mm512_mask_storeu_pd(output, (1u << remaining_elements) - 1u, dequantized);
+    }
 
     return 0;
 }

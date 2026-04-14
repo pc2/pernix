@@ -56,6 +56,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     const __m512 scale_v = _mm512_set1_ps(scale);
 
     if constexpr (iterations_64 > 0) {
+#pragma GCC unroll 8
         for (uint32_t i = 0; i < iterations_64; ++i) {
             const __m512i source   = _mm512_maskz_loadu_epi64((1ull << BIT_WIDTH) - 1ull, input);
             const __m512i unpacked = m512::mm512_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
@@ -139,6 +140,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     const __m512d scale_v = _mm512_set1_pd(scale);
 
     if constexpr (iterations_64 > 0) {
+#pragma GCC unroll 8
         for (uint32_t i = 0; i < iterations_64; ++i) {
             const __m512i source   = _mm512_maskz_loadu_epi64((1ull << BIT_WIDTH) - 1ull, input);
             const __m512i unpacked = m512::mm512_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);

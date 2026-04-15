@@ -8,9 +8,9 @@ option(PERNIX_ENABLE_INSTALL "Enable installation of pernix" on)
 option(PERNIX_ENABLE_DOXYGEN "Build documentation with Doxygen." off)
 option(PERNIX_INSTALL_DOCS "Install documentation with pernix" off)
 
-option(PERNIX_DISABLE_BMI2 "Enable BMI2 optimizations" on)
-option(PERNIX_DISABLE_AVX2 "Enable AVX2 optimizations" off)
-option(PERNIX_DISABLE_AVX512 "Enable AVX512 optimizations" off)
+option(PERNIX_DISABLE_BMI2 "Disable BMI2 optimizations" on)
+option(PERNIX_DISABLE_AVX2 "Disable AVX2 optimizations" off)
+option(PERNIX_DISABLE_AVX512 "Disable AVX512 optimizations" off)
 
 option(PERNIX_ENABLE_FORTRAN_BINDINGS "Build Fortran bindings for pernix" off)
 

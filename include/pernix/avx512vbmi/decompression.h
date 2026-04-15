@@ -85,8 +85,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         const __m256i source   = _mm256_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
         const __m256i unpacked = m256::mm256_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted1 = _mm512_cvtepi8_epi64(_mm256_castsi256_si128(unpacked));
-        const __m512i converted2 = _mm512_cvtepi8_epi64(_mm256_extracti128_si256(unpacked, 1));
+        const __m512i converted1 = _mm512_cvtepi8_epi32(_mm256_castsi256_si128(unpacked));
+        const __m512i converted2 = _mm512_cvtepi8_epi32(_mm256_extracti128_si256(unpacked, 1));
 
         const __m512 dequantized1 = mm512_dequantize_epi32(converted1, scale_v);
         const __m512 dequantized2 = mm512_dequantize_epi32(converted2, scale_v);
@@ -102,7 +102,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         const __m128i source   = _mm_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
         const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted = _mm512_cvtepi8_epi64(unpacked);
+        const __m512i converted = _mm512_cvtepi8_epi32(unpacked);
 
         const __m512 dequantized = mm512_dequantize_epi32(converted, scale_v);
 
@@ -116,7 +116,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         const __m128i source   = _mm_maskz_loadu_epi16(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
         const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted = _mm512_cvtepi8_epi64(unpacked);
+        const __m512i converted = _mm512_cvtepi8_epi32(unpacked);
 
         const __m512 dequantized = mm512_dequantize_epi32(converted, scale_v);
 
@@ -219,6 +219,9 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
             _mm512_storeu_pd(output, dequantized1);
             _mm512_storeu_pd(output + 8, dequantized2);
+
+            output += 16;
+            input += 2 * BIT_WIDTH;
         }
 
         if constexpr (remaining_elements > 0) {
@@ -232,12 +235,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
 
             constexpr __mmask16 store_mask = (1u << remaining_elements) - 1u;
-            // split store mask for double precision
-            // TODO: does this work??
-            const __mmask8 store_mask1 = store_mask & 0xFF;
-            const __mmask8 store_mask2 = (store_mask >> 8) & 0xFF;
-            _mm512_mask_storeu_pd(output, store_mask1, dequantized1);
-            _mm512_mask_storeu_pd(output + 8, store_mask2, dequantized2);
+            _mm512_mask_storeu_pd(output, store_mask & 0xFF, dequantized1);
+            _mm512_mask_storeu_pd(output + 8, (store_mask >> 8) & 0xFF, dequantized2);
         }
     }
 

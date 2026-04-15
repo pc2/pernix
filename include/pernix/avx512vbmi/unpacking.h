@@ -62,9 +62,39 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
             const __m128i unpacked = _mm_abs_epi8(source);
             return unpacked;
         } else if constexpr (BIT_WIDTH == 2) {
-            return input;
+            __m128i values_shift0       = input;
+            __m128i values_shift2       = _mm_srli_epi16(values_shift0, 2);
+            const __m128i values_shift4 = _mm_srli_epi16(values_shift0, 4);
+            const __m128i values_shift6 = _mm_srli_epi16(values_shift0, 6);
+
+            __m128i interleave_tmp = _mm_unpacklo_epi8(values_shift0, values_shift2);
+            values_shift0          = _mm_unpackhi_epi8(values_shift0, values_shift2);
+            values_shift0          = _mm_unpacklo_epi64(interleave_tmp, values_shift0);
+
+            interleave_tmp = _mm_unpacklo_epi8(values_shift4, values_shift6);
+            values_shift2  = _mm_unpackhi_epi8(values_shift4, values_shift6);
+            values_shift2  = _mm_unpacklo_epi64(interleave_tmp, values_shift2);
+
+            interleave_tmp = _mm_unpacklo_epi16(values_shift0, values_shift2);
+            values_shift0  = _mm_unpackhi_epi16(values_shift0, values_shift2);
+            values_shift0  = _mm_unpacklo_epi64(interleave_tmp, values_shift0);
+            values_shift0  = _mm_shuffle_epi32(values_shift0, 0xD8);
+
+            values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0303));
+
+            return values_shift0;
         } else if constexpr (BIT_WIDTH == 4) {
-            return input;
+            __m128i values_shift0       = input;
+            const __m128i values_shift4 = _mm_srli_epi16(values_shift0, 4);
+
+            const __m128i interleave_tmp = _mm_unpacklo_epi8(values_shift0, values_shift4);
+            values_shift0                = _mm_unpackhi_epi8(values_shift0, values_shift4);
+            values_shift0                = _mm_unpacklo_epi64(interleave_tmp, values_shift0);
+            values_shift0                = _mm_shuffle_epi32(values_shift0, 0xD8);
+
+            values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0F0F));
+
+            return values_shift0;
         } else {
             using tables = unpack_tables_avx512_8_new<BIT_WIDTH, __m128i>;
 
@@ -218,10 +248,10 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
             return values_shift0;
         } else if constexpr (BIT_WIDTH == 4) {
             __m256i values_shift0       = input;
-            const __m256i values_shift2 = _mm256_srli_epi16(values_shift0, 4);
+            const __m256i values_shift4 = _mm256_srli_epi16(values_shift0, 4);
 
-            __m256i interleave_tmp = _mm256_unpacklo_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm256_unpackhi_epi8(values_shift0, values_shift2);
+            __m256i interleave_tmp = _mm256_unpacklo_epi8(values_shift0, values_shift4);
+            values_shift0          = _mm256_unpackhi_epi8(values_shift0, values_shift4);
             values_shift0          = _mm256_shuffle_i64x2(interleave_tmp, values_shift0, 0x44);
             values_shift0          = _mm256_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
 
@@ -382,10 +412,10 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
             return values_shift0;
         } else if constexpr (BIT_WIDTH == 4) {
             __m512i values_shift0       = input;
-            const __m512i values_shift2 = _mm512_srli_epi16(values_shift0, 4);
+            const __m512i values_shift4 = _mm512_srli_epi16(values_shift0, 4);
 
-            __m512i interleave_tmp = _mm512_unpacklo_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm512_unpackhi_epi8(values_shift0, values_shift2);
+            __m512i interleave_tmp = _mm512_unpacklo_epi8(values_shift0, values_shift4);
+            values_shift0          = _mm512_unpackhi_epi8(values_shift0, values_shift4);
             values_shift0          = _mm512_shuffle_i64x2(interleave_tmp, values_shift0, 0x44);
             values_shift0          = _mm512_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
 

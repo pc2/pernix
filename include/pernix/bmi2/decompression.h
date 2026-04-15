@@ -23,6 +23,11 @@ namespace internal {
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __m128i mm_sign_extend32(__m128i source) {
+    if constexpr (BIT_WIDTH == 1) {
+        // Keep 1-bit values as 0/1 to match fallback decoding semantics.
+        return source;
+    }
+
     constexpr uint16_t shift = 32 - BIT_WIDTH;
     source                   = _mm_slli_epi32(source, shift);
     return _mm_srai_epi32(source, shift);
@@ -38,6 +43,11 @@ __m128i mm_sign_extend32(__m128i source) {
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __m256i mm256_sign_extend32(__m256i source) {
+    if constexpr (BIT_WIDTH == 1) {
+        // Keep 1-bit values as 0/1 to match fallback decoding semantics.
+        return source;
+    }
+
     constexpr uint16_t shift = 32 - BIT_WIDTH;
     source                   = _mm256_slli_epi32(source, shift);
     return _mm256_srai_epi32(source, shift);
@@ -143,7 +153,20 @@ __m256i mm256_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
 
         alignas(16) uint64_t temp_values[4];
         std::memcpy(temp_values, input, 2 * sizeof(uint64_t));
-        std::memcpy(temp_values + 2, input + BIT_WIDTH / 2, 2 * sizeof(uint64_t));
+
+        if constexpr ((BIT_WIDTH % 2) == 0) {
+            std::memcpy(temp_values + 2, input + BIT_WIDTH / 2, 2 * sizeof(uint64_t));
+        } else {
+            constexpr uint32_t second_group_bit_offset  = BIT_WIDTH * 4;
+            constexpr uint32_t second_group_byte_offset = second_group_bit_offset / 8;
+            constexpr uint32_t second_group_shift       = second_group_bit_offset % 8;
+
+            alignas(16) uint64_t raw_values[2];
+            std::memcpy(raw_values, input + second_group_byte_offset, 2 * sizeof(uint64_t));
+
+            temp_values[2] = (raw_values[0] >> second_group_shift) | (raw_values[1] << (64 - second_group_shift));
+            temp_values[3] = raw_values[1] >> second_group_shift;
+        }
 
         alignas(16) uint64_t values[4];
         values[0] = _pdep_u64((temp_values[0]), pdep_mask);
@@ -177,7 +200,7 @@ __m256i mm256_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
  * @note This function requires AVX2 and BMI2 support.
  */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
@@ -218,7 +241,7 @@ int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t
  * @note This function requires AVX2 and BMI2 support.
  */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr uint32_t iterations_8       = elements_per_block / 8;
@@ -264,7 +287,7 @@ int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const double_
 /**
  * @brief Decompress multiple 512\-bit blocks using AVX2 and BMI2 instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam SIGN_VALUES whether the values are signed or unsigned.
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
@@ -277,7 +300,7 @@ int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const double_
  * @note This function requires AVX2 and BMI2 support.
  */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
                                  const uint32_t blocks) {
     const uint8_t* block_input = input;
@@ -295,7 +318,7 @@ int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_
 /**
  * @brief Decompress multiple blocks to double values using AVX2 and BMI2 instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam SIGN_VALUES whether the values are signed or unsigned.
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
@@ -308,7 +331,7 @@ int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_
  * @note This function requires AVX2 and BMI2 support.
  */
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,
                                  const uint32_t blocks) {
     const uint8_t* block_input = input;

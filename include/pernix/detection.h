@@ -1,8 +1,6 @@
 #ifndef PERNIX_HELPER_H
 #define PERNIX_HELPER_H
 
-#include <immintrin.h>
-
 #include <cstdint>
 
 // Internal capability tiers used to derive the public PERNIX_* feature macros.

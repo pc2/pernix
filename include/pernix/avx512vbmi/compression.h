@@ -2,279 +2,557 @@
 #define PERNIX_AVX512VBMI_COMPRESSION_H
 
 #include <pernix/avx2/compression.h>
-#include <pernix/avx512vbmi/tables.h>
+#include <pernix/avx512vbmi/packing.h>
+
+#include <cstring>
 
 namespace pernix {
 
 namespace internal {
 /**
- * @brief Quantize up to four float values under a mask.
- */
-__always_inline __m128i mm_maskz_quantize_ps_epi32(const __mmask8& mask, const __m128& input, const __m128& scale) {
-    const __m128 scaled  = _mm_maskz_mul_ps(mask, input, scale);
-    const __m128 rounded = _mm_maskz_roundscale_ps(mask, scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
-    return _mm_maskz_cvtps_epi32(mask, rounded);
-}
-
-/**
- * @brief Quantize up to eight float values under a mask.
- */
-__always_inline __m256i mm256_maskz_quantize_ps_epi32(const __mmask8& mask, const __m256& input, const __m256& scale) {
-    const __m256 scaled  = _mm256_maskz_mul_ps(mask, input, scale);
-    const __m256 rounded = _mm256_maskz_roundscale_ps(mask, scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
-    return _mm256_maskz_cvtps_epi32(mask, rounded);
-}
-
-/**
  * @brief Quantize sixteen float values to 32-bit integers.
  */
-__always_inline __m512i mm512_quantize_ps_epi32(const __m512& input, const __m512& scale) {
+[[gnu::always_inline]]
+static inline __m512i mm512_quantize_ps_epi32(const __m512& input, const __m512& scale) {
     const __m512 scaled = _mm512_mul_ps(input, scale);
-    return _mm512_cvt_roundps_epi32(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+    return _mm512_cvtps_epi32(scaled);
 }
 
-/**
- * @brief Quantize up to sixteen float values under a mask.
- */
-__always_inline __m512i mm512_maskz_quantize_ps_epi32(const __mmask16& mask, const __m512& input, const __m512& scale) {
-    const __m512 scaled = _mm512_maskz_mul_ps(mask, input, scale);
-    return _mm512_maskz_cvt_roundps_epi32(mask, scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+[[gnu::always_inline]]
+static inline __m512i mm512_quantize_pd_epi64(const __m512d& input, const __m512d& scale) {
+    const __m512d scaled = _mm512_mul_pd(input, scale);
+    return _mm512_cvtpd_epi64(scaled);
 }
 
-/**
- * @brief Pack eight 32-bit values for bit widths 9 through 15 using VBMI.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm256_pack_epi32_avx512vbmi_9to15(const __m256i& input) -> __m128i {
-    using tables = pack_tables_avx512<BIT_WIDTH, __m128i>;
+[[gnu::always_inline]]
+static inline __m256i mm512_quantize_pd_epi32(const __m512d& input, const __m512d& scale) {
+    const __m512d scaled = _mm512_mul_pd(input, scale);
+    return _mm512_cvtpd_epi32(scaled);
+}
 
-    constexpr uint16_t bit_mask = (1u << BIT_WIDTH) - 1u;
+[[gnu::always_inline]] static inline __m512i make_m512i_from_2x256(const __m256i a, const __m256i b) {
+    __m512i result = _mm512_castsi256_si512(a);
+    result         = _mm512_inserti64x4(result, b, 1);
+    return result;
+}
 
-    const __m128i packed = _mm256_cvtepi32_epi16(input);
-    const __m128i maskv  = _mm_set1_epi16(static_cast<int16_t>(bit_mask));
-    const __m128i masked = _mm_and_si128(packed, maskv);
+[[gnu::always_inline]]
+static inline __m512i make_m512i_from_4x128(const __m128i a, const __m128i b, const __m128i c, const __m128i d) {
+    __m512i result = _mm512_castsi128_si512(a);
+    result         = _mm512_inserti64x2(result, b, 1);
+    result         = _mm512_inserti64x2(result, c, 2);
+    result         = _mm512_inserti64x2(result, d, 3);
+    return result;
+}
 
-    const __m128i p1 = tables::get_permute1();
-    const __m128i p2 = tables::get_permute2();
-    const __m128i s1 = tables::get_shift1();
-    const __m128i s2 = tables::get_shift2();
+[[gnu::always_inline]]
+static inline __m512i make_m512i_from_8x64(const __m128i a, const __m128i b, const __m128i c, const __m128i d, const __m128i e,
+                                           const __m128i f, const __m128i g, const __m128i h) {
+    const __m128i ab = _mm_unpacklo_epi64(a, b);
+    const __m128i cd = _mm_unpacklo_epi64(c, d);
+    const __m128i ef = _mm_unpacklo_epi64(e, f);
+    const __m128i gh = _mm_unpacklo_epi64(g, h);
 
-    if constexpr (BIT_WIDTH == 12 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
-        const __m128i permuted1 = _mm_permutexvar_epi16(p1, masked);
-        const __m128i permuted2 = _mm_permutexvar_epi16(p2, masked);
+    __m512i x = _mm512_castsi128_si512(ab);
+    x         = _mm512_inserti32x4(x, cd, 1);
+    x         = _mm512_inserti32x4(x, ef, 2);
+    x         = _mm512_inserti32x4(x, gh, 3);
+    return x;
+}
 
-        const __m128i shifted1 = _mm_sllv_epi16(permuted1, s1);
-        const __m128i shifted2 = _mm_srlv_epi16(permuted2, s2);
+[[gnu::always_inline]]
+static inline __m256i make_m256i_from_2x128(const __m128i a, const __m128i b) {
+    __m256i result = _mm256_castsi128_si256(a);
+    result         = _mm256_inserti128_si256(result, b, 1);
+    return result;
+}
 
-        return _mm_or_si128(shifted1, shifted2);
-    } else {
-        const __m128i p3 = tables::get_permute3();
-        const __m128i s3 = tables::get_shift3();
+[[gnu::always_inline]]
+static inline __m256i make_m256i_from_4x64(const __m128i a, const __m128i b, const __m128i c, const __m128i d) {
+    const __m128i ab = _mm_unpacklo_epi64(a, b);
+    const __m128i cd = _mm_unpacklo_epi64(c, d);
 
-        const auto [mask1, mask2, mask3] = tables::get_permute_masks();
+    __m256i x = _mm256_castsi128_si256(ab);
+    x         = _mm256_inserti128_si256(x, cd, 1);
+    return x;
+}
 
-        const __m128i permuted1 = _mm_maskz_permutexvar_epi16(mask1, p1, masked);
-        const __m128i permuted2 = _mm_maskz_permutexvar_epi16(mask2, p2, masked);
-        const __m128i permuted3 = _mm_maskz_permutexvar_epi16(mask3, p3, masked);
+template <uint8_t BIT_WIDTH, uint32_t REMAINING>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+static constexpr __mmask32 tail_store_mask() {
+    constexpr uint32_t tail_bits  = REMAINING * BIT_WIDTH;
+    constexpr uint32_t tail_bytes = (tail_bits + 7u) / 8u;
+    return (1u << tail_bytes) - 1u;
+}
 
-        const __m128i shifted1 = _mm_sllv_epi16(permuted1, s1);
-        const __m128i shifted2 = _mm_sllv_epi16(permuted2, s2);
-        const __m128i shifted3 = _mm_srlv_epi16(permuted3, s3);
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
+[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restrict__ input, const float_t scale,
+                                                                       uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
-        return _mm_or_si128(_mm_or_si128(shifted1, shifted2), shifted3);
+    constexpr uint32_t iterations_64      = elements_per_block / 64;
+    constexpr uint32_t iterations_32      = (elements_per_block % 64) / 32;
+    constexpr uint32_t iterations_16      = (elements_per_block % 32) / 16;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_64 * 64 - iterations_32 * 32 - iterations_16 * 16;
+
+    const __m512 scale_v = _mm512_set1_ps(scale);
+
+    if constexpr (iterations_64 > 0) {
+#pragma GCC unroll 8
+        for (uint32_t iter = 0; iter < iterations_64; ++iter) {
+            const __m512 source1 = _mm512_loadu_ps(input);
+            const __m512 source2 = _mm512_loadu_ps(input + 16);
+            const __m512 source3 = _mm512_loadu_ps(input + 32);
+            const __m512 source4 = _mm512_loadu_ps(input + 48);
+
+            const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
+            const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
+            const __m512i quantized3 = mm512_quantize_ps_epi32(source3, scale_v);
+            const __m512i quantized4 = mm512_quantize_ps_epi32(source4, scale_v);
+
+            const __m128i converted1 = _mm512_cvtepi32_epi8(quantized1);
+            const __m128i converted2 = _mm512_cvtepi32_epi8(quantized2);
+            const __m128i converted3 = _mm512_cvtepi32_epi8(quantized3);
+            const __m128i converted4 = _mm512_cvtepi32_epi8(quantized4);
+
+            const __m512i packed =
+                m512::mm512_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(
+                    make_m512i_from_4x128(converted1, converted2, converted3, converted4));
+
+            _mm512_mask_storeu_epi64(output, (1u << BIT_WIDTH) - 1u, packed);
+
+            input += 64;
+            output += 8 * BIT_WIDTH;
+        }
     }
-}
 
-/**
- * @brief Pack four 32-bit values for bit widths 9 through 15 using VBMI.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm_pack_epi32_avx512vbmi_9to15(const __m128i& input) -> __m128i {
-    return mm256_pack_epi32_avx512vbmi_9to15<BIT_WIDTH>(_mm256_castsi128_si256(input));
-}
+    if constexpr (iterations_32 > 0) {
+        const __m512 source1 = _mm512_loadu_ps(input);
+        const __m512 source2 = _mm512_loadu_ps(input + 16);
 
-/**
- * @brief Pack sixteen 32-bit values for bit widths 9 through 15 using VBMI.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm512_pack_epi32_avx512vbmi_9to15(const __m512i& input) -> __m256i {
-    using tables = pack_tables_avx512<BIT_WIDTH, __m256i>;
+        const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
+        const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
 
-    constexpr uint16_t bit_mask = (1u << BIT_WIDTH) - 1u;
+        const __m128i converted1 = _mm512_cvtepi32_epi8(quantized1);
+        const __m128i converted2 = _mm512_cvtepi32_epi8(quantized2);
 
-    const __m256i converted = _mm512_cvtepi32_epi16(input);
-    const __m256i maskv     = _mm256_set1_epi16(static_cast<int16_t>(bit_mask));
-    const __m256i masked    = _mm256_and_si256(converted, maskv);
+        const __m256i packed =
+            m256::mm256_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(make_m256i_from_2x128(converted1, converted2));
+        _mm256_mask_storeu_epi32(output, (1u << BIT_WIDTH) - 1u, packed);
 
-    if constexpr (BIT_WIDTH == 12 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
-        const __m256i permuted1 = _mm256_permutexvar_epi16(tables::get_permute1(), masked);
-        const __m256i permuted2 = _mm256_permutexvar_epi16(tables::get_permute2(), masked);
-
-        const __m256i shifted1 = _mm256_sllv_epi16(permuted1, tables::get_shift1());
-        const __m256i shifted2 = _mm256_srlv_epi16(permuted2, tables::get_shift2());
-
-        return _mm256_or_si256(shifted1, shifted2);
-    } else {
-        const auto [mask1, mask2, mask3] = tables::get_permute_masks();
-
-        const __m256i permuted1 = _mm256_maskz_permutexvar_epi16(mask1, tables::get_permute1(), masked);
-        const __m256i permuted2 = _mm256_maskz_permutexvar_epi16(mask2, tables::get_permute2(), masked);
-        const __m256i permuted3 = _mm256_maskz_permutexvar_epi16(mask3, tables::get_permute3(), masked);
-
-        const __m256i shifted1 = _mm256_sllv_epi16(permuted1, tables::get_shift1());
-        const __m256i shifted2 = _mm256_sllv_epi16(permuted2, tables::get_shift2());
-        const __m256i shifted3 = _mm256_srlv_epi16(permuted3, tables::get_shift3());
-
-        return _mm256_or_si256(_mm256_or_si256(shifted1, shifted2), shifted3);
+        input += 32;
+        output += 4 * BIT_WIDTH;
     }
+
+    if constexpr (iterations_16 > 0) {
+        const __m512 source     = _mm512_loadu_ps(input);
+        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m128i converted = _mm512_cvtepi32_epi8(quantized);
+
+        const __m128i packed = m128::mm_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(converted);
+        _mm_mask_storeu_epi16(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 16;
+        output += 2 * BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        const __m512 source     = _mm512_maskz_loadu_ps((1u << remaining_elements) - 1u, input);
+        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m128i converted = _mm512_cvtepi32_epi8(quantized);
+        const __m128i packed    = m128::mm_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(converted);
+
+        _mm_mask_storeu_epi8(output, tail_store_mask<BIT_WIDTH, remaining_elements>(), packed);
+    }
+
+    return 0;
 }
 
-/**
- * @brief Pack thirty-two 32-bit values for bit widths 9 through 15 using VBMI.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm1024_pack_epi32_avx512vbmi_9to15(const __m512i& input) -> __m512i {
-    using tables                = pack_tables_avx512<BIT_WIDTH, __m512i>;
-    constexpr uint16_t bit_mask = (1u << BIT_WIDTH) - 1u;
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_9to16(const float_t* __restrict__ input, const float_t scale,
+                                                                        uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
-    const __m512i maskv  = _mm512_set1_epi16(static_cast<int16_t>(bit_mask));
-    const __m512i masked = _mm512_and_si512(input, maskv);
+    constexpr uint32_t iterations_32      = elements_per_block / 32;
+    constexpr uint32_t iterations_16      = (elements_per_block % 32) / 16;
+    constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_32 * 32 - iterations_16 * 16 - iterations_8 * 8;
 
-    if constexpr (BIT_WIDTH == 12 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
-        const __m512i permuted1 = _mm512_permutexvar_epi16(tables::get_permute1(), masked);
-        const __m512i permuted2 = _mm512_permutexvar_epi16(tables::get_permute2(), masked);
+    const __m512 scale_v    = _mm512_set1_ps(scale);
+    const __m256 scale_v256 = _mm256_set1_ps(scale);
 
-        const __m512i shifted1 = _mm512_sllv_epi16(permuted1, tables::get_shift1());
-        const __m512i shifted2 = _mm512_srlv_epi16(permuted2, tables::get_shift2());
+    if constexpr (iterations_32 > 0) {
+        const __m512 source1 = _mm512_loadu_ps(input);
+        const __m512 source2 = _mm512_loadu_ps(input + 16);
 
-        return _mm512_or_si512(shifted1, shifted2);
-    } else {
-        const auto [mask1, mask2, mask3] = tables::get_permute_masks();
+        const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
+        const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
 
-        const __m512i permuted1 = _mm512_maskz_permutexvar_epi16(mask1, tables::get_permute1(), masked);
-        const __m512i permuted2 = _mm512_maskz_permutexvar_epi16(mask2, tables::get_permute2(), masked);
-        const __m512i permuted3 = _mm512_maskz_permutexvar_epi16(mask3, tables::get_permute3(), masked);
+        const __m256i converted1 = _mm512_cvtepi32_epi16(quantized1);
+        const __m256i converted2 = _mm512_cvtepi32_epi16(quantized2);
 
-        const __m512i shifted1 = _mm512_sllv_epi16(permuted1, tables::get_shift1());
-        const __m512i shifted2 = _mm512_sllv_epi16(permuted2, tables::get_shift2());
-        const __m512i shifted3 = _mm512_srlv_epi16(permuted3, tables::get_shift3());
+        const __m512i packed =
+            m512::mm512_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(make_m512i_from_2x256(converted1, converted2));
+        _mm512_mask_storeu_epi32(output, (1u << BIT_WIDTH) - 1u, packed);
 
-        return _mm512_or_si512(_mm512_or_si512(shifted1, shifted2), shifted3);
+        input += 32;
+        output += 4 * BIT_WIDTH;
     }
+
+    if constexpr (iterations_16 > 0) {
+        const __m512 source     = _mm512_loadu_ps(input);
+        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m256i converted = _mm512_cvtepi32_epi16(quantized);
+
+        const __m256i packed = m256::mm256_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
+        _mm256_mask_storeu_epi16(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 16;
+        output += 2 * BIT_WIDTH;
+    }
+
+    if constexpr (iterations_8 > 0) {
+        const __m256 source     = _mm256_loadu_ps(input);
+        const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
+        const __m128i converted = _mm256_cvtepi32_epi16(quantized);
+
+        const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
+        _mm_mask_storeu_epi8(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 8;
+        output += BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        const __m256 source     = _mm256_maskz_loadu_ps((1u << remaining_elements) - 1u, input);
+        const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
+        const __m128i converted = _mm256_cvtepi32_epi16(quantized);
+        const __m128i packed    = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
+
+        _mm_mask_storeu_epi8(output, tail_store_mask<BIT_WIDTH, remaining_elements>(), packed);
+    }
+
+    return 0;
 }
 
-/**
- * @brief Pack aligned 8-bit or 16-bit values from four 32-bit lanes using AVX-512 narrowing instructions.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm_pack_aligned_epi32_avx512(const __m128i& input) -> __m128i {
-    if constexpr (BIT_WIDTH == 8) {
-        return _mm_cvtepi32_epi8(input);
-    } else {
-        return _mm_cvtepi32_epi16(input);
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_17to24(const float_t* __restrict__ input, const float_t scale,
+                                                                         uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_16      = elements_per_block / 16;
+    constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_16 * 16 - iterations_8 * 8;
+
+    const __m512 scale_v    = _mm512_set1_ps(scale);
+    const __m256 scale_v256 = _mm256_set1_ps(scale);
+
+    if constexpr (iterations_16 > 0) {
+        const __m512 source        = _mm512_loadu_ps(input);
+        const __m512i quantized    = mm512_quantize_ps_epi32(source, scale_v);
+        const __m512i packed_input = [&]() {
+            if constexpr (BIT_WIDTH == 24) {
+                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+                return _mm512_min_epi32(_mm512_max_epi32(quantized, _mm512_set1_epi32(min_value)), _mm512_set1_epi32(max_value));
+            } else {
+                return quantized;
+            }
+        }();
+
+        const __m512i packed = m512::mm512_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
+        _mm512_mask_storeu_epi16(output, (1ull << BIT_WIDTH) - 1ull, packed);
+        input += 16;
+        output += 2 * BIT_WIDTH;
     }
+
+    if constexpr (iterations_8 > 0) {
+        const __m256 source        = _mm256_loadu_ps(input);
+        const __m256i quantized    = mm256_quantize_ps_epi32(source, scale_v256);
+        const __m256i packed_input = [&]() {
+            if constexpr (BIT_WIDTH == 24) {
+                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
+            } else {
+                return quantized;
+            }
+        }();
+
+        const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
+        _mm256_mask_storeu_epi8(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 8;
+        output += BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        const __m256 source        = _mm256_maskz_loadu_ps((1u << remaining_elements) - 1u, input);
+        const __m256i quantized    = mm256_quantize_ps_epi32(source, scale_v256);
+        const __m256i packed_input = [&]() {
+            if constexpr (BIT_WIDTH == 24) {
+                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
+                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
+                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
+            } else {
+                return quantized;
+            }
+        }();
+        const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
+
+        _mm256_mask_storeu_epi8(output, tail_store_mask<BIT_WIDTH, remaining_elements>(), packed);
+    }
+
+    return 0;
 }
 
-/**
- * @brief Pack aligned 8-bit or 16-bit values from eight 32-bit lanes.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm256_pack_aligned_epi32_avx512(const __m256i& input) -> __m128i {
-    if constexpr (BIT_WIDTH == 8) {
-        return _mm256_cvtepi32_epi8(input);
-    } else {
-        return _mm256_cvtepi32_epi16(input);
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
+[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_1to8(const double_t* __restrict__ input, const double_t scale,
+                                                                       uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_64      = elements_per_block / 64;
+    constexpr uint32_t iterations_32      = (elements_per_block % 64) / 32;
+    constexpr uint32_t iterations_16      = (elements_per_block % 32) / 16;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_64 * 64 - iterations_32 * 32 - iterations_16 * 16;
+
+    const __m512d scale_v = _mm512_set1_pd(scale);
+
+    if constexpr (iterations_64 > 0) {
+#pragma GCC unroll 8
+        for (uint32_t iter = 0; iter < iterations_64; ++iter) {
+            const __m512d source1 = _mm512_loadu_pd(input);
+            const __m512d source2 = _mm512_loadu_pd(input + 8);
+            const __m512d source3 = _mm512_loadu_pd(input + 16);
+            const __m512d source4 = _mm512_loadu_pd(input + 24);
+            const __m512d source5 = _mm512_loadu_pd(input + 32);
+            const __m512d source6 = _mm512_loadu_pd(input + 40);
+            const __m512d source7 = _mm512_loadu_pd(input + 48);
+            const __m512d source8 = _mm512_loadu_pd(input + 56);
+
+            const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
+            const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+            const __m512i quantized3 = mm512_quantize_pd_epi64(source3, scale_v);
+            const __m512i quantized4 = mm512_quantize_pd_epi64(source4, scale_v);
+            const __m512i quantized5 = mm512_quantize_pd_epi64(source5, scale_v);
+            const __m512i quantized6 = mm512_quantize_pd_epi64(source6, scale_v);
+            const __m512i quantized7 = mm512_quantize_pd_epi64(source7, scale_v);
+            const __m512i quantized8 = mm512_quantize_pd_epi64(source8, scale_v);
+
+            const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
+            const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
+            const __m128i converted3 = _mm512_cvtepi64_epi8(quantized3);
+            const __m128i converted4 = _mm512_cvtepi64_epi8(quantized4);
+            const __m128i converted5 = _mm512_cvtepi64_epi8(quantized5);
+            const __m128i converted6 = _mm512_cvtepi64_epi8(quantized6);
+            const __m128i converted7 = _mm512_cvtepi64_epi8(quantized7);
+            const __m128i converted8 = _mm512_cvtepi64_epi8(quantized8);
+
+            const __m512i packed = m512::mm512_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(
+                make_m512i_from_8x64(converted1, converted2, converted3, converted4, converted5, converted6, converted7,
+                                     converted8));
+
+            _mm512_mask_storeu_epi64(output, (1u << BIT_WIDTH) - 1u, packed);
+
+            input += 64;
+            output += 8 * BIT_WIDTH;
+        }
     }
+
+    if constexpr (iterations_32 > 0) {
+        const __m512d source1 = _mm512_loadu_pd(input);
+        const __m512d source2 = _mm512_loadu_pd(input + 8);
+        const __m512d source3 = _mm512_loadu_pd(input + 16);
+        const __m512d source4 = _mm512_loadu_pd(input + 24);
+
+        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
+        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+        const __m512i quantized3 = mm512_quantize_pd_epi64(source3, scale_v);
+        const __m512i quantized4 = mm512_quantize_pd_epi64(source4, scale_v);
+
+        const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
+        const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
+        const __m128i converted3 = _mm512_cvtepi64_epi8(quantized3);
+        const __m128i converted4 = _mm512_cvtepi64_epi8(quantized4);
+
+        const __m256i packed =
+            m256::mm256_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(
+                make_m256i_from_4x64(converted1, converted2, converted3, converted4));
+
+        _mm256_mask_storeu_epi32(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 32;
+        output += 4 * BIT_WIDTH;
+    }
+
+    if constexpr (iterations_16 > 0) {
+        const __m512d source1    = _mm512_loadu_pd(input);
+        const __m512d source2    = _mm512_loadu_pd(input + 8);
+        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
+        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+
+        const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
+        const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
+
+        const __m128i packed = m128::mm_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(_mm_unpacklo_epi64(converted1, converted2));
+
+        _mm_mask_storeu_epi16(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 16;
+        output += 2 * BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        constexpr __mmask16 load_mask = (1u << remaining_elements) - 1u;
+
+        const __m512d source1    = _mm512_maskz_loadu_pd(load_mask, input);
+        const __m512d source2    = _mm512_maskz_loadu_pd(load_mask >> 8, input + 8);
+        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
+        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+
+        const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
+        const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
+
+        const __m128i packed = m128::mm_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(_mm_unpacklo_epi64(converted1, converted2));
+
+        _mm_mask_storeu_epi8(output, tail_store_mask<BIT_WIDTH, remaining_elements>(), packed);
+    }
+
+    return 0;
 }
 
-/**
- * @brief Pack aligned 8-bit or 16-bit values from sixteen 32-bit lanes.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm512_pack_aligned_epi32_avx512(const __m512i& input) -> __m256i {
-    if constexpr (BIT_WIDTH == 8) {
-        return _mm256_castsi128_si256(_mm512_cvtepi32_epi8(input));
-    } else {
-        return _mm512_cvtepi32_epi16(input);
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_9to16(const double_t* __restrict__ input, const double_t scale,
+                                                                        uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_32      = elements_per_block / 32;
+    constexpr uint32_t iterations_16      = (elements_per_block % 32) / 16;
+    constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_32 * 32 - iterations_16 * 16 - iterations_8 * 8;
+
+    const __m512d scale_v = _mm512_set1_pd(scale);
+
+    if constexpr (iterations_32 > 0) {
+        const __m512d source1 = _mm512_loadu_pd(input);
+        const __m512d source2 = _mm512_loadu_pd(input + 8);
+        const __m512d source3 = _mm512_loadu_pd(input + 16);
+        const __m512d source4 = _mm512_loadu_pd(input + 24);
+
+        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
+        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+        const __m512i quantized3 = mm512_quantize_pd_epi64(source3, scale_v);
+        const __m512i quantized4 = mm512_quantize_pd_epi64(source4, scale_v);
+
+        const __m128i converted1 = _mm512_cvtepi64_epi16(quantized1);
+        const __m128i converted2 = _mm512_cvtepi64_epi16(quantized2);
+        const __m128i converted3 = _mm512_cvtepi64_epi16(quantized3);
+        const __m128i converted4 = _mm512_cvtepi64_epi16(quantized4);
+
+        const __m512i packed =
+            m512::mm512_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(
+                make_m512i_from_4x128(converted1, converted2, converted3, converted4));
+
+        _mm512_mask_storeu_epi32(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 32;
+        output += 4 * BIT_WIDTH;
     }
+
+    if constexpr (iterations_16 > 0) {
+        const __m512d source1    = _mm512_loadu_pd(input);
+        const __m512d source2    = _mm512_loadu_pd(input + 8);
+        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
+        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+
+        const __m128i converted1 = _mm512_cvtepi64_epi16(quantized1);
+        const __m128i converted2 = _mm512_cvtepi64_epi16(quantized2);
+
+        const __m256i packed =
+            m256::mm256_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(make_m256i_from_2x128(converted1, converted2));
+
+        _mm256_mask_storeu_epi16(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 16;
+        output += 2 * BIT_WIDTH;
+    }
+
+    if constexpr (iterations_8 > 0) {
+        const __m512d source    = _mm512_loadu_pd(input);
+        const __m512i quantized = mm512_quantize_pd_epi64(source, scale_v);
+        const __m128i converted = _mm512_cvtepi64_epi16(quantized);
+
+        const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
+        _mm_mask_storeu_epi8(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 8;
+        output += BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        const __m512d source    = _mm512_maskz_loadu_pd((1u << remaining_elements) - 1u, input);
+        const __m512i quantized = mm512_quantize_pd_epi64(source, scale_v);
+        const __m128i converted = _mm512_cvtepi64_epi16(quantized);
+
+        const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
+        _mm_mask_storeu_epi8(output, tail_store_mask<BIT_WIDTH, remaining_elements>(), packed);
+    }
+
+    return 0;
 }
 
-/**
- * @brief Pack aligned 8-bit or 16-bit values from thirty-two 32-bit lanes.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__always_inline auto mm1024_pack_aligned_epi32_avx512(const __m512i& input) -> __m512i {
-    if constexpr (BIT_WIDTH == 8) {
-        return _mm512_castsi256_si512(_mm512_cvtepi16_epi8(input));
-    } else {
-        return input;
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_17to24(const double_t* __restrict__ input, const double_t scale,
+                                                                         uint8_t* __restrict__ output) {
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_16      = elements_per_block / 16;
+    constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_16 * 16 - iterations_8 * 8;
+
+    const __m512d scale_v = _mm512_set1_pd(scale);
+
+    if constexpr (iterations_16 > 0) {
+        const __m512d source1 = _mm512_loadu_pd(input);
+        const __m512d source2 = _mm512_loadu_pd(input + 8);
+
+        const __m256i quantized1 = mm512_quantize_pd_epi32(source1, scale_v);
+        const __m256i quantized2 = mm512_quantize_pd_epi32(source2, scale_v);
+
+        const __m512i packed =
+            m512::mm512_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(make_m512i_from_2x256(quantized1, quantized2));
+        _mm512_mask_storeu_epi16(output, (1ull << BIT_WIDTH) - 1ull, packed);
+
+        input += 16;
+        output += 2 * BIT_WIDTH;
     }
-}
 
-/**
- * @brief Dispatch to the appropriate 128-bit VBMI packer.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm_pack_epi32_avx512vbmi(const __m128i& input) -> __m128i {
-    if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 15) {
-        return mm_pack_epi32_avx512vbmi_9to15<BIT_WIDTH>(input);
-    } else {
-        return mm_pack_aligned_epi32_avx512<BIT_WIDTH>(input);
+    if constexpr (iterations_8 > 0) {
+        const __m512d source    = _mm512_loadu_pd(input);
+        const __m256i quantized = mm512_quantize_pd_epi32(source, scale_v);
+
+        const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(quantized);
+        _mm256_mask_storeu_epi8(output, (1u << BIT_WIDTH) - 1u, packed);
+
+        input += 8;
+        output += BIT_WIDTH;
     }
-}
 
-/**
- * @brief Dispatch to the appropriate 256-bit VBMI packer.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm256_pack_epi32_avx512vbmi(const __m256i& input) -> __m128i {
-    if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 15) {
-        return mm256_pack_epi32_avx512vbmi_9to15<BIT_WIDTH>(input);
-    } else {
-        return mm256_pack_aligned_epi32_avx512<BIT_WIDTH>(input);
+    if constexpr (remaining_elements > 0) {
+        const __m512d source    = _mm512_maskz_loadu_pd((1u << remaining_elements) - 1u, input);
+        const __m256i quantized = mm512_quantize_pd_epi32(source, scale_v);
+        const __m256i packed    = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(quantized);
+
+        _mm256_mask_storeu_epi8(output, tail_store_mask<BIT_WIDTH, remaining_elements>(), packed);
     }
-}
 
-/**
- * @brief Dispatch to the appropriate 512-bit VBMI packer.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm512_pack_epi32_avx512vbmi(const __m512i& input) -> __m256i {
-    if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 15) {
-        return mm512_pack_epi32_avx512vbmi_9to15<BIT_WIDTH>(input);
-    } else {
-        return mm512_pack_aligned_epi32_avx512<BIT_WIDTH>(input);
-    }
-}
-
-/**
- * @brief Dispatch to the appropriate dual-register VBMI packer.
- */
-template <uint8_t BIT_WIDTH>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16)
-__always_inline auto mm1024_pack_epi32_avx512vbmi(const __m512i& input1, const __m512i& input2) -> __m512i {
-    const __m256i converted1 = _mm512_cvtepi32_epi16(input1);
-    const __m256i converted2 = _mm512_cvtepi32_epi16(input2);
-
-    __m512i packed = _mm512_castsi256_si512(converted1);
-    packed         = _mm512_inserti64x4(packed, converted2, 1);
-
-    if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 15) {
-        return mm1024_pack_epi32_avx512vbmi_9to15<BIT_WIDTH>(packed);
-    } else {
-        return mm1024_pack_aligned_epi32_avx512<BIT_WIDTH>(packed);
-    }
+    return 0;
 }
 
 }  // namespace internal
@@ -282,7 +560,7 @@ __always_inline auto mm1024_pack_epi32_avx512vbmi(const __m512i& input1, const _
 /**
  * @brief Compress a single 512-bit block using AVX-512 and AVX-512-VBMI instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (8 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  *
  * @param input pointer to the start of the input float values.
  * @param scale scaling factor used during quantization.
@@ -292,79 +570,21 @@ __always_inline auto mm1024_pack_epi32_avx512vbmi(const __m512i& input1, const _
  * @note This function requires AVX-512 and AVX-512-VBMI support.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
-    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
-    constexpr uint32_t iterations_32      = elements_per_block / 32;
-    constexpr uint32_t iterations_16      = (elements_per_block % 32) / 16;
-    constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
-    constexpr uint8_t remaining           = elements_per_block - iterations_32 * 32 - iterations_16 * 16 - iterations_8 * 8;
-
-    const __m512 scale_v    = _mm512_set1_ps(scale);
-    const __m256 scale_v256 = _mm256_set1_ps(scale);
-#pragma GCC unroll 2
-    for (uint32_t iter = 0; iter < iterations_32; iter++) {
-        const __m512 source1     = _mm512_loadu_ps(input);
-        const __m512 source2     = _mm512_loadu_ps(input + 16);
-        const __m512i quantized1 = internal::mm512_quantize_ps_epi32(source1, scale_v);
-        const __m512i quantized2 = internal::mm512_quantize_ps_epi32(source2, scale_v);
-        const __m512i packed     = internal::mm1024_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized1, quantized2);
-
-        constexpr uint32_t bytes_32       = 4u * BIT_WIDTH;
-        constexpr __mmask64 store_mask_32 = (bytes_32 == 64u) ? ~0ull : (1ull << bytes_32) - 1ull;
-
-        _mm512_mask_storeu_epi8(output, store_mask_32, packed);
-
-        input += 32;
-        output += bytes_32;
+    if constexpr (BIT_WIDTH <= 8) {
+        return internal::mm512_compress_block_avx512vbmi_1to8<BIT_WIDTH>(input, scale, output);
+    } else if constexpr (BIT_WIDTH <= 16) {
+        return internal::mm512_compress_block_avx512vbmi_9to16<BIT_WIDTH>(input, scale, output);
+    } else {
+        return internal::mm512_compress_block_avx512vbmi_17to24<BIT_WIDTH>(input, scale, output);
     }
-
-    if constexpr (iterations_16 > 0) {
-        const __m512 source     = _mm512_loadu_ps(input);
-        const __m512i quantized = internal::mm512_quantize_ps_epi32(source, scale_v);
-        const __m256i packed    = internal::mm512_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-
-        constexpr __mmask32 store_mask_16 = (BIT_WIDTH == 16) ? 0xFFFFFFFFu : (1u << 2 * BIT_WIDTH) - 1u;
-        _mm256_mask_storeu_epi8(output, store_mask_16, packed);
-
-        input += 16;
-        output += 2 * BIT_WIDTH;
-    }
-
-    if constexpr (iterations_8 > 0) {
-        const __m256 source     = _mm256_loadu_ps(input);
-        const __m256i quantized = internal::mm256_quantize_ps_epi32(source, scale_v256);
-        const __m128i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-
-        constexpr __mmask16 store_mask_8 =
-            (BIT_WIDTH == 16) ? static_cast<__mmask16>(0xFFFFu) : static_cast<__mmask16>((1u << BIT_WIDTH) - 1u);
-        _mm_mask_storeu_epi8(output, store_mask_8, packed);
-
-        input += 8;
-        output += BIT_WIDTH;
-    }
-
-    if constexpr (remaining > 0) {
-        constexpr auto lane_mask = static_cast<__mmask8>((1u << remaining) - 1u);
-
-        constexpr uint32_t tail_bits  = remaining * BIT_WIDTH;
-        constexpr uint32_t tail_bytes = (tail_bits + 7u) / 8u;
-        constexpr auto store_mask     = static_cast<__mmask16>((1u << tail_bytes) - 1u);
-
-        const __m256 source     = _mm256_maskz_loadu_ps(lane_mask, input);
-        const __m256i quantized = internal::mm256_maskz_quantize_ps_epi32(lane_mask, source, scale_v256);
-        const __m128i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(quantized);
-
-        _mm_mask_storeu_epi8(output, store_mask, packed);
-    }
-
-    return 0;
 }
 
 /**
  * @brief Compress a single block of double values using AVX-512 and AVX-512-VBMI instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (8 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @param input pointer to the start of the input double values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.
@@ -373,87 +593,21 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
  * @note This overload is declared for parity with the float path.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
-int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output) {
-    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
-    constexpr uint32_t iterations_16      = elements_per_block / 16;
-    constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
-    constexpr uint8_t remaining           = elements_per_block - iterations_16 * 16 - iterations_8 * 8;
-
-    const __m256d scale_v = _mm256_set1_pd(scale);
-
-#pragma GCC unroll 2
-    for (uint32_t iter = 0; iter < iterations_16; iter++) {
-        const __m256d source1   = _mm256_loadu_pd(input);
-        const __m256d source2   = _mm256_loadu_pd(input + 4);
-        const __m128i quantized1 = internal::mm256_quantize_pd_epi32(source1, scale_v);
-        const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
-
-        __m256i combined1      = _mm256_castsi128_si256(quantized1);
-        combined1              = _mm256_inserti128_si256(combined1, quantized2, 1);
-        const __m128i packed1  = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(combined1);
-
-        const __m256d source3   = _mm256_loadu_pd(input + 8);
-        const __m256d source4   = _mm256_loadu_pd(input + 12);
-        const __m128i quantized3 = internal::mm256_quantize_pd_epi32(source3, scale_v);
-        const __m128i quantized4 = internal::mm256_quantize_pd_epi32(source4, scale_v);
-
-        __m256i combined2      = _mm256_castsi128_si256(quantized3);
-        combined2              = _mm256_inserti128_si256(combined2, quantized4, 1);
-        const __m128i packed2  = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(combined2);
-
-        constexpr __mmask16 store_mask_8 =
-            (BIT_WIDTH == 16) ? static_cast<__mmask16>(0xFFFFu) : static_cast<__mmask16>((1u << BIT_WIDTH) - 1u);
-        _mm_mask_storeu_epi8(output, store_mask_8, packed1);
-        _mm_mask_storeu_epi8(output + BIT_WIDTH, store_mask_8, packed2);
-
-        input += 16;
-        output += 2 * BIT_WIDTH;
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
+    if constexpr (BIT_WIDTH <= 8) {
+        return internal::mm512_compress_block_avx512vbmi_1to8<BIT_WIDTH>(input, scale, output);
+    } else if constexpr (BIT_WIDTH <= 16) {
+        return internal::mm512_compress_block_avx512vbmi_9to16<BIT_WIDTH>(input, scale, output);
+    } else {
+        return internal::mm512_compress_block_avx512vbmi_17to24<BIT_WIDTH>(input, scale, output);
     }
-
-    if constexpr (iterations_8 > 0) {
-        const __m256d source1    = _mm256_loadu_pd(input);
-        const __m256d source2    = _mm256_loadu_pd(input + 4);
-        const __m128i quantized1 = internal::mm256_quantize_pd_epi32(source1, scale_v);
-        const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
-
-        __m256i combined        = _mm256_castsi128_si256(quantized1);
-        combined                = _mm256_inserti128_si256(combined, quantized2, 1);
-        const __m128i packed    = internal::mm256_pack_epi32_avx512vbmi<BIT_WIDTH>(combined);
-
-        constexpr __mmask16 store_mask_8 =
-            (BIT_WIDTH == 16) ? static_cast<__mmask16>(0xFFFFu) : static_cast<__mmask16>((1u << BIT_WIDTH) - 1u);
-        _mm_mask_storeu_epi8(output, store_mask_8, packed);
-
-        input += 8;
-        output += BIT_WIDTH;
-    }
-
-    if constexpr (remaining > 0) {
-        std::vector<uint32_t> block_values(remaining);
-#pragma GCC unroll 7
-        for (uint32_t i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<uint32_t>(internal::quantize_pd_epi64(input[i], scale));
-        }
-
-        uint8_t packed_tail[16] = {0};
-        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, packed_tail);
-
-        constexpr uint32_t tail_bits  = remaining * BIT_WIDTH;
-        constexpr uint32_t tail_bytes = (tail_bits + 7u) / 8u;
-#pragma GCC unroll 14
-        for (uint32_t i = 0; i < tail_bytes; i++) {
-            output[i] = packed_tail[i];
-        }
-    }
-
-    return 0;
 }
 
 /**
  * @brief Compress multiple 512-bit blocks using AVX-512 and AVX-512-VBMI instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  *
  * @param input pointer to the start of the input float values.
  * @param scale scaling factor used during quantization.
@@ -464,13 +618,13 @@ int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, double_t
  * @note This function requires AVX-512 and AVX-512-VBMI support.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm512_compress_blocks_avx512vbmi(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output,
                                      const uint32_t blocks) {
     const float_t* block_input = input;
     uint8_t* block_output      = output;
 
-    for (uint32_t block = 0; block < blocks; block++) {
+    for (uint32_t block = 0; block < blocks; ++block) {
         mm512_compress_block_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
         block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
@@ -482,7 +636,7 @@ int mm512_compress_blocks_avx512vbmi(const float_t* __restrict__ input, const fl
 /**
  * @brief Compress multiple blocks of double values using AVX-512 and AVX-512-VBMI instructions.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (8 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @param input pointer to the start of the input double values.
  * @param scale scaling factor used during quantization.
  * @param output pointer to the output buffer where compressed bytes will be stored.
@@ -490,13 +644,13 @@ int mm512_compress_blocks_avx512vbmi(const float_t* __restrict__ input, const fl
  * @return int status code.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm512_compress_blocks_avx512vbmi(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,
                                      const uint32_t blocks) {
     const double_t* block_input = input;
     uint8_t* block_output       = output;
 
-    for (uint32_t block = 0; block < blocks; block++) {
+    for (uint32_t block = 0; block < blocks; ++block) {
         mm512_compress_block_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
         block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;

@@ -9,14 +9,15 @@ TYPED_TEST(CompressionTest, AVX2CompressBlock) {
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         compressedData[block].resize(64u);
 
-        pernix::mm256_compress_block_avx2<this->BitWidth>(this->testSet.getDecompressedData()[block].data(),
-                                                          1 / this->testSet.getScales()[block],
-                                                          reinterpret_cast<uint8_t*>(compressedData[block].data()));
+        pernix::mm256_compress_block_avx2<TestFixture::BitWidth>(this->testSet.getDecompressedData()[block].data(),
+                                                                 1 / this->testSet.getScales()[block],
+                                                                 reinterpret_cast<uint8_t*>(compressedData[block].data()));
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         std::vector<float_t> restored(this->testSet.elementsPerBlock);
-        pernix::decompress_block_fallback<this->BitWidth>(compressedData[block].data(), this->testSet.getScales()[block], restored.data());
+        pernix::decompress_block_fallback<TestFixture::BitWidth>(compressedData[block].data(), this->testSet.getScales()[block],
+                                                                 restored.data());
 
         for (uint32_t i = 0; i < restored.size(); i++) {
             ASSERT_NEAR(restored[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))
@@ -32,14 +33,15 @@ TYPED_TEST(CompressionTest64, AVX2CompressBlock) {
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         compressedData[block].resize(64u);
 
-        pernix::mm256_compress_block_avx2<this->BitWidth>(this->testSet.getDecompressedData()[block].data(),
-                                                          1 / this->testSet.getScales()[block],
-                                                          reinterpret_cast<uint8_t*>(compressedData[block].data()));
+        pernix::mm256_compress_block_avx2<TestFixture::BitWidth>(this->testSet.getDecompressedData()[block].data(),
+                                                                 1 / this->testSet.getScales()[block],
+                                                                 reinterpret_cast<uint8_t*>(compressedData[block].data()));
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         std::vector<double_t> restored(this->testSet.elementsPerBlock);
-        pernix::decompress_block_fallback<this->BitWidth>(compressedData[block].data(), this->testSet.getScales()[block], restored.data());
+        pernix::decompress_block_fallback<TestFixture::BitWidth>(compressedData[block].data(), this->testSet.getScales()[block],
+                                                                 restored.data());
 
         for (uint32_t i = 0; i < restored.size(); i++) {
             ASSERT_NEAR(restored[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))

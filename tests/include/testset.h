@@ -46,7 +46,7 @@ public:
     }
 
     explicit TestSet(const uint32_t number_of_blocks) : numberOfBlocks(number_of_blocks) {
-        compressedData.resize(numberOfBlocks);  // 64 bytes per block
+        compressedData.resize(numberOfBlocks);
         decompressedData.resize(number_of_blocks);
         scalesData.resize(numberOfBlocks);
 
@@ -63,7 +63,7 @@ private:
     // Generate random data, compress it, and verify decompression
     void generateData() {
         for (uint32_t i = 0; i < numberOfBlocks; i++) {
-            compressedData[i].resize(BLOCK_SIZE);  // 64 bytes per block
+            compressedData[i].resize(BLOCK_SIZE);
             decompressedData[i].resize(elementsPerBlock);
 
             for (uint32_t j = 0; j < elementsPerBlock; j++) {
@@ -77,13 +77,13 @@ private:
                                                                                                    : std::numeric_limits<T>::epsilon();
 
             // Compress the data using the fallback implementation
-            pernix::compress_block_fallback<BIT_WIDTH>(decompressedData[i].data(), 1 / scalesData[i],
-                                                       reinterpret_cast<uint8_t*>(compressedData[i].data()));
+            pernix::compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(decompressedData[i].data(), 1 / scalesData[i],
+                                                                   reinterpret_cast<uint8_t*>(compressedData[i].data()));
 
             // Decompress and verify using the fallback implementation
             std::vector<T> decompressed_verify(elementsPerBlock);
-            pernix::decompress_block_fallback<BIT_WIDTH>(reinterpret_cast<uint8_t*>(compressedData[i].data()), scalesData[i],
-                                                         decompressed_verify.data());
+            pernix::decompress_block_fallback<BIT_WIDTH, true, BLOCK_SIZE>(reinterpret_cast<uint8_t*>(compressedData[i].data()),
+                                                                            scalesData[i], decompressed_verify.data());
 
             for (uint32_t j = 0; j < elementsPerBlock; j++) {
                 ASSERT_NEAR(decompressed_verify[j], decompressedData[i][j], blockTolerance(i));
@@ -92,84 +92,86 @@ private:
     }
 };
 
-#define BitWithType(N)                          \
-    struct BitWidth##N {                        \
-        static constexpr uint8_t bit_width = N; \
-    }
-
-BitWithType(1);
-BitWithType(2);
-BitWithType(3);
-BitWithType(4);
-BitWithType(5);
-BitWithType(6);
-BitWithType(7);
-BitWithType(8);
-BitWithType(9);
-BitWithType(10);
-BitWithType(11);
-BitWithType(12);
-BitWithType(13);
-BitWithType(14);
-BitWithType(15);
-BitWithType(16);
-BitWithType(17);
-BitWithType(18);
-BitWithType(19);
-BitWithType(20);
-BitWithType(21);
-BitWithType(22);
-BitWithType(23);
-BitWithType(24);
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+struct BitWidthBlockSize {
+    static constexpr uint8_t bit_width   = BIT_WIDTH;
+    static constexpr uint32_t block_size = BLOCK_SIZE;
+};
 
 using testing::Types;
-using BitWidthTypes = Types<BitWidth1, BitWidth2, BitWidth3, BitWidth4, BitWidth5, BitWidth6, BitWidth7, BitWidth8, BitWidth9, BitWidth10,
-                            BitWidth11, BitWidth12, BitWidth13, BitWidth14, BitWidth15, BitWidth16, BitWidth17, BitWidth18, BitWidth19,
-                            BitWidth20, BitWidth21, BitWidth22, BitWidth23, BitWidth24>;
+using BitWidthBlockSizeTypes =
+    Types<BitWidthBlockSize<1, 64>, BitWidthBlockSize<2, 64>, BitWidthBlockSize<3, 64>, BitWidthBlockSize<4, 64>,
+          BitWidthBlockSize<5, 64>, BitWidthBlockSize<6, 64>, BitWidthBlockSize<7, 64>, BitWidthBlockSize<8, 64>,
+          BitWidthBlockSize<9, 64>, BitWidthBlockSize<10, 64>, BitWidthBlockSize<11, 64>, BitWidthBlockSize<12, 64>,
+          BitWidthBlockSize<13, 64>, BitWidthBlockSize<14, 64>, BitWidthBlockSize<15, 64>, BitWidthBlockSize<16, 64>,
+          BitWidthBlockSize<17, 64>, BitWidthBlockSize<18, 64>, BitWidthBlockSize<19, 64>, BitWidthBlockSize<20, 64>,
+          BitWidthBlockSize<21, 64>, BitWidthBlockSize<22, 64>, BitWidthBlockSize<23, 64>, BitWidthBlockSize<24, 64>,
+          BitWidthBlockSize<1, 128>, BitWidthBlockSize<2, 128>, BitWidthBlockSize<3, 128>, BitWidthBlockSize<4, 128>,
+          BitWidthBlockSize<5, 128>, BitWidthBlockSize<6, 128>, BitWidthBlockSize<7, 128>, BitWidthBlockSize<8, 128>,
+          BitWidthBlockSize<9, 128>, BitWidthBlockSize<10, 128>, BitWidthBlockSize<11, 128>, BitWidthBlockSize<12, 128>,
+          BitWidthBlockSize<13, 128>, BitWidthBlockSize<14, 128>, BitWidthBlockSize<15, 128>, BitWidthBlockSize<16, 128>,
+          BitWidthBlockSize<17, 128>, BitWidthBlockSize<18, 128>, BitWidthBlockSize<19, 128>, BitWidthBlockSize<20, 128>,
+          BitWidthBlockSize<21, 128>, BitWidthBlockSize<22, 128>, BitWidthBlockSize<23, 128>, BitWidthBlockSize<24, 128>,
+          BitWidthBlockSize<1, 256>, BitWidthBlockSize<2, 256>, BitWidthBlockSize<3, 256>, BitWidthBlockSize<4, 256>,
+          BitWidthBlockSize<5, 256>, BitWidthBlockSize<6, 256>, BitWidthBlockSize<7, 256>, BitWidthBlockSize<8, 256>,
+          BitWidthBlockSize<9, 256>, BitWidthBlockSize<10, 256>, BitWidthBlockSize<11, 256>, BitWidthBlockSize<12, 256>,
+          BitWidthBlockSize<13, 256>, BitWidthBlockSize<14, 256>, BitWidthBlockSize<15, 256>, BitWidthBlockSize<16, 256>,
+          BitWidthBlockSize<17, 256>, BitWidthBlockSize<18, 256>, BitWidthBlockSize<19, 256>, BitWidthBlockSize<20, 256>,
+          BitWidthBlockSize<21, 256>, BitWidthBlockSize<22, 256>, BitWidthBlockSize<23, 256>, BitWidthBlockSize<24, 256>,
+          BitWidthBlockSize<1, 512>, BitWidthBlockSize<2, 512>, BitWidthBlockSize<3, 512>, BitWidthBlockSize<4, 512>,
+          BitWidthBlockSize<5, 512>, BitWidthBlockSize<6, 512>, BitWidthBlockSize<7, 512>, BitWidthBlockSize<8, 512>,
+          BitWidthBlockSize<9, 512>, BitWidthBlockSize<10, 512>, BitWidthBlockSize<11, 512>, BitWidthBlockSize<12, 512>,
+          BitWidthBlockSize<13, 512>, BitWidthBlockSize<14, 512>, BitWidthBlockSize<15, 512>, BitWidthBlockSize<16, 512>,
+          BitWidthBlockSize<17, 512>, BitWidthBlockSize<18, 512>, BitWidthBlockSize<19, 512>, BitWidthBlockSize<20, 512>,
+          BitWidthBlockSize<21, 512>, BitWidthBlockSize<22, 512>, BitWidthBlockSize<23, 512>, BitWidthBlockSize<24, 512>>;
 
-template <typename BitWidthT>
+template <typename TestConfigT>
 class CompressionTest : public ::testing::Test {
 public:
-    static constexpr uint8_t BitWidth = BitWidthT::bit_width;
+    static constexpr uint8_t BitWidth   = TestConfigT::bit_width;
+    static constexpr uint32_t BlockSize = TestConfigT::block_size;
 
-    TestSet<BitWidth> testSet;
+    TestSet<BitWidth, float_t, BlockSize> testSet;
 
     CompressionTest() : testSet(1u << 10) {}
 };
 
-template <typename BitWidthT>
+template <typename TestConfigT>
 class DecompressionTest : public ::testing::Test {
 public:
-    static constexpr uint8_t BitWidth = BitWidthT::bit_width;
+    static constexpr uint8_t BitWidth   = TestConfigT::bit_width;
+    static constexpr uint32_t BlockSize = TestConfigT::block_size;
 
-    TestSet<BitWidth> testSet;
+    TestSet<BitWidth, float_t, BlockSize> testSet;
 
     DecompressionTest() : testSet(1u << 10) {}
 };
 
-template <typename BitWidthT>
+template <typename TestConfigT>
 class CompressionTest64 : public ::testing::Test {
 public:
-    static constexpr uint8_t BitWidth = BitWidthT::bit_width;
+    static constexpr uint8_t BitWidth   = TestConfigT::bit_width;
+    static constexpr uint32_t BlockSize = TestConfigT::block_size;
 
-    TestSet<BitWidth, double_t> testSet;
+    TestSet<BitWidth, double_t, BlockSize> testSet;
 
     CompressionTest64() : testSet(1u << 10) {}
 };
 
-template <typename BitWidthT>
+template <typename TestConfigT>
 class DecompressionTest64 : public ::testing::Test {
 public:
-    static constexpr uint8_t BitWidth = BitWidthT::bit_width;
+    static constexpr uint8_t BitWidth   = TestConfigT::bit_width;
+    static constexpr uint32_t BlockSize = TestConfigT::block_size;
 
-    TestSet<BitWidth, double_t> testSet;
+    TestSet<BitWidth, double_t, BlockSize> testSet;
 
     DecompressionTest64() : testSet(1u << 10) {}
 };
 
-TYPED_TEST_SUITE(CompressionTest, BitWidthTypes);
-TYPED_TEST_SUITE(DecompressionTest, BitWidthTypes);
-TYPED_TEST_SUITE(CompressionTest64, BitWidthTypes);
-TYPED_TEST_SUITE(DecompressionTest64, BitWidthTypes);
+TYPED_TEST_SUITE(CompressionTest, BitWidthBlockSizeTypes);
+TYPED_TEST_SUITE(DecompressionTest, BitWidthBlockSizeTypes);
+TYPED_TEST_SUITE(CompressionTest64, BitWidthBlockSizeTypes);
+TYPED_TEST_SUITE(DecompressionTest64, BitWidthBlockSizeTypes);
 
 #endif  // PERNIX_TESTSET_H

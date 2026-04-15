@@ -32,7 +32,7 @@ namespace pernix {
 /**
  * @brief Compress a single block of floating-point data into a bit-packed format using the specified bit width and scale.
  *
- * @tparam BIT_WIDTH bit width per value in the packed representation (8 to 16).
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the start of the input float values.
@@ -44,13 +44,13 @@ namespace pernix {
  * @note This function will dispatch to the best available implementation based on detected CPU features at compile time.
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output);
 
 /**
  * @brief Compress a single block of double-precision values into a bit-packed representation.
  *
- * @tparam BIT_WIDTH bit width per quantized value (8 to 16).
+ * @tparam BIT_WIDTH bit width per quantized value (1 to 24).
  * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the input block.
@@ -60,13 +60,13 @@ int compress_block(const float_t* __restrict__ input, float_t scale, uint8_t* __
  * @return int status code (0 for success).
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output);
 
 /**
  * @brief Compress multiple blocks of single-precision values.
  *
- * @tparam BIT_WIDTH bit width per quantized value (8 to 16).
+ * @tparam BIT_WIDTH bit width per quantized value (1 to 24).
  * @tparam BLOCK_SIZE size of each block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the first input value.
@@ -77,13 +77,13 @@ int compress_block(const double_t* __restrict__ input, double_t scale, uint8_t* 
  * @return int status code (0 for success).
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const float_t* __restrict__ input, float_t scale, uint8_t* __restrict__ output, uint32_t blocks);
 
 /**
  * @brief Compress multiple blocks of double-precision values.
  *
- * @tparam BIT_WIDTH bit width per quantized value (8 to 16).
+ * @tparam BIT_WIDTH bit width per quantized value (1 to 24).
  * @tparam BLOCK_SIZE size of each block in bytes (must be a multiple of 32).
  *
  * @param input pointer to the first input value.
@@ -94,7 +94,7 @@ int compress_blocks(const float_t* __restrict__ input, float_t scale, uint8_t* _
  * @return int status code (0 for success).
  */
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const double_t* __restrict__ input, double_t scale, uint8_t* __restrict__ output, uint32_t blocks);
 
 /**
@@ -171,25 +171,25 @@ int decompress_blocks(const uint8_t* __restrict__ input, double_t scale, double_
 #ifdef PERNIX_AVX2_ENABLED
 #ifdef PERNIX_AVX512_VBMI_ENABLED
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
     return mm512_compress_block_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
     return mm512_compress_block_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
     return mm512_compress_blocks_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
     return mm512_compress_blocks_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
 }
@@ -219,25 +219,25 @@ int decompress_blocks(const uint8_t* __restrict__ input, const double_t scale, d
 }
 #else
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
     return mm256_compress_block_avx2<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
     return mm256_compress_block_avx2<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
     return mm256_compress_blocks_avx2<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
     return mm256_compress_blocks_avx2<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
 }
@@ -268,25 +268,25 @@ int decompress_blocks(const uint8_t* __restrict__ input, const double_t scale, d
 #endif
 #else
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
     return compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_block(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
     return compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
     return compress_blocks_fallback<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
 }
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
-    requires(BIT_WIDTH >= 8 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int compress_blocks(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
     return compress_blocks_fallback<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
 }

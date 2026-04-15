@@ -11,19 +11,10 @@
 namespace pernix {
 
 namespace internal {
-template <uint32_t LANES>
-    requires(LANES <= 8)
-consteval __mmask8 lane_mask_8() {
-    if constexpr (LANES == 8) {
-        return static_cast<__mmask8>(0xFF);
-    } else {
-        return static_cast<__mmask8>((1u << LANES) - 1u);
-    }
-}
 
 template <uint8_t BIT_WIDTH, uint32_t REMAINING>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-static constexpr __mmask32 tail_store_mask() {
+static constexpr __mmask32 tail_load_mask() {
     constexpr uint32_t tail_bits  = REMAINING * BIT_WIDTH;
     constexpr uint32_t tail_bytes = (tail_bits + 7u) / 8u;
     return (1u << tail_bytes) - 1u;
@@ -113,7 +104,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi16(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+        const __m128i source   = _mm_maskz_loadu_epi16(tail_load_mask<BIT_WIDTH, remaining_elements>(), input);
         const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi8_epi32(unpacked);
@@ -225,7 +216,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         }
 
         if constexpr (remaining_elements > 0) {
-            const __m128i source   = _mm_maskz_loadu_epi16(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+            const __m128i source   = _mm_maskz_loadu_epi16(tail_load_mask<BIT_WIDTH, remaining_elements>(), input);
             const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512i converted1 = _mm512_cvtepi8_epi64(unpacked);
@@ -301,7 +292,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if (remaining_elements > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi8(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+        const __m128i source   = _mm_maskz_loadu_epi8(tail_load_mask<BIT_WIDTH, remaining_elements>(), input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m256i converted  = _mm256_cvtepi16_epi32(unpacked);
@@ -382,7 +373,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi8(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+        const __m128i source   = _mm_maskz_loadu_epi8(tail_load_mask<BIT_WIDTH, remaining_elements>(), input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi16_epi64(unpacked);
@@ -433,7 +424,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi8(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+        const __m256i source   = _mm256_maskz_loadu_epi8(tail_load_mask<BIT_WIDTH, remaining_elements>(), input);
         const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v256);
@@ -488,7 +479,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi8(tail_store_mask<BIT_WIDTH, remaining_elements>(), input);
+        const __m256i source   = _mm256_maskz_loadu_epi8(tail_load_mask<BIT_WIDTH, remaining_elements>(), input);
         const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi32_epi64(unpacked);

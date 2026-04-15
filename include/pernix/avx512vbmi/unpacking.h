@@ -62,40 +62,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
             const __m128i unpacked = _mm_abs_epi8(source);
             return unpacked;
         } else if constexpr (BIT_WIDTH == 2) {
-            // __m128i values_shift0       = input;
-            // __m128i values_shift2       = _mm_srli_epi16(values_shift0, 2);
-            // const __m128i values_shift4 = _mm_srli_epi16(values_shift0, 4);
-            // const __m128i values_shift6 = _mm_srli_epi16(values_shift0, 6);
-            //
-            // __m128i interleave_tmp = _mm_unpacklo_epi8(values_shift0, values_shift2);
-            // values_shift0          = _mm_unpackhi_epi8(values_shift0, values_shift2);
-            // values_shift0          = _mm_shuffle_i64x2(interleave_tmp, values_shift0, 0b00000000);
-            //
-            // interleave_tmp = _mm_unpacklo_epi8(values_shift4, values_shift6);
-            // values_shift2  = _mm_unpackhi_epi8(values_shift4, values_shift6);
-            // values_shift2  = _mm_shuffle_i64x2(interleave_tmp, values_shift2, 0b00000000);
-            //
-            // interleave_tmp = _mm_unpacklo_epi16(values_shift0, values_shift2);
-            // values_shift0  = _mm_unpackhi_epi16(values_shift0, values_shift2);
-            // values_shift0  = _mm_shuffle_i64x2(interleave_tmp, values_shift0, 0x88);
-            // values_shift0  = _mm_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
-            //
-            // values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0303));
-            //
-            // return values_shift0;
             return input;
         } else if constexpr (BIT_WIDTH == 4) {
-            // __m128i values_shift0       = input;
-            // const __m128i values_shift2 = _mm_srli_epi16(values_shift0, 4);
-            //
-            // __m128i interleave_tmp = _mm_unpacklo_epi8(values_shift0, values_shift2);
-            // values_shift0          = _mm_unpackhi_epi8(values_shift0, values_shift2);
-            // values_shift0          = _mm_shuffle_i64x2(interleave_tmp, values_shift0, 0x44);
-            // values_shift0          = _mm_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
-            //
-            // values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0F0F));
-            //
-            // return values_shift0;
             return input;
         } else {
             using tables = unpack_tables_avx512_8_new<BIT_WIDTH, __m128i>;
@@ -125,7 +93,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 [[gnu::always_inline]] inline __m128i mm_unpack_epi16_avx512vbmi_9to16(const __m128i& input) {
-    if (BIT_WIDTH == 16) {
+    if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
         using tables = unpack_tables_avx512_16_new<BIT_WIDTH, __m128i>;
@@ -288,7 +256,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 [[gnu::always_inline]] inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(const __m256i& input) {
-    if (BIT_WIDTH == 16) {
+    if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
         using tables = unpack_tables_avx512_16_new<BIT_WIDTH, __m256i>;
@@ -452,7 +420,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 [[gnu::always_inline]] inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(const __m512i& input) {
-    if (BIT_WIDTH == 16) {
+    if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
         using tables = unpack_tables_avx512_16_new<BIT_WIDTH, __m512i>;

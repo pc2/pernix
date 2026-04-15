@@ -71,7 +71,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             input += 8 * BIT_WIDTH;
         }
     }
-
+    
     if constexpr (iterations_32 > 0) {
         const __m256i source   = _mm256_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
         const __m256i unpacked = m256::mm256_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
@@ -291,7 +291,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         input += BIT_WIDTH;
     }
 
-    if (remaining_elements > 0) {
+    if constexpr (remaining_elements > 0) {
         const __m128i source   = _mm_maskz_loadu_epi8(tail_load_mask<BIT_WIDTH, remaining_elements>(), input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
@@ -565,7 +565,7 @@ int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const 
     const uint8_t* block_input = input;
     float_t* block_output      = output;
 
-    for (uint32_t block = 0; block < blocks; block++) {
+    for (uint32_t block = 0; block < blocks; ++block) {
         mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
         block_input += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
@@ -592,7 +592,7 @@ int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const 
     const uint8_t* block_input = input;
     double_t* block_output     = output;
 
-    for (uint32_t block = 0; block < blocks; block++) {
+    for (uint32_t block = 0; block < blocks; ++block) {
         mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
         block_input += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;

@@ -94,7 +94,7 @@ template <uint8_t BIT_WIDTH>
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-[[gnu::always_inline]] inline __m128i mm_pack_epi32_avx512_17to24(const __m128i& input) {
+[[gnu::always_inline]] inline __m128i mm_pack_epi32_avx512vbmi_17to24(const __m128i& input) {
     using tables = pack_tables_avx512_24<BIT_WIDTH, __m128i>;
 
     const __m128i maskv  = _mm_set1_epi32(static_cast<int32_t>((1u << BIT_WIDTH) - 1u));
@@ -202,7 +202,7 @@ template <uint8_t BIT_WIDTH>
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-[[gnu::always_inline]] inline __m256i mm256_pack_epi32_avx512_17to24(const __m256i& input) {
+[[gnu::always_inline]] inline __m256i mm256_pack_epi32_avx512vbmi_17to24(const __m256i& input) {
     using tables = pack_tables_avx512_24<BIT_WIDTH, __m256i>;
 
     const __m256i maskv  = _mm256_set1_epi32(static_cast<int32_t>((1u << BIT_WIDTH) - 1u));
@@ -310,7 +310,7 @@ template <uint8_t BIT_WIDTH>
  */
 template <uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-[[gnu::always_inline]] inline __m512i mm512_pack_epi32_avx512_17to24(const __m512i& input) {
+[[gnu::always_inline]] inline __m512i mm512_pack_epi32_avx512vbmi_17to24(const __m512i& input) {
     using tables = pack_tables_avx512_24<BIT_WIDTH, __m512i>;
 
     const __m512i maskv  = _mm512_set1_epi32(static_cast<int32_t>((1u << BIT_WIDTH) - 1u));

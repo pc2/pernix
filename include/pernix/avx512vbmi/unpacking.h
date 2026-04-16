@@ -96,7 +96,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
             return values_shift0;
         } else {
-            using tables = unpack_tables_avx512_8_new<BIT_WIDTH, __m128i>;
+            using tables = unpack_tables_avx512_8<BIT_WIDTH, __m128i>;
 
             const __m128i permuted1 = _mm_permutexvar_epi8(tables::get_permute1(), input);
             const __m128i permuted2 = _mm_permutexvar_epi8(tables::get_permute2(), input);
@@ -126,7 +126,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
-        using tables = unpack_tables_avx512_16_new<BIT_WIDTH, __m128i>;
+        using tables = unpack_tables_avx512_16<BIT_WIDTH, __m128i>;
 
         const __m128i permuted = _mm_permutexvar_epi8(tables::get_permute1(), input);
 
@@ -259,7 +259,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
             return values_shift0;
         } else {
-            using tables = unpack_tables_avx512_8_new<BIT_WIDTH, __m256i>;
+            using tables = unpack_tables_avx512_8<BIT_WIDTH, __m256i>;
 
             const __m256i permuted1 = _mm256_permutexvar_epi8(tables::get_permute1(), input);
             const __m256i permuted2 = _mm256_permutexvar_epi8(tables::get_permute2(), input);
@@ -289,7 +289,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
-        using tables = unpack_tables_avx512_16_new<BIT_WIDTH, __m256i>;
+        using tables = unpack_tables_avx512_16<BIT_WIDTH, __m256i>;
 
         const __m256i permuted = _mm256_permutexvar_epi8(tables::get_permute1(), input);
 
@@ -423,7 +423,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
             return values_shift0;
         } else {
-            using tables = unpack_tables_avx512_8_new<BIT_WIDTH, __m512i>;
+            using tables = unpack_tables_avx512_8<BIT_WIDTH, __m512i>;
 
             const __m512i permuted1 = _mm512_permutexvar_epi8(tables::get_permute1(), input);
             const __m512i permuted2 = _mm512_permutexvar_epi8(tables::get_permute2(), input);
@@ -453,7 +453,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
-        using tables = unpack_tables_avx512_16_new<BIT_WIDTH, __m512i>;
+        using tables = unpack_tables_avx512_16<BIT_WIDTH, __m512i>;
 
         const __m512i permuted = _mm512_permutexvar_epi8(tables::get_permute1(), input);
         __m512i shifted        = _mm512_srlv_epi16(permuted, tables::get_shift1());

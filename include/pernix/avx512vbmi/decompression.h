@@ -1,12 +1,11 @@
 #ifndef PERNIX_AVX512VBMI_DECOMPRESSION_H
 #define PERNIX_AVX512VBMI_DECOMPRESSION_H
 
-#include <immintrin.h>
 #include <pernix/avx2/decompression.h>
 #include <pernix/avx512vbmi/unpacking.h>
+#include <pernix/simd_compat.h>
 
 #include <cmath>
-#include <cstdint>
 
 namespace pernix {
 

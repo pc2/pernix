@@ -1,8 +1,9 @@
 #ifndef PERNIX_FALLBACK_DECOMPRESSION_H
 #define PERNIX_FALLBACK_DECOMPRESSION_H
 
+#include <pernix/simd_compat.h>
+
 #include <cmath>
-#include <cstdint>
 #include <limits>
 #include <span>
 #include <type_traits>

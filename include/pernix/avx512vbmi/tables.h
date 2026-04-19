@@ -1,11 +1,10 @@
 #ifndef PERNIX_AVX512VBMI_TABLES_H
 #define PERNIX_AVX512VBMI_TABLES_H
 
-#include <immintrin.h>
+#include <pernix/simd_compat.h>
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <ranges>
 #include <tuple>
 

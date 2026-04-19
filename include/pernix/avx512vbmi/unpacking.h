@@ -1,8 +1,8 @@
 #ifndef PERNIX_AVX512VBMI_UNPACKING_H
 #define PERNIX_AVX512VBMI_UNPACKING_H
 
-#include <immintrin.h>
 #include <pernix/avx512vbmi/tables.h>
+#include <pernix/simd_compat.h>
 
 namespace pernix::internal {
 
@@ -10,54 +10,56 @@ namespace m128 {
 
 constexpr __mmask16 kAlternateByteMask16 = 0xAAAAULL;
 
-[[gnu::always_inline]] inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i count) {
+__always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi16(0x00ff);
     const __m128i low_half  = _mm_srlv_epi16(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
     const __m128i high_half = _mm_srlv_epi16(a, _mm_srli_epi16(count, 8));
     return _mm_mask_blend_epi8(kAlternateByteMask16, low_half, high_half);
 }
 
-[[gnu::always_inline]] inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
+__always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi16(0xff00);
     const __m128i low_half  = _mm_sllv_epi16(a, _mm_andnot_si128(mask, count));
     const __m128i high_half = _mm_sllv_epi16(_mm_and_si128(mask, a), _mm_srli_epi16(count, 8));
     return _mm_mask_blend_epi8(kAlternateByteMask16, low_half, high_half);
 }
 
-[[gnu::always_inline]] inline static __m128i _mm_slli_epi8(const __m128i a, const int8_t imm8) {
+__always_inline static __m128i _mm_slli_epi8(const __m128i a, const int8_t imm8) {
     return _mm_sllv_epi8(a, _mm_set1_epi8(imm8));
 }
 
-[[gnu::always_inline]] inline static __m128i _mm_srli_epi8(const __m128i a, const int8_t imm8) {
+__always_inline static __m128i _mm_srli_epi8(const __m128i a, const int imm8) {
     const __m128i lo_mask = _mm_set1_epi16(0x00ff);
     const __m128i hi_mask = _mm_set1_epi16(0xff00);
+    const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
-    const __m128i lo = _mm_srli_epi16(_mm_and_si128(a, lo_mask), imm8);
-    const __m128i hi = _mm_and_si128(_mm_srli_epi16(a, imm8), hi_mask);
+    const __m128i lo = _mm_srl_epi16(_mm_and_si128(a, lo_mask), shift);
+    const __m128i hi = _mm_and_si128(_mm_srl_epi16(a, shift), hi_mask);
 
     return _mm_mask_blend_epi8(kAlternateByteMask16, lo, hi);
 }
 
-[[gnu::always_inline]] inline static __m128i _mm_srai_epi8(const __m128i a, const int8_t imm8) {
+__always_inline static __m128i _mm_srai_epi8(const __m128i a, const int8_t imm8) {
     const __m128i lo_mask = _mm_set1_epi16(0x00ff);
     const __m128i hi_mask = _mm_set1_epi16(0xff00);
+    const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
-    const __m128i hi = _mm_and_si128(_mm_srai_epi16(a, imm8), hi_mask);
+    const __m128i hi = _mm_and_si128(_mm_sra_epi16(a, shift), hi_mask);
 
     const __m128i lo_as_hi = _mm_slli_epi16(_mm_and_si128(a, lo_mask), 8);
-    const __m128i lo       = _mm_and_si128(_mm_srli_epi16(_mm_srai_epi16(lo_as_hi, imm8), 8), lo_mask);
+    const __m128i lo       = _mm_and_si128(_mm_srli_epi16(_mm_sra_epi16(lo_as_hi, shift), 8), lo_mask);
 
     return _mm_mask_blend_epi8(kAlternateByteMask16, lo, hi);
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-[[gnu::always_inline]] inline __m128i mm_unpack_epi8_avx512vbmi_1to8(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(const __m128i& input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
         if constexpr (BIT_WIDTH == 1) {
-            const auto value       = static_cast<__mmask64>(_mm_cvtsi128_si64(input));
+            const auto value       = static_cast<__mmask16>(_mm_cvtsi128_si64(input));
             const __m128i source   = _mm_movm_epi8(value);
             const __m128i unpacked = _mm_abs_epi8(source);
             return unpacked;
@@ -122,7 +124,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-[[gnu::always_inline]] inline __m128i mm_unpack_epi16_avx512vbmi_9to16(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi16_avx512vbmi_9to16(const __m128i& input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
@@ -152,7 +154,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-[[gnu::always_inline]] inline __m128i mm_unpack_epi32_avx512vbmi_17to24(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(const __m128i& input) {
     using tables = unpack_tables_avx512_24<BIT_WIDTH, __m128i>;
 
     const __m128i permuted = _mm_permutexvar_epi8(tables::get_permute(), input);
@@ -173,54 +175,56 @@ namespace m256 {
 
 constexpr __mmask32 kAlternateByteMask32 = 0xAAAAAAAAULL;
 
-[[gnu::always_inline]] inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i count) {
+__always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i count) {
     const __m256i mask      = _mm256_set1_epi16(0x00ff);
     const __m256i low_half  = _mm256_srlv_epi16(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
     const __m256i high_half = _mm256_srlv_epi16(a, _mm256_srli_epi16(count, 8));
     return _mm256_mask_blend_epi8(kAlternateByteMask32, low_half, high_half);
 }
 
-[[gnu::always_inline]] inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
+__always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
     const __m256i mask      = _mm256_set1_epi16(0xff00);
     const __m256i low_half  = _mm256_sllv_epi16(a, _mm256_andnot_si256(mask, count));
     const __m256i high_half = _mm256_sllv_epi16(_mm256_and_si256(mask, a), _mm256_srli_epi16(count, 8));
     return _mm256_mask_blend_epi8(kAlternateByteMask32, low_half, high_half);
 }
 
-[[gnu::always_inline]] inline static __m256i _mm256_slli_epi8(const __m256i a, const int8_t imm8) {
+__always_inline static __m256i _mm256_slli_epi8(const __m256i a, const int8_t imm8) {
     return _mm256_sllv_epi8(a, _mm256_set1_epi8(imm8));
 }
 
-[[gnu::always_inline]] inline static __m256i _mm256_srli_epi8(const __m256i a, const int8_t imm8) {
+__always_inline static __m256i _mm256_srli_epi8(const __m256i a, const int8_t imm8) {
     const __m256i lo_mask = _mm256_set1_epi16(0x00ff);
     const __m256i hi_mask = _mm256_set1_epi16(0xff00);
+    const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
-    const __m256i lo = _mm256_srli_epi16(_mm256_and_si256(a, lo_mask), imm8);
-    const __m256i hi = _mm256_and_si256(_mm256_srli_epi16(a, imm8), hi_mask);
+    const __m256i lo = _mm256_srl_epi16(_mm256_and_si256(a, lo_mask), shift);
+    const __m256i hi = _mm256_and_si256(_mm256_srl_epi16(a, shift), hi_mask);
 
     return _mm256_mask_blend_epi8(kAlternateByteMask32, lo, hi);
 }
 
-[[gnu::always_inline]] inline static __m256i _mm256_srai_epi8(const __m256i a, const int8_t imm8) {
+__always_inline static __m256i _mm256_srai_epi8(const __m256i a, const int8_t imm8) {
     const __m256i lo_mask = _mm256_set1_epi16(0x00ff);
     const __m256i hi_mask = _mm256_set1_epi16(0xff00);
+    const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
-    const __m256i hi = _mm256_and_si256(_mm256_srai_epi16(a, imm8), hi_mask);
+    const __m256i hi = _mm256_and_si256(_mm256_sra_epi16(a, shift), hi_mask);
 
     const __m256i lo_as_hi = _mm256_slli_epi16(_mm256_and_si256(a, lo_mask), 8);
-    const __m256i lo       = _mm256_and_si256(_mm256_srli_epi16(_mm256_srai_epi16(lo_as_hi, imm8), 8), lo_mask);
+    const __m256i lo       = _mm256_and_si256(_mm256_srli_epi16(_mm256_sra_epi16(lo_as_hi, shift), 8), lo_mask);
 
     return _mm256_mask_blend_epi8(kAlternateByteMask32, lo, hi);
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-[[gnu::always_inline]] inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
         if constexpr (BIT_WIDTH == 1) {
-            const auto value       = static_cast<__mmask64>(_mm_cvtsi128_si64(_mm256_castsi256_si128(input)));
+            const auto value       = static_cast<__mmask32>(_mm_cvtsi128_si64(_mm256_castsi256_si128(input)));
             const __m256i source   = _mm256_movm_epi8(value);
             const __m256i unpacked = _mm256_abs_epi8(source);
             return unpacked;
@@ -285,7 +289,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-[[gnu::always_inline]] inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(const __m256i& input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
@@ -315,7 +319,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-[[gnu::always_inline]] inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(const __m256i& input) {
     using tables = unpack_tables_avx512_24<BIT_WIDTH, __m256i>;
 
     const __m256i permuted = _mm256_permutexvar_epi8(tables::get_permute(), input);
@@ -337,49 +341,51 @@ namespace m512 {
 
 constexpr __mmask64 kAlternateByteMask64 = 0xAAAAAAAAAAAAAAAAULL;
 
-[[gnu::always_inline]] inline static __m512i _mm512_srlv_epi8(const __m512i a, const __m512i count) {
+__always_inline static __m512i _mm512_srlv_epi8(const __m512i a, const __m512i count) {
     const __m512i mask      = _mm512_set1_epi16(0x00ff);
     const __m512i low_half  = _mm512_srlv_epi16(_mm512_and_si512(mask, a), _mm512_and_si512(mask, count));
     const __m512i high_half = _mm512_srlv_epi16(a, _mm512_srli_epi16(count, 8));
     return _mm512_mask_blend_epi8(kAlternateByteMask64, low_half, high_half);
 }
 
-[[gnu::always_inline]] inline static __m512i _mm512_sllv_epi8(const __m512i a, const __m512i count) {
+__always_inline static __m512i _mm512_sllv_epi8(const __m512i a, const __m512i count) {
     const __m512i mask      = _mm512_set1_epi16(0xff00);
     const __m512i low_half  = _mm512_sllv_epi16(a, _mm512_andnot_si512(mask, count));
     const __m512i high_half = _mm512_sllv_epi16(_mm512_and_si512(mask, a), _mm512_srli_epi16(count, 8));
     return _mm512_mask_blend_epi8(kAlternateByteMask64, low_half, high_half);
 }
 
-[[gnu::always_inline]] inline static __m512i _mm512_slli_epi8(const __m512i a, const int8_t imm8) {
+__always_inline static __m512i _mm512_slli_epi8(const __m512i a, const int8_t imm8) {
     return _mm512_sllv_epi8(a, _mm512_set1_epi8(imm8));
 }
 
-[[gnu::always_inline]] inline static __m512i _mm512_srli_epi8(const __m512i a, const int8_t imm8) {
+__always_inline static __m512i _mm512_srli_epi8(const __m512i a, const int8_t imm8) {
     const __m512i lo_mask = _mm512_set1_epi16(0x00ff);
     const __m512i hi_mask = _mm512_set1_epi16(0xff00);
+    const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
-    const __m512i lo = _mm512_srli_epi16(_mm512_and_si512(a, lo_mask), imm8);
-    const __m512i hi = _mm512_and_si512(_mm512_srli_epi16(a, imm8), hi_mask);
+    const __m512i lo = _mm512_srl_epi16(_mm512_and_si512(a, lo_mask), shift);
+    const __m512i hi = _mm512_and_si512(_mm512_srl_epi16(a, shift), hi_mask);
 
     return _mm512_mask_blend_epi8(kAlternateByteMask64, lo, hi);
 }
 
-[[gnu::always_inline]] inline static __m512i _mm512_srai_epi8(const __m512i a, const int8_t imm8) {
+__always_inline static __m512i _mm512_srai_epi8(const __m512i a, const int8_t imm8) {
     const __m512i lo_mask = _mm512_set1_epi16(0x00ff);
     const __m512i hi_mask = _mm512_set1_epi16(0xff00);
+    const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
-    const __m512i hi = _mm512_and_si512(_mm512_srai_epi16(a, imm8), hi_mask);
+    const __m512i hi = _mm512_and_si512(_mm512_sra_epi16(a, shift), hi_mask);
 
     const __m512i lo_as_hi = _mm512_slli_epi16(_mm512_and_si512(a, lo_mask), 8);
-    const __m512i lo       = _mm512_and_si512(_mm512_srli_epi16(_mm512_srai_epi16(lo_as_hi, imm8), 8), lo_mask);
+    const __m512i lo       = _mm512_and_si512(_mm512_srli_epi16(_mm512_sra_epi16(lo_as_hi, shift), 8), lo_mask);
 
     return _mm512_mask_blend_epi8(kAlternateByteMask64, lo, hi);
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-[[gnu::always_inline]] inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) {
+__always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
@@ -449,7 +455,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-[[gnu::always_inline]] inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(const __m512i& input) {
+__always_inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(const __m512i& input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
@@ -478,7 +484,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-[[gnu::always_inline]] inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(const __m512i& input) {
+__always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(const __m512i& input) {
     using tables = unpack_tables_avx512_24<BIT_WIDTH, __m512i>;
 
     const __m512i permuted = _mm512_permutexvar_epi8(tables::get_permute(), input);

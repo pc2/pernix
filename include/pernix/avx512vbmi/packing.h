@@ -2,6 +2,7 @@
 #define PERNIX_AVX512VBMI_PACKING_H
 
 #include <pernix/avx512vbmi/tables.h>
+#include <pernix/simd_compat.h>
 
 namespace pernix::internal {
 

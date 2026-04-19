@@ -1,10 +1,9 @@
 #ifndef PERNIX_AVX2_TABLES_H
 #define PERNIX_AVX2_TABLES_H
 
-#include <immintrin.h>
+#include <pernix/simd_compat.h>
 
 #include <array>
-#include <cstdint>
 #include <type_traits>
 
 namespace pernix::internal {

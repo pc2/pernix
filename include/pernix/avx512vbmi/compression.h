@@ -3,8 +3,7 @@
 
 #include <pernix/avx2/compression.h>
 #include <pernix/avx512vbmi/packing.h>
-
-#include <cstring>
+#include <pernix/simd_compat.h>
 
 namespace pernix {
 

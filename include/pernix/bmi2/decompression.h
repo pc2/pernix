@@ -1,14 +1,11 @@
 #ifndef PERNIX_BMI2_DECOMPRESSION_H
 #define PERNIX_BMI2_DECOMPRESSION_H
 
-#include <immintrin.h>
 #include <pernix/avx2/decompression.h>
+#include <pernix/simd_compat.h>
 
 #include <cmath>
-#include <cstdint>
-#include <cstring>
 #include <limits>
-#include <tuple>
 
 namespace pernix {
 

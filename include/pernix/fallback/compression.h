@@ -1,9 +1,10 @@
 #ifndef PERNIX_FALLBACK_COMPRESSION_H
 #define PERNIX_FALLBACK_COMPRESSION_H
 
+#include <pernix/simd_compat.h>
+
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <limits>
 #include <span>
 #include <type_traits>

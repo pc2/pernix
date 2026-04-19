@@ -1,8 +1,8 @@
 #ifndef PERNIX_AVX2_DECOMPRESSION_H
 #define PERNIX_AVX2_DECOMPRESSION_H
 
-#include <immintrin.h>
 #include <pernix/avx2/tables.h>
+#include <pernix/simd_compat.h>
 
 #include <cmath>
 #include <cstdint>
@@ -106,6 +106,8 @@ __m128i mm_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
+    using unpack_table = unpack_tables_avx2<BIT_WIDTH, __m128i>;
+
     __m128i source;
     if constexpr (BIT_WIDTH <= 8) {
         source = _mm_loadu_si32(input);
@@ -114,10 +116,10 @@ __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     } else {
         source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(input));
     }
-    const __m128i shuffled = _mm_shuffle_epi8(source, unpack_tables_avx2<BIT_WIDTH, __m128i>::get_shuffle());
+    const __m128i shuffled = _mm_shuffle_epi8(source, unpack_table::get_shuffle());
 
     constexpr uint16_t shift = 32 - BIT_WIDTH;
-    __m128i shifted          = _mm_sllv_epi32(shuffled, unpack_tables_avx2<BIT_WIDTH, __m128i>::get_shift());
+    __m128i shifted          = _mm_sllv_epi32(shuffled, unpack_table::get_shift());
     if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
         shifted = _mm_srai_epi32(shifted, shift);
     } else {
@@ -156,6 +158,8 @@ __m256i mm256_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
+    using unpack_table = unpack_tables_avx2<BIT_WIDTH, __m256i>;
+
     __m256i source;
     if constexpr (BIT_WIDTH <= 8) {
         source = _mm256_castsi128_si256(_mm_loadu_si64(input));
@@ -164,11 +168,11 @@ __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
     } else {
         source = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(input));
     }
-    const __m256i permuted = _mm256_permutevar8x32_epi32(source, unpack_tables_avx2<BIT_WIDTH, __m256i>::get_permute());
-    const __m256i shuffled = _mm256_shuffle_epi8(permuted, unpack_tables_avx2<BIT_WIDTH, __m256i>::get_shuffle());
+    const __m256i permuted = _mm256_permutevar8x32_epi32(source, unpack_table::get_permute());
+    const __m256i shuffled = _mm256_shuffle_epi8(permuted, unpack_table::get_shuffle());
 
     constexpr uint16_t shift = 32 - BIT_WIDTH;
-    __m256i shifted          = _mm256_sllv_epi32(shuffled, unpack_tables_avx2<BIT_WIDTH, __m256i>::get_shift());
+    __m256i shifted          = _mm256_sllv_epi32(shuffled, unpack_table::get_shift());
     if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
         shifted = _mm256_srai_epi32(shifted, shift);
     } else {

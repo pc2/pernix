@@ -14,6 +14,12 @@ set_target_properties(pernix PROPERTIES
 target_include_directories(pernix PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 )
+
+if (PERNIX_USE_SIMDE)
+    target_link_libraries(pernix PUBLIC simde::simde)
+    target_compile_definitions(pernix PUBLIC PERNIX_USE_SIMDE=1)
+endif ()
+
 set_target_properties(pernix PROPERTIES LINKER_LANGUAGE CXX)
 
 configure_file(

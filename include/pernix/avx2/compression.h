@@ -1,9 +1,9 @@
 #ifndef PERNIX_AVX2_COMPRESSION_H
 #define PERNIX_AVX2_COMPRESSION_H
 
-#include <immintrin.h>
 #include <pernix/avx2/tables.h>
 #include <pernix/fallback/compression.h>
+#include <pernix/simd_compat.h>
 
 #include <cmath>
 #include <cstdint>
@@ -63,103 +63,103 @@ __always_inline __m128i mm256_quantize_pd_epi32(const __m256d& input, const __m2
     return _mm256_cvtpd_epi32(scaled);
 }
 
-/**
- * @brief Emulate per-16-bit left shifts on AVX2.
- *
- * @param a source values.
- * @param count per-lane shift amounts.
- * @return __m128i shifted values.
- */
-__always_inline static __m128i _mm_sllv_epi16(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi32(0xffff0000);
-    const __m128i low_half  = _mm_sllv_epi32(a, _mm_andnot_si128(mask, count));
-    const __m128i high_half = _mm_sllv_epi32(_mm_and_si128(mask, a), _mm_srli_epi32(count, 16));
-    return _mm_blend_epi16(low_half, high_half, 0xaa);
-}
-
-/**
- * @brief Emulate per-16-bit right shifts on AVX2.
- */
-__always_inline static __m128i _mm_srlv_epi16(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi32(0x0000ffff);
-    const __m128i low_half  = _mm_srlv_epi32(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
-    const __m128i high_half = _mm_srlv_epi32(a, _mm_srli_epi32(count, 16));
-    return _mm_blend_epi16(low_half, high_half, 0xaa);
-}
-
-/**
- * @brief Emulate per-16-bit left shifts on 256-bit AVX2 vectors.
- */
-__always_inline static __m256i _mm256_sllv_epi16(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi32(0xffff0000);
-    const __m256i low_half  = _mm256_sllv_epi32(a, _mm256_andnot_si256(mask, count));
-    const __m256i high_half = _mm256_sllv_epi32(_mm256_and_si256(mask, a), _mm256_srli_epi32(count, 16));
-    return _mm256_blend_epi16(low_half, high_half, 0xaa);
-}
-
-/**
- * @brief Emulate per-16-bit right shifts on 256-bit AVX2 vectors.
- */
-__always_inline static __m256i _mm256_srlv_epi16(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi32(0x0000ffff);
-    const __m256i low_half  = _mm256_srlv_epi32(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
-    const __m256i high_half = _mm256_srlv_epi32(a, _mm256_srli_epi32(count, 16));
-    return _mm256_blend_epi16(low_half, high_half, 0xaa);
-}
-
-/**
- * @brief Blend 8-bit lanes by expanding a scalar mask value.
- */
-__always_inline static __m128i mm_blend_epi8(const __m128i X, const __m128i Y, const int8_t M) {
-    return _mm_blendv_epi8(X, Y, _mm_set1_epi8(M));
-}
-
-/**
- * @brief Blend 8-bit lanes in 256-bit vectors by expanding a scalar mask value.
- */
-__always_inline static __m256i mm256_blend_epi8(const __m256i X, const __m256i Y, const int8_t M) {
-    return _mm256_blendv_epi8(X, Y, _mm256_set1_epi8(M));
-}
-
-/**
- * @brief Emulate per-byte left shifts on 128-bit vectors.
- */
-__always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi16(0xff00);
-    const __m128i low_half  = _mm_sllv_epi16(a, _mm_andnot_si128(mask, count));
-    const __m128i high_half = _mm_sllv_epi16(_mm_and_si128(mask, a), _mm_srli_epi16(count, 8));
-    return mm_blend_epi8(low_half, high_half, 0xaa);
-}
-
-/**
- * @brief Emulate per-byte right shifts on 128-bit vectors.
- */
-__always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi16(0x00ff);
-    const __m128i low_half  = _mm_srlv_epi16(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
-    const __m128i high_half = _mm_srlv_epi16(a, _mm_srli_epi16(count, 8));
-    return mm_blend_epi8(low_half, high_half, 0xaa);
-}
-
-/**
- * @brief Emulate per-byte left shifts on 256-bit vectors.
- */
-__always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi16(0xff00);
-    const __m256i low_half  = _mm256_sllv_epi16(a, _mm256_andnot_si256(mask, count));
-    const __m256i high_half = _mm256_sllv_epi16(_mm256_and_si256(mask, a), _mm256_srli_epi16(count, 8));
-    return mm256_blend_epi8(low_half, high_half, 0xaa);
-}
-
-/**
- * @brief Emulate per-byte right shifts on 256-bit vectors.
- */
-__always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi16(0x00ff);
-    const __m256i low_half  = _mm256_srlv_epi16(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
-    const __m256i high_half = _mm256_srlv_epi16(a, _mm256_srli_epi16(count, 8));
-    return mm256_blend_epi8(low_half, high_half, 0xaa);
-}
+// /**
+//  * @brief Emulate per-16-bit left shifts on AVX2.
+//  *
+//  * @param a source values.
+//  * @param count per-lane shift amounts.
+//  * @return __m128i shifted values.
+//  */
+// __always_inline static __m128i _mm_sllv_epi16(const __m128i a, const __m128i count) {
+//     const __m128i mask      = _mm_set1_epi32(0xffff0000);
+//     const __m128i low_half  = _mm_sllv_epi32(a, _mm_andnot_si128(mask, count));
+//     const __m128i high_half = _mm_sllv_epi32(_mm_and_si128(mask, a), _mm_srli_epi32(count, 16));
+//     return _mm_blend_epi16(low_half, high_half, 0xaa);
+// }
+//
+// /**
+//  * @brief Emulate per-16-bit right shifts on AVX2.
+//  */
+// __always_inline static __m128i _mm_srlv_epi16(const __m128i a, const __m128i count) {
+//     const __m128i mask      = _mm_set1_epi32(0x0000ffff);
+//     const __m128i low_half  = _mm_srlv_epi32(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
+//     const __m128i high_half = _mm_srlv_epi32(a, _mm_srli_epi32(count, 16));
+//     return _mm_blend_epi16(low_half, high_half, 0xaa);
+// }
+//
+// /**
+//  * @brief Emulate per-16-bit left shifts on 256-bit AVX2 vectors.
+//  */
+// __always_inline static __m256i _mm256_sllv_epi16(const __m256i a, const __m256i count) {
+//     const __m256i mask      = _mm256_set1_epi32(0xffff0000);
+//     const __m256i low_half  = _mm256_sllv_epi32(a, _mm256_andnot_si256(mask, count));
+//     const __m256i high_half = _mm256_sllv_epi32(_mm256_and_si256(mask, a), _mm256_srli_epi32(count, 16));
+//     return _mm256_blend_epi16(low_half, high_half, 0xaa);
+// }
+//
+// /**
+//  * @brief Emulate per-16-bit right shifts on 256-bit AVX2 vectors.
+//  */
+// __always_inline static __m256i _mm256_srlv_epi16(const __m256i a, const __m256i count) {
+//     const __m256i mask      = _mm256_set1_epi32(0x0000ffff);
+//     const __m256i low_half  = _mm256_srlv_epi32(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
+//     const __m256i high_half = _mm256_srlv_epi32(a, _mm256_srli_epi32(count, 16));
+//     return _mm256_blend_epi16(low_half, high_half, 0xaa);
+// }
+//
+// /**
+//  * @brief Blend 8-bit lanes by expanding a scalar mask value.
+//  */
+// __always_inline static __m128i mm_blend_epi8(const __m128i X, const __m128i Y, const int8_t M) {
+//     return _mm_blendv_epi8(X, Y, _mm_set1_epi8(M));
+// }
+//
+// /**
+//  * @brief Blend 8-bit lanes in 256-bit vectors by expanding a scalar mask value.
+//  */
+// __always_inline static __m256i mm256_blend_epi8(const __m256i X, const __m256i Y, const int8_t M) {
+//     return _mm256_blendv_epi8(X, Y, _mm256_set1_epi8(M));
+// }
+//
+// /**
+//  * @brief Emulate per-byte left shifts on 128-bit vectors.
+//  */
+// __always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
+//     const __m128i mask      = _mm_set1_epi16(0xff00);
+//     const __m128i low_half  = _mm_sllv_epi16(a, _mm_andnot_si128(mask, count));
+//     const __m128i high_half = _mm_sllv_epi16(_mm_and_si128(mask, a), _mm_srli_epi16(count, 8));
+//     return mm_blend_epi8(low_half, high_half, 0xaa);
+// }
+//
+// /**
+//  * @brief Emulate per-byte right shifts on 128-bit vectors.
+//  */
+// __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i count) {
+//     const __m128i mask      = _mm_set1_epi16(0x00ff);
+//     const __m128i low_half  = _mm_srlv_epi16(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
+//     const __m128i high_half = _mm_srlv_epi16(a, _mm_srli_epi16(count, 8));
+//     return mm_blend_epi8(low_half, high_half, 0xaa);
+// }
+//
+// /**
+//  * @brief Emulate per-byte left shifts on 256-bit vectors.
+//  */
+// __always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
+//     const __m256i mask      = _mm256_set1_epi16(0xff00);
+//     const __m256i low_half  = _mm256_sllv_epi16(a, _mm256_andnot_si256(mask, count));
+//     const __m256i high_half = _mm256_sllv_epi16(_mm256_and_si256(mask, a), _mm256_srli_epi16(count, 8));
+//     return mm256_blend_epi8(low_half, high_half, 0xaa);
+// }
+//
+// /**
+//  * @brief Emulate per-byte right shifts on 256-bit vectors.
+//  */
+// __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i count) {
+//     const __m256i mask      = _mm256_set1_epi16(0x00ff);
+//     const __m256i low_half  = _mm256_srlv_epi16(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
+//     const __m256i high_half = _mm256_srlv_epi16(a, _mm256_srli_epi16(count, 8));
+//     return mm256_blend_epi8(low_half, high_half, 0xaa);
+// }
 
 /**
  * @brief Pack four 32-bit values for bit widths 1 through 3.

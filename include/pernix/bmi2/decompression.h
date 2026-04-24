@@ -6,9 +6,9 @@
 
 #include <cmath>
 #include <limits>
+#include <cstring>
 
 namespace pernix {
-
 namespace internal {
 /**
  * @brief Sign-extend packed values after BMI2 expansion into 32-bit lanes.
@@ -180,7 +180,7 @@ __m256i mm256_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
     }
     return result;
 }
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Decompress a single 512\-bit block using AVX2 and BMI2 instructions.
@@ -209,7 +209,7 @@ int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const float_t
         const __m256i unpacked   = internal::mm256_unpack_epi32_bmi2<BIT_WIDTH, SIGN_VALUES>(input);
         const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v);
         _mm256_storeu_ps(output, dequantized);
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
         output += 8;
     }
 
@@ -256,7 +256,7 @@ int mm256_decompress_block_bmi2(const uint8_t* __restrict__ input, const double_
         _mm256_storeu_pd(output, dequantized1);
         _mm256_storeu_pd(output + 4, dequantized2);
 
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
         output += 8;
     }
 
@@ -305,7 +305,7 @@ int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const float_
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_decompress_block_bmi2<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
@@ -336,13 +336,13 @@ int mm256_decompress_blocks_bmi2(const uint8_t* __restrict__ input, const double
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_decompress_block_bmi2<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
     return 0;
 }
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -407,7 +407,7 @@ int mm256_decompress_blocks_f64_bmi2(uint8_t bit_width, const uint8_t* __restric
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_BMI2_DECOMPRESSION_H

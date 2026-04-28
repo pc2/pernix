@@ -2,10 +2,12 @@
 #define PERNIX_SIMD_COMPAT_H
 
 #include <cstdint>
+#include <type_traits>
 
 #if defined(PERNIX_USE_SIMDE)
 #define SIMDE_ENABLE_NATIVE_ALIASES
 #include <simde/x86/avx512.h>
+#include <simde/x86/avx2.h>
 #include <simde/x86/bmi.h>
 
 // #ifndef __mmask8
@@ -40,7 +42,7 @@ template <typename T>
 static constexpr T tail_mask(const uint8_t bit_width, const uint32_t remaining_elements) {
     const uint32_t tail_bits  = remaining_elements * bit_width;
     const uint32_t tail_bytes = (tail_bits + 7u) / 8u;
-    return (static_cast<T>(1) << (tail_bytes * 8)) - 1u;
+    return (static_cast<T>(1) << tail_bytes) - 1u;
 }
 
 #endif  // PERNIX_SIMD_COMPAT_H

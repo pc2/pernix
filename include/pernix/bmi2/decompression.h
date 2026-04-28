@@ -74,6 +74,9 @@ __m128i mm_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
         const __m128i source = _mm_insert_epi32(_mm_setzero_si128(), value, 0);
 
         result = _mm_cvtepi8_epi32(source);
+    } else if constexpr (BIT_WIDTH == 16) {
+        const __m128i source = _mm_loadu_si64(input);
+        result               = _mm_cvtepi16_epi32(source);
     } else if constexpr (BIT_WIDTH > 8 && BIT_WIDTH <= 16) {
         constexpr uint64_t pdep_mask = 0x0001000100010001ULL * mask;
 
@@ -129,6 +132,9 @@ __m256i mm256_unpack_epi32_bmi2(const uint8_t* __restrict__ input) {
         const __m128i source = _mm_insert_epi64(_mm_setzero_si128(), value, 0);
 
         result = _mm256_cvtepi8_epi32(source);
+    } else if constexpr (BIT_WIDTH == 16) {
+        const __m128i source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(input));
+        result               = _mm256_cvtepi16_epi32(source);
     } else if constexpr (BIT_WIDTH > 8 && BIT_WIDTH <= 16) {
         constexpr uint64_t pdep_mask = 0x0001000100010001ULL * mask;
         constexpr uint64_t shift1    = BIT_WIDTH * 4;

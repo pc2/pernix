@@ -12,7 +12,7 @@ option(PERNIX_DISABLE_BMI2 "Disable BMI2 optimizations" off)
 option(PERNIX_DISABLE_AVX2 "Disable AVX2 optimizations" off)
 option(PERNIX_DISABLE_AVX512 "Disable AVX512 optimizations" off)
 
-option(PERNIX_USE_SIMDE "Use SIMDe library for portable SIMD support" on)
+option(PERNIX_USE_SIMDE "Use SIMDe library for portable SIMD support" off)
 
 option(PERNIX_ENABLE_FORTRAN_BINDINGS "Build Fortran bindings for pernix" off)
 

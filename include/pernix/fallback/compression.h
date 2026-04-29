@@ -6,13 +6,11 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <span>
 #include <type_traits>
 #include <vector>
 
 namespace pernix {
 namespace internal {
-
 /**
  * @brief Quantize a single float value to int32_t using the provided scale.
  *
@@ -65,38 +63,28 @@ template <typename T, uint8_t BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
 void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t bit_offset, uint8_t* __restrict__ destination) {
     constexpr uint32_t bits_in_type = sizeof(T) * 8;
-    constexpr uint32_t typemask     = std::numeric_limits<T>::max();
-    constexpr T bitmask             = BIT_WIDTH == bits_in_type ? std::numeric_limits<T>::max() : (1U << BIT_WIDTH) - 1U;
-
-    std::span<T> destination_span(reinterpret_cast<T*>(destination),
-                                  (input.size() * BIT_WIDTH + bit_offset + bits_in_type - 1) / bits_in_type);
+    constexpr uint32_t bitmask      = BIT_WIDTH == bits_in_type ? std::numeric_limits<T>::max() : (1U << BIT_WIDTH) - 1U;
 
     std::size_t idx            = 0;
     std::size_t bits_in_buffer = bit_offset;
-    uint64_t buffer            = 0;
+    uint64_t buffer            = bit_offset ? static_cast<uint64_t>(destination[0] & ((1U << bit_offset) - 1U)) : 0;
 
-    if (bit_offset) {
-        buffer = static_cast<uint64_t>(destination_span[0] & ((1ULL << bit_offset) - 1ULL));
-        idx++;
-    }
-
-#pragma GCC unroll 64
+#pragma GCC unroll 512
     for (uint32_t raw_value : input) {
         const uint32_t next_value = raw_value & bitmask;
 
-        // Shift in 64-bit space so values spanning a 32-bit lane are preserved.
-        buffer |= static_cast<uint64_t>(next_value) << bits_in_buffer;
+        buffer         |= static_cast<uint64_t>(next_value) << bits_in_buffer;
         bits_in_buffer += BIT_WIDTH;
 
-        if (bits_in_buffer >= bits_in_type) {
-            destination_span[idx++] = buffer & typemask;
-            buffer >>= bits_in_type;
-            bits_in_buffer -= bits_in_type;
+        while (bits_in_buffer >= 8) {
+            destination[idx++] = static_cast<uint8_t>(buffer & 0xFFU);
+            buffer             >>= 8;
+            bits_in_buffer     -= 8;
         }
     }
 
     if (bits_in_buffer > 0) {
-        destination_span[idx] = buffer & typemask;
+        destination[idx] = static_cast<uint8_t>(buffer & 0xFFU);
     }
 }
 
@@ -120,7 +108,7 @@ void pack_epi32_fallback(const std::vector<uint32_t>& input, uint8_t* __restrict
         return internal::pack_epi32_fallback_inner<uint32_t, BIT_WIDTH>(input, 0, destination);
     }
 }
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Compress a single 512-bit block using fallback scalar implementation.
@@ -194,7 +182,7 @@ int compress_blocks_fallback(const float_t* __restrict__ input, const float_t sc
 
     for (uint32_t block = 0; block < blocks; block++) {
         compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
@@ -221,12 +209,12 @@ int compress_blocks_fallback(const double_t* __restrict__ input, const double_t 
 
     for (uint32_t block = 0; block < blocks; block++) {
         compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
     return 0;
 }
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -283,7 +271,7 @@ int compress_blocks_fallback_f64(uint8_t bit_width, const double_t* __restrict__
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_FALLBACK_COMPRESSION_H

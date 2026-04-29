@@ -2,13 +2,15 @@
 #define PERNIX_AVX2_DECOMPRESSION_H
 
 #include <pernix/avx2/tables.h>
+#include <pernix/fallback/decompression.h>
 #include <pernix/simd_compat.h>
 
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 
 namespace pernix {
-
 namespace internal {
 /**
  * @brief Convert an 8-lane mask to the lane representation used by AVX2 float masked stores.
@@ -37,9 +39,9 @@ __always_inline __m128 mm_dequantize_epi32(const __m128i& input, const __m128& s
 __always_inline __m128d convert_epi64_pd(const __m128i v) {
     __m128i xH       = _mm_srai_epi32(v, 16);
     xH               = _mm_blend_epi16(xH, _mm_setzero_si128(), 0x33);
-    xH               = _mm_add_epi64(xH, _mm_castpd_si128(_mm_set1_pd(442721857769029238784.)));     //  3*2^67
-    const __m128i xL = _mm_blend_epi16(v, _mm_castpd_si128(_mm_set1_pd(0x0010000000000000)), 0x88);  //  2^52
-    const __m128d f  = _mm_sub_pd(_mm_castsi128_pd(xH), _mm_set1_pd(442726361368656609280.));        //  3*2^67 + 2^52
+    xH               = _mm_add_epi64(xH, _mm_castpd_si128(_mm_set1_pd(442721857769029238784.))); //  3*2^67
+    const __m128i xL = _mm_blend_epi16(v, _mm_castpd_si128(_mm_set1_pd(0x0010000000000000)), 0x88); //  2^52
+    const __m128d f  = _mm_sub_pd(_mm_castsi128_pd(xH), _mm_set1_pd(442726361368656609280.)); //  3*2^67 + 2^52
     return _mm_add_pd(f, _mm_castsi128_pd(xL));
 }
 
@@ -106,16 +108,12 @@ __m128i mm_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m128i mm_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
-    using unpack_table = unpack_tables_avx2<BIT_WIDTH, __m128i>;
+    using unpack_table                 = unpack_tables_avx2<BIT_WIDTH, __m128i>;
+    constexpr std::size_t packed_bytes = (4 * BIT_WIDTH + 7) / 8;
 
-    __m128i source;
-    if constexpr (BIT_WIDTH <= 8) {
-        source = _mm_loadu_si32(input);
-    } else if constexpr (BIT_WIDTH <= 16) {
-        source = _mm_loadu_si64(input);
-    } else {
-        source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(input));
-    }
+    __m128i source = _mm_setzero_si128();
+    std::memcpy(&source, input, packed_bytes);
+
     const __m128i shuffled = _mm_shuffle_epi8(source, unpack_table::get_shuffle());
 
     constexpr uint16_t shift = 32 - BIT_WIDTH;
@@ -158,16 +156,12 @@ __m256i mm256_unpack_aligned_epi32_avx2(const uint8_t* __restrict__ input) {
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
-    using unpack_table = unpack_tables_avx2<BIT_WIDTH, __m256i>;
+    using unpack_table                 = unpack_tables_avx2<BIT_WIDTH, __m256i>;
+    constexpr std::size_t packed_bytes = BIT_WIDTH;
 
-    __m256i source;
-    if constexpr (BIT_WIDTH <= 8) {
-        source = _mm256_castsi128_si256(_mm_loadu_si64(input));
-    } else if constexpr (BIT_WIDTH <= 16) {
-        source = _mm256_castsi128_si256(_mm_loadu_si128(reinterpret_cast<const __m128i*>(input)));
-    } else {
-        source = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(input));
-    }
+    __m256i source = _mm256_setzero_si256();
+    std::memcpy(&source, input, packed_bytes);
+
     const __m256i permuted = _mm256_permutevar8x32_epi32(source, unpack_table::get_permute());
     const __m256i shuffled = _mm256_shuffle_epi8(permuted, unpack_table::get_shuffle());
 
@@ -181,8 +175,7 @@ __m256i mm256_unpack_epi32_avx2(const uint8_t* __restrict__ input) {
 
     return shifted;
 }
-
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Decompress a single block to float using AVX2 instructions.
@@ -210,15 +203,15 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const float_t
         const __m256i unpacked   = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
         const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v);
         _mm256_storeu_ps(output, dequantized);
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
         output += 8;
     }
 
-    constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
     if constexpr (remaining > 0) {
-        const __m256i unpacked   = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
-        const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v);
-        _mm256_maskstore_ps(output, internal::mm256_convert_vmask_epi32(remaining_mask), dequantized);
+        const std::vector<int32_t> tail_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
+        for (uint32_t i = 0; i < remaining; i++) {
+            output[i] = internal::dequantize_epi32(tail_values[i], scale);
+        }
     }
 
     return 0;
@@ -256,25 +249,14 @@ int mm256_decompress_block_avx2(const uint8_t* __restrict__ input, const double_
         _mm256_storeu_pd(output, dequantized1);
         _mm256_storeu_pd(output + 4, dequantized2);
 
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
         output += 8;
     }
 
-    constexpr __mmask8 remaining_mask = (1 << remaining) - 1;
     if constexpr (remaining > 0) {
-        const __m256i unpacked     = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
-        const __m256i extend1      = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
-        const __m256d dequantized1 = internal::mm256_dequantize_epi64_pd(extend1, scale_v);
-
-        constexpr auto mask_lo = static_cast<__mmask8>(remaining_mask & 0x0F);
-        _mm256_maskstore_pd(output, internal::mm256_convert_vmask_epi64(mask_lo), dequantized1);
-
-        if constexpr (remaining > 4) {
-            const __m256i extend2      = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
-            const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
-
-            constexpr auto mask_hi = static_cast<__mmask8>((remaining_mask >> 4) & 0x0F);
-            _mm256_maskstore_pd(output + 4, internal::mm256_convert_vmask_epi64(mask_hi), dequantized2);
+        const std::vector<int32_t> tail_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
+        for (uint32_t i = 0; i < remaining; i++) {
+            output[i] = internal::dequantize_epi64(tail_values[i], scale);
         }
     }
     return 0;
@@ -303,7 +285,7 @@ int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const float_
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_decompress_block_avx2<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
@@ -333,14 +315,13 @@ int mm256_decompress_blocks_avx2(const uint8_t* __restrict__ input, const double
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_decompress_block_avx2<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
     return 0;
 }
-
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -405,7 +386,7 @@ int mm256_decompress_blocks_f64_avx2(uint8_t bit_width, const uint8_t* __restric
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_AVX2_DECOMPRESSION_H

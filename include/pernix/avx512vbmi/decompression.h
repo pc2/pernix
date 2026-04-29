@@ -8,9 +8,7 @@
 #include <cmath>
 
 namespace pernix {
-
 namespace internal {
-
 /**
  * @brief Dequantize sixteen integer values to floats.
  */
@@ -59,7 +57,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_ps(output + 48, dequantized4);
 
             output += 64;
-            input += 8 * BIT_WIDTH;
+            input  += 8 * BIT_WIDTH;
         }
     }
 
@@ -77,7 +75,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_ps(output + 16, dequantized2);
 
         output += 32;
-        input += 4 * BIT_WIDTH;
+        input  += 4 * BIT_WIDTH;
     }
 
     if constexpr (iterations_16 > 0) {
@@ -91,7 +89,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_ps(output, dequantized);
 
         output += 16;
-        input += 2 * BIT_WIDTH;
+        input  += 2 * BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -160,7 +158,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 56, dequantized8);
 
             output += 64;
-            input += 8 * BIT_WIDTH;
+            input  += 8 * BIT_WIDTH;
         }
 
         if constexpr (iterations_32 > 0) {
@@ -186,7 +184,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 24, dequantized4);
 
             output += 32;
-            input += 4 * BIT_WIDTH;
+            input  += 4 * BIT_WIDTH;
         }
 
         if constexpr (iterations_16 > 0) {
@@ -203,7 +201,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 8, dequantized2);
 
             output += 16;
-            input += 2 * BIT_WIDTH;
+            input  += 2 * BIT_WIDTH;
         }
 
         if constexpr (remaining_elements > 0) {
@@ -218,7 +216,9 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
             constexpr __mmask16 store_mask = (1u << remaining_elements) - 1u;
             _mm512_mask_storeu_pd(output, store_mask & 0xFF, dequantized1);
-            _mm512_mask_storeu_pd(output + 8, (store_mask >> 8) & 0xFF, dequantized2);
+            if constexpr (((store_mask >> 8) & 0xFF) > 0) {
+                _mm512_mask_storeu_pd(output + 8, (store_mask >> 8) & 0xFF, dequantized2);
+            }
         }
     }
 
@@ -255,7 +255,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_ps(output + 16, dequantized2);
 
             output += 32;
-            input += 4 * BIT_WIDTH;
+            input  += 4 * BIT_WIDTH;
         }
     }
 
@@ -269,7 +269,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_ps(output, dequantized);
 
         output += 16;
-        input += 2 * BIT_WIDTH;
+        input  += 2 * BIT_WIDTH;
     }
 
     if constexpr (iterations_8 > 0) {
@@ -282,7 +282,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm256_storeu_ps(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -334,7 +334,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 24, dequantized4);
 
             output += 32;
-            input += 4 * BIT_WIDTH;
+            input  += 4 * BIT_WIDTH;
         }
     }
 
@@ -352,7 +352,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_pd(output + 8, dequantized2);
 
         output += 16;
-        input += 2 * BIT_WIDTH;
+        input  += 2 * BIT_WIDTH;
     }
 
     if constexpr (iterations_8 > 0) {
@@ -366,7 +366,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_pd(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -407,7 +407,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_ps(output, dequantized);
 
             output += 16;
-            input += 2 * BIT_WIDTH;
+            input  += 2 * BIT_WIDTH;
         }
     }
 
@@ -420,7 +420,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm256_storeu_ps(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -463,7 +463,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 8, dequantized2);
 
             output += 16;
-            input += 2 * BIT_WIDTH;
+            input  += 2 * BIT_WIDTH;
         }
     }
 
@@ -478,7 +478,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_pd(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -494,7 +494,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
     return 0;
 }
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Decompress a single 512\-bit block using AVX-512 and AVX-512-VBMI instructions.
@@ -570,7 +570,7 @@ int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const 
 
     for (uint32_t block = 0; block < blocks; ++block) {
         mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
@@ -597,12 +597,12 @@ int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const 
 
     for (uint32_t block = 0; block < blocks; ++block) {
         mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
     return 0;
 }
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -667,7 +667,7 @@ int mm512_decompress_blocks_f64_avx512vbmi(uint8_t bit_width, const uint8_t* __r
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_AVX512VBMI_DECOMPRESSION_H

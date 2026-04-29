@@ -5,9 +5,7 @@
 #include <pernix/simd_compat.h>
 
 namespace pernix::internal {
-
 namespace m128 {
-
 constexpr __mmask16 kAlternateByteMask16 = 0xAAAAULL;
 
 __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i count) {
@@ -169,10 +167,9 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(const __m128i& input) 
 
     return shifted;
 }
-}  // namespace m128
+} // namespace m128
 
 namespace m256 {
-
 constexpr __mmask32 kAlternateByteMask32 = 0xAAAAAAAAULL;
 
 __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i count) {
@@ -236,16 +233,16 @@ __always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) 
 
             __m256i interleave_tmp = _mm256_unpacklo_epi8(values_shift0, values_shift2);
             values_shift0          = _mm256_unpackhi_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm256_shuffle_i64x2(interleave_tmp, values_shift0, 0b00000000);
+            values_shift0          = _mm256_shuffle_i32x4(interleave_tmp, values_shift0, 0b00000000);
 
             interleave_tmp = _mm256_unpacklo_epi8(values_shift4, values_shift6);
             values_shift2  = _mm256_unpackhi_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm256_shuffle_i64x2(interleave_tmp, values_shift2, 0b00000000);
+            values_shift2  = _mm256_shuffle_i32x4(interleave_tmp, values_shift2, 0b00000000);
 
             interleave_tmp = _mm256_unpacklo_epi16(values_shift0, values_shift2);
             values_shift0  = _mm256_unpackhi_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm256_shuffle_i64x2(interleave_tmp, values_shift0, 0x88);
-            values_shift0  = _mm256_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
+            values_shift0  = _mm256_shuffle_i32x4(interleave_tmp, values_shift0, 0b00);
+            values_shift0  = _mm256_shuffle_i32x4(values_shift0, values_shift0, 0b00);
 
             values_shift0 = _mm256_and_si256(values_shift0, _mm256_set1_epi16(0x0303));
 
@@ -256,8 +253,8 @@ __always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) 
 
             __m256i interleave_tmp = _mm256_unpacklo_epi8(values_shift0, values_shift4);
             values_shift0          = _mm256_unpackhi_epi8(values_shift0, values_shift4);
-            values_shift0          = _mm256_shuffle_i64x2(interleave_tmp, values_shift0, 0x44);
-            values_shift0          = _mm256_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
+            values_shift0          = _mm256_shuffle_i32x4(interleave_tmp, values_shift0, 0b00);
+            values_shift0          = _mm256_shuffle_i32x4(values_shift0, values_shift0, 0b00);
 
             values_shift0 = _mm256_and_si256(values_shift0, _mm256_set1_epi16(0x0F0F));
 
@@ -334,11 +331,9 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(const __m256i& inpu
 
     return shifted;
 }
-
-}  // namespace m256
+} // namespace m256
 
 namespace m512 {
-
 constexpr __mmask64 kAlternateByteMask64 = 0xAAAAAAAAAAAAAAAAULL;
 
 __always_inline static __m512i _mm512_srlv_epi8(const __m512i a, const __m512i count) {
@@ -402,16 +397,16 @@ __always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) 
 
             __m512i interleave_tmp = _mm512_unpacklo_epi8(values_shift0, values_shift2);
             values_shift0          = _mm512_unpackhi_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm512_shuffle_i64x2(interleave_tmp, values_shift0, 0b00000000);
+            values_shift0          = _mm512_shuffle_i32x4(interleave_tmp, values_shift0, 0b00000000);
 
             interleave_tmp = _mm512_unpacklo_epi8(values_shift4, values_shift6);
             values_shift2  = _mm512_unpackhi_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm512_shuffle_i64x2(interleave_tmp, values_shift2, 0b00000000);
+            values_shift2  = _mm512_shuffle_i32x4(interleave_tmp, values_shift2, 0b00000000);
 
             interleave_tmp = _mm512_unpacklo_epi16(values_shift0, values_shift2);
             values_shift0  = _mm512_unpackhi_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm512_shuffle_i64x2(interleave_tmp, values_shift0, 0x88);
-            values_shift0  = _mm512_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
+            values_shift0  = _mm512_shuffle_i32x4(interleave_tmp, values_shift0, 0x88);
+            values_shift0  = _mm512_shuffle_i32x4(values_shift0, values_shift0, 0xD8);
 
             values_shift0 = _mm512_and_si512(values_shift0, _mm512_set1_epi16(0x0303));
 
@@ -422,8 +417,8 @@ __always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) 
 
             __m512i interleave_tmp = _mm512_unpacklo_epi8(values_shift0, values_shift4);
             values_shift0          = _mm512_unpackhi_epi8(values_shift0, values_shift4);
-            values_shift0          = _mm512_shuffle_i64x2(interleave_tmp, values_shift0, 0x44);
-            values_shift0          = _mm512_shuffle_i64x2(values_shift0, values_shift0, 0xD8);
+            values_shift0          = _mm512_shuffle_i32x4(interleave_tmp, values_shift0, 0x44);
+            values_shift0          = _mm512_shuffle_i32x4(values_shift0, values_shift0, 0xD8);
 
             values_shift0 = _mm512_and_si512(values_shift0, _mm512_set1_epi16(0x0F0F));
 
@@ -499,8 +494,7 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(const __m512i& inpu
 
     return shifted;
 }
-
-}  // namespace m512
-}  // namespace pernix::internal
+} // namespace m512
+} // namespace pernix::internal
 
 #endif  // PERNIX_AVX512VBMI_UNPACKING_H

@@ -1,9 +1,9 @@
 #ifndef PERNIX_AVX512VBMI_COMPRESSION_H
 #define PERNIX_AVX512VBMI_COMPRESSION_H
 
-#include <pernix/avx2/compression.h>
-#include <pernix/avx512vbmi/packing.h>
-#include <pernix/avx512vbmi/compat.h>
+#include <pernix/x86/avx2/compression.h>
+#include <pernix/x86/avx512vbmi/packing.h>
+#include <pernix/x86/avx512vbmi/compat.h>
 #include <pernix/simd_compat.h>
 
 namespace pernix {

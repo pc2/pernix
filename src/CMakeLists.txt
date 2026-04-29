@@ -1,10 +1,27 @@
 include(GNUInstallDirs)
 
 file(GLOB_RECURSE
-        PERNIX_SOURCES
-        ./*.cpp
+        PERNIX_COMMON_SOURCES
+        ./fallback/*.cpp
+        ./pernix.cpp
         ${PROJECT_SOURCE_DIR}/include/pernix/*.h
 )
+
+set(PERNIX_SOURCES ${PERNIX_COMMON_SOURCES})
+
+set(PERNIX_TARGET_IS_X86 OFF)
+if (PERNIX_USE_SIMDE OR CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|i[3-6]86|i686)$")
+    set(PERNIX_TARGET_IS_X86 ON)
+endif ()
+
+if (PERNIX_TARGET_IS_X86)
+    file(GLOB_RECURSE
+            PERNIX_X86_SOURCES
+            ./x86/*.cpp
+            ${PROJECT_SOURCE_DIR}/include/pernix/x86/*.h
+    )
+    list(APPEND PERNIX_SOURCES ${PERNIX_X86_SOURCES})
+endif ()
 
 add_library(pernix SHARED ${PERNIX_SOURCES})
 set_target_properties(pernix PROPERTIES

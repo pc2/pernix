@@ -6,19 +6,19 @@
 // Include architecture-specific headers based on detected capabilities
 // AVX2
 #ifdef PERNIX_AVX2_ENABLED
-#include <pernix/avx2/compression.h>
-#include <pernix/avx2/decompression.h>
+#include <pernix/x86/avx2/compression.h>
+#include <pernix/x86/avx2/decompression.h>
 
 // BMI2: Needs AVX2 as well
 #ifdef PERNIX_BMI2_ENABLED
-#include <pernix/bmi2/compression.h>
-#include <pernix/bmi2/decompression.h>
+#include <pernix/x86/bmi2/compression.h>
+#include <pernix/x86/bmi2/decompression.h>
 #endif  // PERNIX_BMI2_ENABLED
 
 // AVX512 VBMI: Needs AVX2 as well
 #ifdef PERNIX_AVX512_VBMI_ENABLED
-#include <pernix/avx512vbmi/compression.h>
-#include <pernix/avx512vbmi/decompression.h>
+#include <pernix/x86/avx512vbmi/compression.h>
+#include <pernix/x86/avx512vbmi/decompression.h>
 #endif  // PERNIX_AVX512_VBMI_ENABLED
 
 #endif  // PERNIX_AVX2_ENABLED
@@ -28,7 +28,6 @@
 #include <pernix/fallback/decompression.h>
 
 namespace pernix {
-
 /**
  * @brief Compress a single block of floating-point data into a bit-packed format using the specified bit width and scale.
  *
@@ -315,7 +314,7 @@ int decompress_blocks(const uint8_t* __restrict__ input, const double_t scale, d
     return decompress_blocks_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
 }
 #endif
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -418,7 +417,7 @@ int decompress_blocks_f64(uint8_t bit_width, const uint8_t* __restrict__ input, 
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_H

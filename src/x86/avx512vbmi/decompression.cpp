@@ -1,7 +1,7 @@
-#include <pernix/avx2/decompression.h>
+#include <pernix/x86/avx512vbmi/decompression.h>
 #include <pernix/detection.h>
 
-#ifdef PERNIX_AVX2_ENABLED
+#if defined(PERNIX_AVX2_ENABLED) && defined(PERNIX_AVX512_VBMI_ENABLED)
 #ifdef __cplusplus
 namespace pernix {
 extern "C" {
@@ -9,14 +9,14 @@ extern "C" {
 
 #define PERNIX_DECOMPRESS_BLOCK_CASE(N) \
     case N:                             \
-        return mm256_decompress_block_avx2<N>(input, scale, output);
+        return mm512_decompress_block_avx512vbmi<N>(input, scale, output);
 
 #define PERNIX_DECOMPRESS_BLOCKS_CASE(N) \
     case N:                              \
-        return mm256_decompress_blocks_avx2<N>(input, scale, output, blocks);
+        return mm512_decompress_blocks_avx512vbmi<N>(input, scale, output, blocks);
 
-int mm256_decompress_block_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale,
-                                float_t* __restrict__ output) {
+int mm512_decompress_block_avx512vbmi(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale,
+                                      float_t* __restrict__ output) {
     switch (bit_width) {
         PERNIX_DECOMPRESS_BLOCK_CASE(1)
         PERNIX_DECOMPRESS_BLOCK_CASE(2)
@@ -47,8 +47,8 @@ int mm256_decompress_block_avx2(const uint8_t bit_width, const uint8_t* __restri
     }
 }
 
-int mm256_decompress_block_f64_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
-                                    double_t* __restrict__ output) {
+int mm512_decompress_block_f64_avx512vbmi(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
+                                          double_t* __restrict__ output) {
     switch (bit_width) {
         PERNIX_DECOMPRESS_BLOCK_CASE(1)
         PERNIX_DECOMPRESS_BLOCK_CASE(2)
@@ -79,8 +79,8 @@ int mm256_decompress_block_f64_avx2(const uint8_t bit_width, const uint8_t* __re
     }
 }
 
-int mm256_decompress_blocks_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale,
-                                 float_t* __restrict__ output, const uint32_t blocks) {
+int mm512_decompress_blocks_avx512vbmi(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale,
+                                       float_t* __restrict__ output, const uint32_t blocks) {
     switch (bit_width) {
         PERNIX_DECOMPRESS_BLOCKS_CASE(1)
         PERNIX_DECOMPRESS_BLOCKS_CASE(2)
@@ -111,8 +111,8 @@ int mm256_decompress_blocks_avx2(const uint8_t bit_width, const uint8_t* __restr
     }
 }
 
-int mm256_decompress_blocks_f64_avx2(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
-                                     double_t* __restrict__ output, const uint32_t blocks) {
+int mm512_decompress_blocks_f64_avx512vbmi(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
+                                           double_t* __restrict__ output, const uint32_t blocks) {
     switch (bit_width) {
         PERNIX_DECOMPRESS_BLOCKS_CASE(1)
         PERNIX_DECOMPRESS_BLOCKS_CASE(2)
@@ -148,6 +148,6 @@ int mm256_decompress_blocks_f64_avx2(const uint8_t bit_width, const uint8_t* __r
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif  // __cplusplus
-#endif  // PERNIX_AVX2_ENABLED
+#endif  // PERNIX_AVX2_ENABLED && PERNIX_AVX512_VBMI_ENABLED

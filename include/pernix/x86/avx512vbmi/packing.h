@@ -1,13 +1,11 @@
 #ifndef PERNIX_AVX512VBMI_PACKING_H
 #define PERNIX_AVX512VBMI_PACKING_H
 
-#include <pernix/avx512vbmi/tables.h>
+#include <pernix/x86/avx512vbmi/tables.h>
 #include <pernix/simd_compat.h>
 
 namespace pernix::internal {
-
 namespace m128 {
-
 /**
  * @brief Pack 8 16-bit values for bit widths 9 through 16 using VBMI.
  */
@@ -111,11 +109,9 @@ template <uint8_t BIT_WIDTH>
 
     return _mm_or_si128(_mm_or_si128(shifted1, shifted2), shifted3);
 }
-
-}  // namespace m128
+} // namespace m128
 
 namespace m256 {
-
 /**
  * @brief Pack 16 16-bit values for bit widths 9 through 16 using VBMI.
  */
@@ -219,11 +215,9 @@ template <uint8_t BIT_WIDTH>
 
     return _mm256_or_si256(_mm256_or_si256(shifted1, shifted2), shifted3);
 }
-
-}  // namespace m256
+} // namespace m256
 
 namespace m512 {
-
 /**
  * @brief Pack 32 16-bit values for bit widths 9 through 16 using VBMI.
  */
@@ -327,8 +321,7 @@ template <uint8_t BIT_WIDTH>
 
     return _mm512_or_si512(_mm512_or_si512(shifted1, shifted2), shifted3);
 }
-
-}  // namespace m512
-}  // namespace pernix::internal
+} // namespace m512
+} // namespace pernix::internal
 
 #endif  // PERNIX_AVX512VBMI_PACKING_H

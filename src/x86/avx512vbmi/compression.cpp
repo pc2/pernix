@@ -1,4 +1,4 @@
-#include <pernix/avx512vbmi/compression.h>
+#include <pernix/x86/avx512vbmi/compression.h>
 #include <pernix/detection.h>
 
 #if defined(PERNIX_AVX2_ENABLED) && defined(PERNIX_AVX512_VBMI_ENABLED)
@@ -148,6 +148,6 @@ int mm512_compress_blocks_f64_avx512vbmi(const uint8_t bit_width, const double_t
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif  // __cplusplus
 #endif  // defined(PERNIX_AVX2_ENABLED) && defined(PERNIX_AVX512_VBMI_ENABLED)

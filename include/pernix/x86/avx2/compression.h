@@ -1,7 +1,7 @@
 #ifndef PERNIX_AVX2_COMPRESSION_H
 #define PERNIX_AVX2_COMPRESSION_H
 
-#include <pernix/avx2/tables.h>
+#include <pernix/x86/avx2/tables.h>
 #include <pernix/fallback/compression.h>
 #include <pernix/simd_compat.h>
 
@@ -213,7 +213,7 @@ __always_inline __m256i mm256_pack_epi32_avx2_4(const __m256i& input) {
     const __m256i combined = _mm256_or_si256(packed8, _mm256_srli_epi16(packed8, 4));
 
     const __m256i shuffled = _mm256_shuffle_epi8(combined, _mm256_setr_epi8(0, 2, 4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1, 0, 2,
-                                                     4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1));
+                                                                            4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1));
 
     return shuffled;
 }

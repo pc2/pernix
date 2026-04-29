@@ -1,7 +1,7 @@
 #ifndef PERNIX_BMI2_DECOMPRESSION_H
 #define PERNIX_BMI2_DECOMPRESSION_H
 
-#include <pernix/avx2/decompression.h>
+#include <pernix/x86/avx2/decompression.h>
 #include <pernix/simd_compat.h>
 
 #include <cmath>

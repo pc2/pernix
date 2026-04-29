@@ -1,4 +1,4 @@
-#include <pernix/avx2/compression.h>
+#include <pernix/x86/avx2/compression.h>
 #include <pernix/detection.h>
 
 #ifdef PERNIX_AVX2_ENABLED
@@ -149,6 +149,6 @@ int mm256_compress_blocks_f64_avx2(const uint8_t bit_width, const double_t* __re
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif  // __cplusplus
 #endif  // PERNIX_AVX2_ENABLED

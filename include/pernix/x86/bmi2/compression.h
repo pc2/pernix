@@ -1,7 +1,7 @@
 #ifndef PERNIX_BMI2_COMPRESSION_H
 #define PERNIX_BMI2_COMPRESSION_H
 
-#include <pernix/avx2/compression.h>
+#include <pernix/x86/avx2/compression.h>
 #include <pernix/fallback/compression.h>
 #include <pernix/simd_compat.h>
 
@@ -65,7 +65,7 @@ static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
 
         const uint64_t temp_combined = _pext_u64(_mm_extract_epi64(input, 1), pext_mask);
         values[1]                    = temp_combined >> shift2;
-        values[0] |= (temp_combined << shift1);
+        values[0]                    |= (temp_combined << shift1);
 
         const __m128i result = _mm_set_epi64x(static_cast<int64_t>(values[1]), static_cast<int64_t>(values[0]));
         return result;
@@ -106,7 +106,7 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
         const __m256i result = _mm256_setr_epi64x(values[0], values[1], 0, 0);
         return result;
     } else {
-        constexpr uint32_t chunk_bits = BIT_WIDTH * 2;  // bits extracted per 64-bit lane
+        constexpr uint32_t chunk_bits = BIT_WIDTH * 2; // bits extracted per 64-bit lane
         static_assert(chunk_bits < 64);
 
         constexpr uint64_t chunk_mask = (chunk_bits == 64) ? ~uint64_t{0} : ((uint64_t{1} << chunk_bits) - 1);
@@ -121,8 +121,8 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
         uint64_t out2 = 0;
 
         auto append_bits = [&](uint64_t value, uint32_t bit_offset) {
-            const uint32_t word = bit_offset >> 6;  // / 64
-            const uint32_t off  = bit_offset & 63;  // % 64
+            const uint32_t word = bit_offset >> 6; // / 64
+            const uint32_t off  = bit_offset & 63; // % 64
 
             if (word == 0) {
                 out0 |= value << off;
@@ -147,7 +147,7 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
         return _mm256_setr_epi64x(static_cast<int64_t>(out0), static_cast<int64_t>(out1), static_cast<int64_t>(out2), 0);
     }
 }
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Compress a single 512-bit block using AVX2 and BMI2 instructions.
@@ -184,7 +184,7 @@ int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t s
         }();
         const __m256i packed = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(packed_input);
         std::memcpy(output, &packed, BIT_WIDTH);
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -231,7 +231,7 @@ int mm256_compress_block_bmi2(const double_t* __restrict__ input, const double_t
         combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
         const __m256i packed     = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(combined);
         std::memcpy(output, &packed, BIT_WIDTH);
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -270,7 +270,7 @@ int mm256_compress_blocks_bmi2(const float_t* __restrict__ input, const float_t 
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_compress_block_bmi2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
@@ -298,14 +298,13 @@ int mm256_compress_blocks_bmi2(const double_t* __restrict__ input, const double_
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_compress_block_bmi2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
     return 0;
 }
-
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -370,7 +369,7 @@ int mm256_compress_blocks_f64_bmi2(uint8_t bit_width, const double_t* __restrict
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_BMI2_COMPRESSION_H

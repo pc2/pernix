@@ -1,4 +1,4 @@
-#include <pernix/bmi2/compression.h>
+#include <pernix/x86/bmi2/compression.h>
 #include <pernix/detection.h>
 
 #if defined(PERNIX_AVX2_ENABLED) && defined(PERNIX_BMI2_ENABLED)
@@ -148,6 +148,6 @@ int mm256_compress_blocks_f64_bmi2(const uint8_t bit_width, const double_t* __re
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif  // __cplusplus
 #endif  // PERNIX_AVX2_ENABLED && PERNIX_BMI2_ENABLED

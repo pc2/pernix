@@ -1,7 +1,7 @@
 #ifndef PERNIX_AVX512VBMI_UNPACKING_H
 #define PERNIX_AVX512VBMI_UNPACKING_H
 
-#include <pernix/avx512vbmi/tables.h>
+#include <pernix/x86/avx512vbmi/tables.h>
 #include <pernix/simd_compat.h>
 
 namespace pernix::internal {

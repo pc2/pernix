@@ -1,17 +1,15 @@
 #ifndef PERNIX_FALLBACK_DECOMPRESSION_H
 #define PERNIX_FALLBACK_DECOMPRESSION_H
 
+#include <pernix/simd_compat.h>
+
 #include <cmath>
-#include <cstdint>
 #include <limits>
-#include <span>
 #include <type_traits>
 #include <vector>
 
 namespace pernix {
-
 namespace internal {
-
 /**
  * @brief Dequantize a single int32_t value to float using the provided scale.
  *
@@ -65,34 +63,33 @@ __always_inline auto sign_extend(const uint32_t value) -> int32_t {
  */
 template <typename T, uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
-__always_inline auto unpack_epi32_fallback_inner(const T* __restrict__ input, const uint8_t bit_offset, const std::size_t elements)
+__always_inline auto unpack_epi32_fallback_inner(const uint8_t* __restrict__ input, const uint8_t bit_offset, const std::size_t elements)
     -> std::vector<int32_t> {
     constexpr uint32_t bits_in_type = sizeof(T) * 8;
-    constexpr T bitmask             = BIT_WIDTH == bits_in_type ? std::numeric_limits<T>::max() : (1U << BIT_WIDTH) - 1U;
+    constexpr uint32_t bitmask      = BIT_WIDTH == bits_in_type ? std::numeric_limits<T>::max() : (1U << BIT_WIDTH) - 1U;
 
-    std::span<const T> input_span(input, (elements * BIT_WIDTH + bit_offset + bits_in_type - 1) / bits_in_type);
     std::vector<int32_t> output(elements);
 
     std::size_t idx        = 0;
-    uint8_t bits_in_buffer = bits_in_type - bit_offset;
-    uint64_t buffer        = static_cast<uint64_t>(input_span[idx++]) >> bit_offset;
+    uint8_t bits_in_buffer = 8 - bit_offset;
+    uint64_t buffer        = static_cast<uint64_t>(input[idx++]) >> bit_offset;
 
 #pragma GCC unroll 512
     for (uint32_t i = 0; i < elements; i++) {
-        if (BIT_WIDTH > bits_in_buffer) {
-            const auto next_value = static_cast<uint64_t>(input_span[idx++]) << bits_in_buffer;
-            buffer |= next_value;
-            bits_in_buffer += bits_in_type;
+        while (BIT_WIDTH > bits_in_buffer) {
+            const auto next_value = static_cast<uint64_t>(input[idx++]) << bits_in_buffer;
+            buffer                |= next_value;
+            bits_in_buffer        += 8;
         }
 
-        const T raw_value = static_cast<T>(buffer & bitmask);
+        const uint32_t raw_value = static_cast<uint32_t>(buffer & bitmask);
         if constexpr (SIGN_VALUES) {
             output[i] = sign_extend<BIT_WIDTH>(raw_value);
         } else {
-            output[i] = raw_value;
+            output[i] = static_cast<int32_t>(raw_value);
         }
 
-        buffer >>= BIT_WIDTH;
+        buffer         >>= BIT_WIDTH;
         bits_in_buffer -= BIT_WIDTH;
     }
 
@@ -112,14 +109,14 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __always_inline auto unpack_epi32_fallback(const uint8_t* __restrict__ input, const std::size_t elements) -> std::vector<int32_t> {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
-        return unpack_epi32_fallback_inner<uint8_t, BIT_WIDTH, SIGN_VALUES>(reinterpret_cast<const uint8_t*>(input), 0, elements);
+        return unpack_epi32_fallback_inner<uint8_t, BIT_WIDTH, SIGN_VALUES>(input, 0, elements);
     } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 16) {
-        return unpack_epi32_fallback_inner<uint16_t, BIT_WIDTH, SIGN_VALUES>(reinterpret_cast<const uint16_t*>(input), 0, elements);
+        return unpack_epi32_fallback_inner<uint16_t, BIT_WIDTH, SIGN_VALUES>(input, 0, elements);
     } else {
-        return unpack_epi32_fallback_inner<uint32_t, BIT_WIDTH, SIGN_VALUES>(reinterpret_cast<const uint32_t*>(input), 0, elements);
+        return unpack_epi32_fallback_inner<uint32_t, BIT_WIDTH, SIGN_VALUES>(input, 0, elements);
     }
 }
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Decompress a single 512\-bit block using fallback scalar implementation.
@@ -191,7 +188,7 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const float_t 
 
     for (uint32_t block = 0; block < blocks; block++) {
         decompress_block_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
@@ -218,14 +215,13 @@ int decompress_blocks_fallback(const uint8_t* __restrict__ input, const double_t
 
     for (uint32_t block = 0; block < blocks; block++) {
         decompress_block_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
     return 0;
 }
-
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -282,7 +278,7 @@ int decompress_blocks_fallback_f64(uint8_t bit_width, const uint8_t* __restrict_
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_FALLBACK_DECOMPRESSION_H

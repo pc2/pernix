@@ -1,9 +1,9 @@
 #ifndef PERNIX_AVX2_COMPRESSION_H
 #define PERNIX_AVX2_COMPRESSION_H
 
-#include <immintrin.h>
 #include <pernix/avx2/tables.h>
 #include <pernix/fallback/compression.h>
+#include <pernix/simd_compat.h>
 
 #include <cmath>
 #include <cstdint>
@@ -11,7 +11,6 @@
 #include <vector>
 
 namespace pernix {
-
 namespace internal {
 /**
  * @brief Quantize four float values into signed 32-bit integers.
@@ -63,6 +62,7 @@ __always_inline __m128i mm256_quantize_pd_epi32(const __m256d& input, const __m2
     return _mm256_cvtpd_epi32(scaled);
 }
 
+#ifndef PERNIX_USE_SIMDE
 /**
  * @brief Emulate per-16-bit left shifts on AVX2.
  *
@@ -160,6 +160,7 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
     const __m256i high_half = _mm256_srlv_epi16(a, _mm256_srli_epi16(count, 8));
     return mm256_blend_epi8(low_half, high_half, 0xaa);
 }
+#endif
 
 /**
  * @brief Pack four 32-bit values for bit widths 1 through 3.
@@ -212,7 +213,7 @@ __always_inline __m256i mm256_pack_epi32_avx2_4(const __m256i& input) {
     const __m256i combined = _mm256_or_si256(packed8, _mm256_srli_epi16(packed8, 4));
 
     const __m256i shuffled = _mm256_shuffle_epi8(combined, _mm256_setr_epi8(0, 2, 4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1, 0, 2,
-                                                                            4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1));
+                                                     4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1));
 
     return shuffled;
 }
@@ -405,8 +406,7 @@ __m256i mm256_pack_epi32_avx2(const __m256i& input) {
     }
     return _mm256_setzero_si256();
 }
-
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Compress a single block of float using AVX2 instructions.
@@ -445,7 +445,7 @@ int mm256_compress_block_avx2(const float_t* __restrict__ input, const float_t s
         const __m256i packed = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(packed_input);
         std::memcpy(output, &packed, BIT_WIDTH);
 
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -495,7 +495,7 @@ int mm256_compress_block_avx2(const double_t* __restrict__ input, const double_t
         const __m256i packed     = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(combined);
         // _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
         std::memcpy(output, &packed, BIT_WIDTH);
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -536,7 +536,7 @@ int mm256_compress_blocks_avx2(const float_t* __restrict__ input, const float_t 
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_compress_block_avx2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
@@ -566,13 +566,13 @@ int mm256_compress_blocks_avx2(const double_t* __restrict__ input, const double_
 
     for (uint32_t block = 0; block < blocks; block++) {
         mm256_compress_block_avx2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
     return 0;
 }
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -637,7 +637,7 @@ int mm256_compress_blocks_f64_avx2(uint8_t bit_width, const double_t* __restrict
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_AVX2_COMPRESSION_H

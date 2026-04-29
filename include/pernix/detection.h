@@ -47,6 +47,14 @@
 #define PERNIX_AVX512_VBMI_ENABLED
 #endif
 
+#ifdef PERNIX_USE_SIMDE
+#define PERNIX_SSE_ENABLED
+#define PERNIX_AVX2_ENABLED
+#define PERNIX_BMI2_ENABLED
+#define PERNIX_AVX512_ENABLED
+#define PERNIX_AVX512_VBMI_ENABLED
+#endif
+
 // Allow build systems or tests to force lower-tier implementations.
 #ifdef PERNIX_DISABLE_AVX512
 #undef PERNIX_AVX512_ENABLED

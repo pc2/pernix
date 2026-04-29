@@ -3,6 +3,7 @@
 
 #include <pernix/avx2/decompression.h>
 #include <pernix/avx512vbmi/unpacking.h>
+#include <pernix/avx512vbmi/compat.h>
 #include <pernix/simd_compat.h>
 
 #include <cmath>
@@ -38,7 +39,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_64 > 0) {
 #pragma GCC unroll 8
         for (uint32_t i = 0; i < iterations_64; ++i) {
-            const __m512i source   = _mm512_maskz_loadu_epi64((1ull << BIT_WIDTH) - 1ull, input);
+            const __m512i source   = mm512_loadu_elements_epi64(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512i converted1 = _mm512_cvtepi8_epi32(_mm512_castsi512_si128(unpacked));
@@ -62,7 +63,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_32 > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
+        const __m256i source   = mm256_loadu_elements_epi32(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted1 = _mm512_cvtepi8_epi32(_mm256_castsi256_si128(unpacked));
@@ -79,7 +80,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_16 > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+        const __m128i source   = mm_loadu_elements_epi16(BIT_WIDTH, input);
         const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi8_epi32(unpacked);
@@ -93,14 +94,14 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi16(tail_mask<__mmask8>(BIT_WIDTH, remaining_elements), input);
+        const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi8_epi32(unpacked);
 
         const __m512 dequantized = mm512_dequantize_epi32(converted, scale_v);
 
-        _mm512_mask_storeu_ps(output, (1u << remaining_elements) - 1u, dequantized);
+        mm512_storeu_elements_ps(output, remaining_elements, dequantized);
     }
 
     return 0;
@@ -122,7 +123,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_64 > 0) {
 #pragma GCC unroll 8
         for (uint32_t i = 0; i < iterations_64; ++i) {
-            const __m512i source   = _mm512_maskz_loadu_epi64((1ull << BIT_WIDTH) - 1ull, input);
+            const __m512i source   = mm512_loadu_elements_epi64(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m128i extracted1 = _mm512_castsi512_si128(unpacked);
@@ -162,7 +163,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         }
 
         if constexpr (iterations_32 > 0) {
-            const __m256i source   = _mm256_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
+            const __m256i source   = mm256_loadu_elements_epi32(BIT_WIDTH, input);
             const __m256i unpacked = m256::mm256_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m128i extracted1 = _mm256_castsi256_si128(unpacked);
@@ -188,7 +189,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         }
 
         if constexpr (iterations_16 > 0) {
-            const __m128i source   = _mm_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+            const __m128i source   = mm_loadu_elements_epi16(BIT_WIDTH, input);
             const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512i converted1 = _mm512_cvtepi8_epi64(unpacked);
@@ -205,7 +206,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         }
 
         if constexpr (remaining_elements > 0) {
-            const __m128i source   = _mm_maskz_loadu_epi16(tail_mask<__mmask8>(BIT_WIDTH, remaining_elements), input);
+            const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
             const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512i converted1 = _mm512_cvtepi8_epi64(unpacked);
@@ -214,10 +215,9 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
             const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
 
-            constexpr __mmask16 store_mask = (1u << remaining_elements) - 1u;
-            _mm512_mask_storeu_pd(output, store_mask & 0xFF, dequantized1);
-            if constexpr (((store_mask >> 8) & 0xFF) > 0) {
-                _mm512_mask_storeu_pd(output + 8, (store_mask >> 8) & 0xFF, dequantized2);
+            mm512_storeu_elements_pd(output, remaining_elements < 8 ? remaining_elements : 8, dequantized1);
+            if constexpr (remaining_elements > 8) {
+                mm512_storeu_elements_pd(output + 8, remaining_elements - 8, dequantized2);
             }
         }
     }
@@ -242,7 +242,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_32 > 0) {
 #pragma GCC unroll 4
         for (uint32_t i = 0; i < iterations_32; ++i) {
-            const __m512i source   = _mm512_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
+            const __m512i source   = mm512_loadu_elements_epi32(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512i converted1 = _mm512_cvtepi16_epi32(_mm512_castsi512_si256(unpacked));
@@ -260,7 +260,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_16 > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+        const __m256i source   = mm256_loadu_elements_epi16(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted  = _mm512_cvtepi16_epi32(unpacked);
@@ -273,7 +273,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_8 > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi8((1u << BIT_WIDTH) - 1u, input);
+        const __m128i source   = mm_loadu_elements_epi8(BIT_WIDTH, input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m256i converted  = _mm256_cvtepi16_epi32(unpacked);
@@ -286,13 +286,13 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi8(tail_mask<__mmask16>(BIT_WIDTH, remaining_elements), input);
+        const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m256i converted  = _mm256_cvtepi16_epi32(unpacked);
         const __m256 dequantized = mm256_dequantize_epi32(converted, scale_v256);
 
-        _mm256_mask_storeu_ps(output, (1u << remaining_elements) - 1u, dequantized);
+        mm256_storeu_elements_ps(output, remaining_elements, dequantized);
     }
 
     return 0;
@@ -309,13 +309,12 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     constexpr uint32_t iterations_8       = (elements_per_block % 16) / 8;
     constexpr uint32_t remaining_elements = elements_per_block - iterations_32 * 32 - iterations_16 * 16 - iterations_8 * 8;
 
-    const __m512d scale_v    = _mm512_set1_pd(scale);
-    const __m256d scale_v256 = _mm256_set1_pd(scale);
+    const __m512d scale_v = _mm512_set1_pd(scale);
 
     if constexpr (iterations_32 > 0) {
 #pragma GCC unroll 4
         for (uint32_t i = 0; i < iterations_32; ++i) {
-            const __m512i source   = _mm512_maskz_loadu_epi32((1ull << BIT_WIDTH) - 1ull, input);
+            const __m512i source   = mm512_loadu_elements_epi32(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512i converted1 = _mm512_cvtepi16_epi64(_mm512_castsi512_si128(unpacked));
@@ -339,7 +338,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_16 > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+        const __m256i source   = mm256_loadu_elements_epi16(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted1 = _mm512_cvtepi16_epi64(_mm256_castsi256_si128(unpacked));
@@ -356,7 +355,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_8 > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi8((1u << BIT_WIDTH) - 1u, input);
+        const __m128i source   = mm_loadu_elements_epi8(BIT_WIDTH, input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi16_epi64(unpacked);
@@ -370,14 +369,14 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m128i source   = _mm_maskz_loadu_epi8(tail_mask<__mmask16>(BIT_WIDTH, remaining_elements), input);
+        const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi16_epi64(unpacked);
 
         const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
 
-        _mm512_mask_storeu_pd(output, (1u << remaining_elements) - 1u, dequantized);
+        mm512_storeu_elements_pd(output, remaining_elements, dequantized);
     }
 
     return 0;
@@ -399,7 +398,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_16 > 0) {
 #pragma GCC unroll 2
         for (uint32_t i = 0; i < iterations_16; ++i) {
-            const __m512i source   = _mm512_maskz_loadu_epi16((1ull << BIT_WIDTH) - 1ull, input);
+            const __m512i source   = mm512_loadu_elements_epi16(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512 dequantized = mm512_dequantize_epi32(unpacked, scale_v);
@@ -412,7 +411,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_8 > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi8((1u << BIT_WIDTH) - 1u, input);
+        const __m256i source   = mm256_loadu_elements_epi8(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v256);
@@ -424,12 +423,12 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi8(tail_mask<__mmask32>(BIT_WIDTH, remaining_elements), input);
+        const __m256i source   = mm256_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v256);
 
-        _mm256_mask_storeu_ps(output, (1u << remaining_elements) - 1u, dequantized);
+        mm256_storeu_elements_ps(output, remaining_elements, dequantized);
     }
 
     return 0;
@@ -450,7 +449,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_16 > 0) {
 #pragma GCC unroll 2
         for (uint32_t i = 0; i < iterations_16; ++i) {
-            const __m512i source   = _mm512_maskz_loadu_epi16((1u << BIT_WIDTH) - 1u, input);
+            const __m512i source   = mm512_loadu_elements_epi16(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
             const __m512i converted1 = _mm512_cvtepi32_epi64(_mm512_castsi512_si256(unpacked));
@@ -468,7 +467,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (iterations_8 > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi8((1u << BIT_WIDTH) - 1u, input);
+        const __m256i source   = mm256_loadu_elements_epi8(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi32_epi64(unpacked);
@@ -482,14 +481,14 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     }
 
     if constexpr (remaining_elements > 0) {
-        const __m256i source   = _mm256_maskz_loadu_epi8(tail_mask<__mmask32>(BIT_WIDTH, remaining_elements), input);
+        const __m256i source   = mm256_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m256i unpacked = m256::mm256_unpack_epi32_avx512vbmi_17to24<BIT_WIDTH, SIGN_VALUES>(source);
 
         const __m512i converted = _mm512_cvtepi32_epi64(unpacked);
 
         const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
 
-        _mm512_mask_storeu_pd(output, (1u << remaining_elements) - 1u, dequantized);
+        mm512_storeu_elements_pd(output, remaining_elements, dequantized);
     }
 
     return 0;

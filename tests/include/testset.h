@@ -5,9 +5,14 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdlib>
+#include <cstdint>
 #include <cmath>
 #include <limits>
 #include <random>
+#include <sstream>
+#include <string>
+#include <type_traits>
 
 /**
  * A test set for compression and decompression tests.
@@ -21,17 +26,19 @@ template <uint8_t BIT_WIDTH, typename T = float_t, uint32_t BLOCK_SIZE = 64, boo
 class TestSet {
     // using ValueType = std::conditional_t<Signed, int8_t, uint8_t>;
     using ValueType = uint8_t;
+    using SeedType  = std::mt19937::result_type;
 
     alignas(64) std::vector<std::vector<ValueType>> compressedData;
     alignas(64) std::vector<std::vector<T>> decompressedData;
     alignas(64) std::vector<T> scalesData;
 
-    std::random_device rd{};
-    std::mt19937 gen{rd()};
+    SeedType seed;
+    std::mt19937 gen;
     std::uniform_real_distribution<T> dis{};
 
 public:
     static constexpr uint32_t elementsPerBlock = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    static constexpr SeedType defaultSeed       = 0x5eed1234u;
 
     static constexpr T quantization_levels =
         SIGN_VALUES ? static_cast<T>(BIT_WIDTH == 1 ? 1u : ((1u << (BIT_WIDTH - 1u)) - 1u)) : static_cast<T>((1u << BIT_WIDTH) - 1u);
@@ -45,7 +52,8 @@ public:
         return (std::abs(scalesData[block]) * static_cast<T>(0.5)) + (std::numeric_limits<T>::epsilon() * static_cast<T>(16));
     }
 
-    explicit TestSet(const uint32_t number_of_blocks) : numberOfBlocks(number_of_blocks) {
+    explicit TestSet(const uint32_t number_of_blocks, const SeedType initial_seed = testSeed())
+        : seed(initial_seed), gen(seed), numberOfBlocks(number_of_blocks) {
         compressedData.resize(numberOfBlocks);
         decompressedData.resize(number_of_blocks);
         scalesData.resize(numberOfBlocks);
@@ -59,8 +67,21 @@ public:
 
     [[nodiscard]] const std::vector<std::vector<T>>& getDecompressedData() const { return decompressedData; }
 
+    [[nodiscard]] SeedType getSeed() const { return seed; }
+
+    [[nodiscard]] static SeedType testSeed() {
+        const char* env_seed = std::getenv("PERNIX_TEST_SEED");
+        if (env_seed == nullptr || *env_seed == '\0') {
+            return defaultSeed;
+        }
+
+        char* end = nullptr;
+        const unsigned long value = std::strtoul(env_seed, &end, 0);
+        return (end != env_seed && *end == '\0') ? static_cast<SeedType>(value) : defaultSeed;
+    }
+
 private:
-    // Generate random data, compress it, and verify decompression
+    // Generate deterministic source data and its fallback-compressed reference.
     void generateData() {
         for (uint32_t i = 0; i < numberOfBlocks; i++) {
             compressedData[i].resize(BLOCK_SIZE);
@@ -79,15 +100,6 @@ private:
             // Compress the data using the fallback implementation
             pernix::compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(decompressedData[i].data(), 1 / scalesData[i],
                                                                    reinterpret_cast<uint8_t*>(compressedData[i].data()));
-
-            // Decompress and verify using the fallback implementation
-            std::vector<T> decompressed_verify(elementsPerBlock);
-            pernix::decompress_block_fallback<BIT_WIDTH, true, BLOCK_SIZE>(reinterpret_cast<uint8_t*>(compressedData[i].data()),
-                                                                            scalesData[i], decompressed_verify.data());
-
-            for (uint32_t j = 0; j < elementsPerBlock; j++) {
-                ASSERT_NEAR(decompressed_verify[j], decompressedData[i][j], blockTolerance(i));
-            }
         }
     }
 };
@@ -124,6 +136,15 @@ using BitWidthBlockSizeTypes =
           BitWidthBlockSize<13, 512>, BitWidthBlockSize<14, 512>, BitWidthBlockSize<15, 512>, BitWidthBlockSize<16, 512>,
           BitWidthBlockSize<17, 512>, BitWidthBlockSize<18, 512>, BitWidthBlockSize<19, 512>, BitWidthBlockSize<20, 512>,
           BitWidthBlockSize<21, 512>, BitWidthBlockSize<22, 512>, BitWidthBlockSize<23, 512>, BitWidthBlockSize<24, 512>>;
+
+struct BitWidthBlockSizeName {
+    template <typename TestConfigT>
+    static std::string GetName(int) {
+        std::ostringstream name;
+        name << "BitWidth" << static_cast<uint32_t>(TestConfigT::bit_width) << "BlockSize" << TestConfigT::block_size;
+        return name.str();
+    }
+};
 
 template <typename TestConfigT>
 class CompressionTest : public ::testing::Test {
@@ -169,9 +190,46 @@ public:
     DecompressionTest64() : testSet(1u << 10) {}
 };
 
-TYPED_TEST_SUITE(CompressionTest, BitWidthBlockSizeTypes);
-TYPED_TEST_SUITE(DecompressionTest, BitWidthBlockSizeTypes);
-TYPED_TEST_SUITE(CompressionTest64, BitWidthBlockSizeTypes);
-TYPED_TEST_SUITE(DecompressionTest64, BitWidthBlockSizeTypes);
+template <typename FixtureT>
+[[nodiscard]] std::string testContext(const FixtureT& fixture, const uint32_t block) {
+    std::ostringstream message;
+    message << "bit_width=" << static_cast<uint32_t>(FixtureT::BitWidth) << ", block_size=" << FixtureT::BlockSize
+            << ", block=" << block << ", scale=" << fixture.testSet.getScales()[block]
+            << ", tolerance=" << fixture.testSet.blockTolerance(block) << ", seed=" << fixture.testSet.getSeed();
+    return message.str();
+}
+
+template <typename FixtureT>
+void expectCompressedBlockEqualsReference(const FixtureT& fixture, const std::vector<uint8_t>& actual, const uint32_t block) {
+    SCOPED_TRACE(testContext(fixture, block));
+
+    const auto& expected = fixture.testSet.getCompressedData()[block];
+    ASSERT_EQ(actual.size(), expected.size()) << "Compressed block byte count differs from reference";
+
+    for (uint32_t byte = 0; byte < actual.size(); byte++) {
+        ASSERT_EQ(actual[byte], expected[byte])
+            << "Compressed byte mismatch at byte=" << byte << ", actual=" << static_cast<uint32_t>(actual[byte])
+            << ", expected=" << static_cast<uint32_t>(expected[byte]);
+    }
+}
+
+template <typename FixtureT, typename T>
+void expectDecompressedBlockNearSource(const FixtureT& fixture, const std::vector<T>& actual, const uint32_t block) {
+    SCOPED_TRACE(testContext(fixture, block));
+
+    const auto& expected = fixture.testSet.getDecompressedData()[block];
+    ASSERT_EQ(actual.size(), expected.size()) << "Decompressed block element count differs from source";
+
+    for (uint32_t element = 0; element < actual.size(); element++) {
+        ASSERT_NEAR(actual[element], expected[element], fixture.testSet.blockTolerance(block))
+            << "Decompressed element mismatch at element=" << element << ", actual=" << actual[element]
+            << ", expected=" << expected[element] << ", absolute_error=" << std::abs(actual[element] - expected[element]);
+    }
+}
+
+TYPED_TEST_SUITE(CompressionTest, BitWidthBlockSizeTypes, BitWidthBlockSizeName);
+TYPED_TEST_SUITE(DecompressionTest, BitWidthBlockSizeTypes, BitWidthBlockSizeName);
+TYPED_TEST_SUITE(CompressionTest64, BitWidthBlockSizeTypes, BitWidthBlockSizeName);
+TYPED_TEST_SUITE(DecompressionTest64, BitWidthBlockSizeTypes, BitWidthBlockSizeName);
 
 #endif  // PERNIX_TESTSET_H

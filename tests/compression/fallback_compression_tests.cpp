@@ -13,13 +13,7 @@ TYPED_TEST(CompressionTest, FallbackCompressBlock) {
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
-        std::vector<uint8_t>& data = compressedData[block];
-
-        for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i])
-                << "Mismatch at block " << block << ", byte " << i << ", element " << static_cast<int>(data[i]) << " vs "
-                << static_cast<int>(this->testSet.getCompressedData()[block][i]);
-        }
+        expectCompressedBlockEqualsReference(*this, compressedData[block], block);
     }
 }
 
@@ -35,12 +29,6 @@ TYPED_TEST(CompressionTest64, FallbackCompressBlock) {
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
-        std::vector<uint8_t>& data = compressedData[block];
-
-        for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_EQ(data[i], this->testSet.getCompressedData()[block][i])
-                << "Mismatch at block " << block << ", byte " << i << ", element " << static_cast<int>(data[i]) << " vs "
-                << static_cast<int>(this->testSet.getCompressedData()[block][i]);
-        }
+        expectCompressedBlockEqualsReference(*this, compressedData[block], block);
     }
 }

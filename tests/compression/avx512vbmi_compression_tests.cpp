@@ -19,11 +19,7 @@ TYPED_TEST(CompressionTest, AVX512VBMICompressBlock) {
         pernix::decompress_block_fallback<TestFixture::BitWidth, true, TestFixture::BlockSize>(
             compressedData[block].data(), this->testSet.getScales()[block], restored.data());
 
-        for (uint32_t i = 0; i < restored.size(); i++) {
-            ASSERT_NEAR(restored[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))
-                << "Mismatch at block " << block << ", element " << i << ": " << restored[i] << " vs "
-                << this->testSet.getDecompressedData()[block][i];
-        }
+        expectDecompressedBlockNearSource(*this, restored, block);
     }
 }
 
@@ -43,11 +39,7 @@ TYPED_TEST(CompressionTest64, AVX512VBMICompressBlock) {
         pernix::decompress_block_fallback<TestFixture::BitWidth, true, TestFixture::BlockSize>(
             compressedData[block].data(), this->testSet.getScales()[block], restored.data());
 
-        for (uint32_t i = 0; i < restored.size(); i++) {
-            ASSERT_NEAR(restored[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))
-                << "Mismatch at block " << block << ", element " << i << ": " << restored[i] << " vs "
-                << this->testSet.getDecompressedData()[block][i];
-        }
+        expectDecompressedBlockNearSource(*this, restored, block);
     }
 }
 

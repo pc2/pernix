@@ -12,13 +12,7 @@ TYPED_TEST(DecompressionTest, FallbackDecompressBlock) {
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
-        std::vector<float_t>& data = decompressedData[block];
-
-        for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_NEAR(data[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))
-                << "Mismatch at block " << block << ", element " << i << ": " << data[i] << " vs "
-                << this->testSet.getDecompressedData()[block][i];
-        }
+        expectDecompressedBlockNearSource(*this, decompressedData[block], block);
     }
 }
 
@@ -33,12 +27,6 @@ TYPED_TEST(DecompressionTest64, FallbackDecompressBlock) {
     }
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
-        std::vector<double_t>& data = decompressedData[block];
-
-        for (uint32_t i = 0; i < data.size(); i++) {
-            ASSERT_NEAR(data[i], this->testSet.getDecompressedData()[block][i], this->testSet.blockTolerance(block))
-                << "Mismatch at block " << block << ", element " << i << ": " << data[i] << " vs "
-                << this->testSet.getDecompressedData()[block][i];
-        }
+        expectDecompressedBlockNearSource(*this, decompressedData[block], block);
     }
 }

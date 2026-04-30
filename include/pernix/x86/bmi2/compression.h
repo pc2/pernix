@@ -168,20 +168,14 @@ int mm256_compress_block_bmi2(const float_t* __restrict__ input, const float_t s
     constexpr uint32_t iterations_8       = elements_per_block / 8;
     constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
 
+    std::memset(output, 0, BLOCK_SIZE);
+
     const __m256 scale_v = _mm256_set1_ps(scale);
 #pragma GCC unroll 4
     for (uint32_t iter = 0; iter < iterations_8; iter++) {
         const __m256 source        = _mm256_loadu_ps(input);
         const __m256i quantized    = internal::mm256_quantize_ps_epi32(source, scale_v);
-        const __m256i packed_input = [&]() {
-            if constexpr (BIT_WIDTH == 24) {
-                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
-                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
-                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
-            } else {
-                return quantized;
-            }
-        }();
+        const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
         const __m256i packed = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(packed_input);
         std::memcpy(output, &packed, BIT_WIDTH);
         input  += 8;
@@ -220,6 +214,8 @@ int mm256_compress_block_bmi2(const double_t* __restrict__ input, const double_t
     constexpr uint32_t iterations_8       = elements_per_block / 8;
     constexpr uint8_t remaining           = elements_per_block - iterations_8 * 8;
 
+    std::memset(output, 0, BLOCK_SIZE);
+
     const __m256d scale_v = _mm256_set1_pd(scale);
 #pragma GCC unroll 4
     for (uint32_t iter = 0; iter < iterations_8; iter++) {
@@ -229,7 +225,7 @@ int mm256_compress_block_bmi2(const double_t* __restrict__ input, const double_t
         const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
         __m256i combined         = _mm256_castsi128_si256(quantized1);
         combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
-        const __m256i packed     = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(combined);
+        const __m256i packed     = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined));
         std::memcpy(output, &packed, BIT_WIDTH);
         input  += 8;
         output += BIT_WIDTH;

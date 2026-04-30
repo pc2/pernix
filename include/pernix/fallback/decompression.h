@@ -46,8 +46,10 @@ __always_inline auto sign_extend(const uint32_t value) -> int32_t {
         return static_cast<int32_t>(value & 1U);
     }
 
-    constexpr uint32_t shift = 32 - BIT_WIDTH;
-    return (static_cast<int32_t>(value) << shift) >> shift;
+    constexpr uint32_t sign_bit = uint32_t{1} << (BIT_WIDTH - 1);
+    constexpr uint32_t mask     = (uint32_t{1} << BIT_WIDTH) - 1;
+    const uint32_t masked       = value & mask;
+    return static_cast<int32_t>((static_cast<int64_t>(masked ^ sign_bit)) - static_cast<int64_t>(sign_bit));
 }
 
 /**

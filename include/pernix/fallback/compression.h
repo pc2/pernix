@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <type_traits>
 #include <vector>
@@ -31,6 +32,29 @@ __always_inline int32_t quantize_ps_epi32(const float input, const float scale) 
  */
 __always_inline int64_t quantize_pd_epi64(const double_t input, const double_t scale) {
     return std::llround(input * scale);
+}
+
+/**
+ * @brief Quantize and clamp without narrowing through an out-of-range integer type.
+ */
+template <uint8_t BIT_WIDTH, typename T>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<T>)
+__always_inline int32_t quantize_clamped(const T input, const T scale) {
+    constexpr int64_t min_value = BIT_WIDTH == 1 ? 0 : -(int64_t{1} << (BIT_WIDTH - 1));
+    constexpr int64_t max_value = BIT_WIDTH == 1 ? 1 : ((int64_t{1} << (BIT_WIDTH - 1)) - 1);
+
+    const long double scaled = static_cast<long double>(input) * static_cast<long double>(scale);
+    if (std::isnan(scaled)) {
+        return 0;
+    }
+    if (scaled <= static_cast<long double>(min_value)) {
+        return static_cast<int32_t>(min_value);
+    }
+    if (scaled >= static_cast<long double>(max_value)) {
+        return static_cast<int32_t>(max_value);
+    }
+
+    return static_cast<int32_t>(std::llround(scaled));
 }
 
 /**
@@ -126,10 +150,12 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 int compress_block_fallback(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
+    std::memset(output, 0, BLOCK_SIZE);
+
     std::vector<uint32_t> block_values(elements_per_block);
 #pragma GCC unroll 64
     for (uint32_t i = 0; i < elements_per_block; i++) {
-        const int32_t quantized = internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i], scale));
+        const int32_t quantized = internal::quantize_clamped<BIT_WIDTH>(input[i], scale);
         block_values[i]         = static_cast<uint32_t>(quantized);
     }
 
@@ -151,10 +177,13 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 int compress_block_fallback(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    std::memset(output, 0, BLOCK_SIZE);
+
     std::vector<uint32_t> block_values(elements_per_block);
 #pragma GCC unroll 32
     for (uint32_t i = 0; i < elements_per_block; i++) {
-        const int32_t quantized = internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i], scale));
+        const int32_t quantized = internal::quantize_clamped<BIT_WIDTH>(input[i], scale);
         block_values[i]         = static_cast<uint32_t>(quantized);
     }
 

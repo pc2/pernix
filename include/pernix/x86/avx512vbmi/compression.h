@@ -6,8 +6,34 @@
 #include <pernix/x86/avx512vbmi/compat.h>
 #include <pernix/simd_compat.h>
 
+#include <cstring>
+
 namespace pernix {
 namespace internal {
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+static __always_inline __m512i mm512_clamp_signed_epi32(__m512i input) {
+    constexpr int32_t min_value = BIT_WIDTH == 1 ? 0 : -(1 << (BIT_WIDTH - 1));
+    constexpr int32_t max_value = BIT_WIDTH == 1 ? 1 : ((1 << (BIT_WIDTH - 1)) - 1);
+    return _mm512_min_epi32(_mm512_max_epi32(input, _mm512_set1_epi32(min_value)), _mm512_set1_epi32(max_value));
+}
+
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+static __always_inline __m256i mm256_clamp_signed_epi32_avx512(__m256i input) {
+    constexpr int32_t min_value = BIT_WIDTH == 1 ? 0 : -(1 << (BIT_WIDTH - 1));
+    constexpr int32_t max_value = BIT_WIDTH == 1 ? 1 : ((1 << (BIT_WIDTH - 1)) - 1);
+    return _mm256_min_epi32(_mm256_max_epi32(input, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
+}
+
+template <uint8_t BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+static __always_inline __m512i mm512_clamp_signed_epi64(__m512i input) {
+    constexpr int64_t min_value = BIT_WIDTH == 1 ? 0 : -(int64_t{1} << (BIT_WIDTH - 1));
+    constexpr int64_t max_value = BIT_WIDTH == 1 ? 1 : ((int64_t{1} << (BIT_WIDTH - 1)) - 1);
+    return _mm512_min_epi64(_mm512_max_epi64(input, _mm512_set1_epi64(min_value)), _mm512_set1_epi64(max_value));
+}
+
 /**
  * @brief Quantize sixteen float values to 32-bit integers.
  */
@@ -91,10 +117,10 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
             const __m512 source3 = _mm512_loadu_ps(input + 32);
             const __m512 source4 = _mm512_loadu_ps(input + 48);
 
-            const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
-            const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
-            const __m512i quantized3 = mm512_quantize_ps_epi32(source3, scale_v);
-            const __m512i quantized4 = mm512_quantize_ps_epi32(source4, scale_v);
+            const __m512i quantized1 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source1, scale_v));
+            const __m512i quantized2 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source2, scale_v));
+            const __m512i quantized3 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source3, scale_v));
+            const __m512i quantized4 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source4, scale_v));
 
             const __m128i converted1 = _mm512_cvtepi32_epi8(quantized1);
             const __m128i converted2 = _mm512_cvtepi32_epi8(quantized2);
@@ -115,8 +141,8 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
         const __m512 source1 = _mm512_loadu_ps(input);
         const __m512 source2 = _mm512_loadu_ps(input + 16);
 
-        const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
-        const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
+        const __m512i quantized1 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source1, scale_v));
+        const __m512i quantized2 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source2, scale_v));
 
         const __m128i converted1 = _mm512_cvtepi32_epi8(quantized1);
         const __m128i converted2 = _mm512_cvtepi32_epi8(quantized2);
@@ -130,7 +156,7 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
 
     if constexpr (iterations_16 > 0) {
         const __m512 source     = _mm512_loadu_ps(input);
-        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m512i quantized = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source, scale_v));
         const __m128i converted = _mm512_cvtepi32_epi8(quantized);
 
         const __m128i packed = m128::mm_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(converted);
@@ -142,7 +168,7 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
 
     if constexpr (remaining_elements > 0) {
         const __m512 source     = mm512_loadu_elements_ps(remaining_elements, input);
-        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m512i quantized = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source, scale_v));
         const __m128i converted = _mm512_cvtepi32_epi8(quantized);
         const __m128i packed    = m128::mm_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(converted);
 
@@ -172,8 +198,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
             const __m512 source1 = _mm512_loadu_ps(input);
             const __m512 source2 = _mm512_loadu_ps(input + 16);
 
-            const __m512i quantized1 = mm512_quantize_ps_epi32(source1, scale_v);
-            const __m512i quantized2 = mm512_quantize_ps_epi32(source2, scale_v);
+            const __m512i quantized1 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source1, scale_v));
+            const __m512i quantized2 = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source2, scale_v));
 
             const __m256i converted1 = _mm512_cvtepi32_epi16(quantized1);
             const __m256i converted2 = _mm512_cvtepi32_epi16(quantized2);
@@ -188,7 +214,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (iterations_16 > 0) {
         const __m512 source     = _mm512_loadu_ps(input);
-        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m512i quantized = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source, scale_v));
         const __m256i converted = _mm512_cvtepi32_epi16(quantized);
 
         const __m256i packed = m256::mm256_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
@@ -200,7 +226,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (iterations_8 > 0) {
         const __m256 source     = _mm256_loadu_ps(input);
-        const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
+        const __m256i quantized = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm256_quantize_ps_epi32(source, scale_v256));
         const __m128i converted = _mm256_cvtepi32_epi16(quantized);
 
         const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
@@ -212,7 +238,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (remaining_elements > 0) {
         const __m256 source     = mm256_loadu_elements_ps(remaining_elements, input);
-        const __m256i quantized = mm256_quantize_ps_epi32(source, scale_v256);
+        const __m256i quantized = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm256_quantize_ps_epi32(source, scale_v256));
         const __m128i converted = _mm256_cvtepi32_epi16(quantized);
         const __m128i packed    = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
 
@@ -239,16 +265,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 #pragma GCC unroll 2
         for (uint32_t i = 0; i < iterations_16; ++i) {
             const __m512 source        = _mm512_loadu_ps(input);
-            const __m512i quantized    = mm512_quantize_ps_epi32(source, scale_v);
-            const __m512i packed_input = [&]() {
-                if constexpr (BIT_WIDTH == 24) {
-                    constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
-                    constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
-                    return _mm512_min_epi32(_mm512_max_epi32(quantized, _mm512_set1_epi32(min_value)), _mm512_set1_epi32(max_value));
-                } else {
-                    return quantized;
-                }
-            }();
+            const __m512i packed_input = mm512_clamp_signed_epi32<BIT_WIDTH>(mm512_quantize_ps_epi32(source, scale_v));
 
             const __m512i packed = m512::mm512_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
             mm512_storeu_elements_epi16(output, BIT_WIDTH, packed);
@@ -259,16 +276,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (iterations_8 > 0) {
         const __m256 source        = _mm256_loadu_ps(input);
-        const __m256i quantized    = mm256_quantize_ps_epi32(source, scale_v256);
-        const __m256i packed_input = [&]() {
-            if constexpr (BIT_WIDTH == 24) {
-                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
-                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
-                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
-            } else {
-                return quantized;
-            }
-        }();
+        const __m256i packed_input = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm256_quantize_ps_epi32(source, scale_v256));
 
         const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
         mm256_storeu_elements_epi8(output, BIT_WIDTH, packed);
@@ -279,16 +287,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (remaining_elements > 0) {
         const __m256 source        = mm256_loadu_elements_ps(remaining_elements, input);
-        const __m256i quantized    = mm256_quantize_ps_epi32(source, scale_v256);
-        const __m256i packed_input = [&]() {
-            if constexpr (BIT_WIDTH == 24) {
-                constexpr int32_t min_value = -(1 << (BIT_WIDTH - 1));
-                constexpr int32_t max_value = (1 << (BIT_WIDTH - 1)) - 1;
-                return _mm256_min_epi32(_mm256_max_epi32(quantized, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
-            } else {
-                return quantized;
-            }
-        }();
+        const __m256i packed_input = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm256_quantize_ps_epi32(source, scale_v256));
         const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
 
         mm256_storeu_elements_epi8(output, tail_bytes(BIT_WIDTH, remaining_elements), packed);
@@ -322,14 +321,14 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
             const __m512d source7 = _mm512_loadu_pd(input + 48);
             const __m512d source8 = _mm512_loadu_pd(input + 56);
 
-            const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
-            const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
-            const __m512i quantized3 = mm512_quantize_pd_epi64(source3, scale_v);
-            const __m512i quantized4 = mm512_quantize_pd_epi64(source4, scale_v);
-            const __m512i quantized5 = mm512_quantize_pd_epi64(source5, scale_v);
-            const __m512i quantized6 = mm512_quantize_pd_epi64(source6, scale_v);
-            const __m512i quantized7 = mm512_quantize_pd_epi64(source7, scale_v);
-            const __m512i quantized8 = mm512_quantize_pd_epi64(source8, scale_v);
+            const __m512i quantized1 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source1, scale_v));
+            const __m512i quantized2 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source2, scale_v));
+            const __m512i quantized3 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source3, scale_v));
+            const __m512i quantized4 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source4, scale_v));
+            const __m512i quantized5 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source5, scale_v));
+            const __m512i quantized6 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source6, scale_v));
+            const __m512i quantized7 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source7, scale_v));
+            const __m512i quantized8 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source8, scale_v));
 
             const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
             const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
@@ -356,10 +355,10 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
         const __m512d source3 = _mm512_loadu_pd(input + 16);
         const __m512d source4 = _mm512_loadu_pd(input + 24);
 
-        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
-        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
-        const __m512i quantized3 = mm512_quantize_pd_epi64(source3, scale_v);
-        const __m512i quantized4 = mm512_quantize_pd_epi64(source4, scale_v);
+        const __m512i quantized1 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source1, scale_v));
+        const __m512i quantized2 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source2, scale_v));
+        const __m512i quantized3 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source3, scale_v));
+        const __m512i quantized4 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source4, scale_v));
 
         const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
         const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
@@ -378,8 +377,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_16 > 0) {
         const __m512d source1    = _mm512_loadu_pd(input);
         const __m512d source2    = _mm512_loadu_pd(input + 8);
-        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
-        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+        const __m512i quantized1 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source1, scale_v));
+        const __m512i quantized2 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source2, scale_v));
 
         const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
         const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
@@ -398,8 +397,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
         const __m512d source1    = mm512_loadu_elements_pd(source1_elements, input);
         const __m512d source2    = source2_elements > 0 ? mm512_loadu_elements_pd(source2_elements, input + 8) : _mm512_setzero_pd();
-        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
-        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+        const __m512i quantized1 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source1, scale_v));
+        const __m512i quantized2 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source2, scale_v));
 
         const __m128i converted1 = _mm512_cvtepi64_epi8(quantized1);
         const __m128i converted2 = _mm512_cvtepi64_epi8(quantized2);
@@ -433,10 +432,10 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
             const __m512d source3 = _mm512_loadu_pd(input + 16);
             const __m512d source4 = _mm512_loadu_pd(input + 24);
 
-            const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
-            const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
-            const __m512i quantized3 = mm512_quantize_pd_epi64(source3, scale_v);
-            const __m512i quantized4 = mm512_quantize_pd_epi64(source4, scale_v);
+            const __m512i quantized1 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source1, scale_v));
+            const __m512i quantized2 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source2, scale_v));
+            const __m512i quantized3 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source3, scale_v));
+            const __m512i quantized4 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source4, scale_v));
 
             const __m128i converted1 = _mm512_cvtepi64_epi16(quantized1);
             const __m128i converted2 = _mm512_cvtepi64_epi16(quantized2);
@@ -456,8 +455,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     if constexpr (iterations_16 > 0) {
         const __m512d source1    = _mm512_loadu_pd(input);
         const __m512d source2    = _mm512_loadu_pd(input + 8);
-        const __m512i quantized1 = mm512_quantize_pd_epi64(source1, scale_v);
-        const __m512i quantized2 = mm512_quantize_pd_epi64(source2, scale_v);
+        const __m512i quantized1 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source1, scale_v));
+        const __m512i quantized2 = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source2, scale_v));
 
         const __m128i converted1 = _mm512_cvtepi64_epi16(quantized1);
         const __m128i converted2 = _mm512_cvtepi64_epi16(quantized2);
@@ -472,7 +471,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (iterations_8 > 0) {
         const __m512d source    = _mm512_loadu_pd(input);
-        const __m512i quantized = mm512_quantize_pd_epi64(source, scale_v);
+        const __m512i quantized = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source, scale_v));
         const __m128i converted = _mm512_cvtepi64_epi16(quantized);
 
         const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
@@ -484,7 +483,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (remaining_elements > 0) {
         const __m512d source    = mm512_loadu_elements_pd(remaining_elements, input);
-        const __m512i quantized = mm512_quantize_pd_epi64(source, scale_v);
+        const __m512i quantized = mm512_clamp_signed_epi64<BIT_WIDTH>(mm512_quantize_pd_epi64(source, scale_v));
         const __m128i converted = _mm512_cvtepi64_epi16(quantized);
 
         const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
@@ -512,8 +511,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
             const __m512d source1 = _mm512_loadu_pd(input);
             const __m512d source2 = _mm512_loadu_pd(input + 8);
 
-            const __m256i quantized1 = mm512_quantize_pd_epi32(source1, scale_v);
-            const __m256i quantized2 = mm512_quantize_pd_epi32(source2, scale_v);
+            const __m256i quantized1 = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm512_quantize_pd_epi32(source1, scale_v));
+            const __m256i quantized2 = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm512_quantize_pd_epi32(source2, scale_v));
 
             const __m512i packed = m512::mm512_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(make_m512i_from_2x256(quantized1, quantized2));
             mm512_storeu_elements_epi16(output, BIT_WIDTH, packed);
@@ -525,7 +524,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (iterations_8 > 0) {
         const __m512d source    = _mm512_loadu_pd(input);
-        const __m256i quantized = mm512_quantize_pd_epi32(source, scale_v);
+        const __m256i quantized = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm512_quantize_pd_epi32(source, scale_v));
 
         const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(quantized);
         mm256_storeu_elements_epi8(output, BIT_WIDTH, packed);
@@ -536,7 +535,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     if constexpr (remaining_elements > 0) {
         const __m512d source    = mm512_loadu_elements_pd(remaining_elements, input);
-        const __m256i quantized = mm512_quantize_pd_epi32(source, scale_v);
+        const __m256i quantized = mm256_clamp_signed_epi32_avx512<BIT_WIDTH>(mm512_quantize_pd_epi32(source, scale_v));
         const __m256i packed    = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(quantized);
 
         mm256_storeu_elements_epi8(output, tail_bytes(BIT_WIDTH, remaining_elements), packed);
@@ -561,6 +560,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
+    std::memset(output, 0, BLOCK_SIZE);
+
     if constexpr (BIT_WIDTH <= 8) {
         return internal::mm512_compress_block_avx512vbmi_1to8<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
     } else if constexpr (BIT_WIDTH <= 16) {
@@ -584,6 +585,8 @@ int mm512_compress_block_avx512vbmi(const float_t* __restrict__ input, const flo
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 int mm512_compress_block_avx512vbmi(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
+    std::memset(output, 0, BLOCK_SIZE);
+
     if constexpr (BIT_WIDTH <= 8) {
         return internal::mm512_compress_block_avx512vbmi_1to8<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
     } else if constexpr (BIT_WIDTH <= 16) {

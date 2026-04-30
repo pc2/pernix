@@ -14,6 +14,13 @@
 #include <string>
 #include <type_traits>
 
+#ifndef PERNIX_TEST_BLOCK_SIZE
+#define PERNIX_TEST_BLOCK_SIZE 64
+#endif
+
+static_assert(PERNIX_TEST_BLOCK_SIZE % 32 == 0,
+              "PERNIX_TEST_BLOCK_SIZE must be dividable by 32 bytes");
+
 /**
  * A test set for compression and decompression tests.
  * It generates random float data, compresses it, and verifies the decompression using the fallback implementation.
@@ -28,8 +35,8 @@ class TestSet {
     using ValueType = uint8_t;
     using SeedType  = std::mt19937::result_type;
 
-    alignas(64) std::vector<std::vector<ValueType>> compressedData;
-    alignas(64) std::vector<std::vector<T>> decompressedData;
+    alignas(64) std::vector<std::vector<ValueType> > compressedData;
+    alignas(64) std::vector<std::vector<T> > decompressedData;
     alignas(64) std::vector<T> scalesData;
 
     SeedType seed;
@@ -38,7 +45,7 @@ class TestSet {
 
 public:
     static constexpr uint32_t elementsPerBlock = (BLOCK_SIZE * 8) / BIT_WIDTH;
-    static constexpr SeedType defaultSeed       = 0x5eed1234u;
+    static constexpr SeedType defaultSeed      = 0x5eed1234u;
 
     static constexpr T quantization_levels =
         SIGN_VALUES ? static_cast<T>(BIT_WIDTH == 1 ? 1u : ((1u << (BIT_WIDTH - 1u)) - 1u)) : static_cast<T>((1u << BIT_WIDTH) - 1u);
@@ -63,9 +70,9 @@ public:
 
     [[nodiscard]] const std::vector<T>& getScales() const { return scalesData; }
 
-    [[nodiscard]] const std::vector<std::vector<ValueType>>& getCompressedData() const { return compressedData; }
+    [[nodiscard]] const std::vector<std::vector<ValueType> >& getCompressedData() const { return compressedData; }
 
-    [[nodiscard]] const std::vector<std::vector<T>>& getDecompressedData() const { return decompressedData; }
+    [[nodiscard]] const std::vector<std::vector<T> >& getDecompressedData() const { return decompressedData; }
 
     [[nodiscard]] SeedType getSeed() const { return seed; }
 
@@ -75,7 +82,7 @@ public:
             return defaultSeed;
         }
 
-        char* end = nullptr;
+        char* end                 = nullptr;
         const unsigned long value = std::strtoul(env_seed, &end, 0);
         return (end != env_seed && *end == '\0') ? static_cast<SeedType>(value) : defaultSeed;
     }
@@ -94,8 +101,9 @@ private:
             const T b_max = *std::ranges::max_element(decompressedData[i]);
             const T b_min = *std::ranges::min_element(decompressedData[i]);
             const T b_abs = std::max(std::abs(b_max), std::abs(b_min));
-            scalesData[i] = (b_abs > static_cast<T>(0) && quantization_levels > static_cast<T>(0)) ? (b_abs / quantization_levels)
-                                                                                                   : std::numeric_limits<T>::epsilon();
+            scalesData[i] = (b_abs > static_cast<T>(0) && quantization_levels > static_cast<T>(0))
+                                ? (b_abs / quantization_levels)
+                                : std::numeric_limits<T>::epsilon();
 
             // Compress the data using the fallback implementation
             pernix::compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(decompressedData[i].data(), 1 / scalesData[i],
@@ -112,30 +120,18 @@ struct BitWidthBlockSize {
 
 using testing::Types;
 using BitWidthBlockSizeTypes =
-    Types<BitWidthBlockSize<1, 64>, BitWidthBlockSize<2, 64>, BitWidthBlockSize<3, 64>, BitWidthBlockSize<4, 64>,
-          BitWidthBlockSize<5, 64>, BitWidthBlockSize<6, 64>, BitWidthBlockSize<7, 64>, BitWidthBlockSize<8, 64>,
-          BitWidthBlockSize<9, 64>, BitWidthBlockSize<10, 64>, BitWidthBlockSize<11, 64>, BitWidthBlockSize<12, 64>,
-          BitWidthBlockSize<13, 64>, BitWidthBlockSize<14, 64>, BitWidthBlockSize<15, 64>, BitWidthBlockSize<16, 64>,
-          BitWidthBlockSize<17, 64>, BitWidthBlockSize<18, 64>, BitWidthBlockSize<19, 64>, BitWidthBlockSize<20, 64>,
-          BitWidthBlockSize<21, 64>, BitWidthBlockSize<22, 64>, BitWidthBlockSize<23, 64>, BitWidthBlockSize<24, 64>,
-          BitWidthBlockSize<1, 128>, BitWidthBlockSize<2, 128>, BitWidthBlockSize<3, 128>, BitWidthBlockSize<4, 128>,
-          BitWidthBlockSize<5, 128>, BitWidthBlockSize<6, 128>, BitWidthBlockSize<7, 128>, BitWidthBlockSize<8, 128>,
-          BitWidthBlockSize<9, 128>, BitWidthBlockSize<10, 128>, BitWidthBlockSize<11, 128>, BitWidthBlockSize<12, 128>,
-          BitWidthBlockSize<13, 128>, BitWidthBlockSize<14, 128>, BitWidthBlockSize<15, 128>, BitWidthBlockSize<16, 128>,
-          BitWidthBlockSize<17, 128>, BitWidthBlockSize<18, 128>, BitWidthBlockSize<19, 128>, BitWidthBlockSize<20, 128>,
-          BitWidthBlockSize<21, 128>, BitWidthBlockSize<22, 128>, BitWidthBlockSize<23, 128>, BitWidthBlockSize<24, 128>,
-          BitWidthBlockSize<1, 256>, BitWidthBlockSize<2, 256>, BitWidthBlockSize<3, 256>, BitWidthBlockSize<4, 256>,
-          BitWidthBlockSize<5, 256>, BitWidthBlockSize<6, 256>, BitWidthBlockSize<7, 256>, BitWidthBlockSize<8, 256>,
-          BitWidthBlockSize<9, 256>, BitWidthBlockSize<10, 256>, BitWidthBlockSize<11, 256>, BitWidthBlockSize<12, 256>,
-          BitWidthBlockSize<13, 256>, BitWidthBlockSize<14, 256>, BitWidthBlockSize<15, 256>, BitWidthBlockSize<16, 256>,
-          BitWidthBlockSize<17, 256>, BitWidthBlockSize<18, 256>, BitWidthBlockSize<19, 256>, BitWidthBlockSize<20, 256>,
-          BitWidthBlockSize<21, 256>, BitWidthBlockSize<22, 256>, BitWidthBlockSize<23, 256>, BitWidthBlockSize<24, 256>,
-          BitWidthBlockSize<1, 512>, BitWidthBlockSize<2, 512>, BitWidthBlockSize<3, 512>, BitWidthBlockSize<4, 512>,
-          BitWidthBlockSize<5, 512>, BitWidthBlockSize<6, 512>, BitWidthBlockSize<7, 512>, BitWidthBlockSize<8, 512>,
-          BitWidthBlockSize<9, 512>, BitWidthBlockSize<10, 512>, BitWidthBlockSize<11, 512>, BitWidthBlockSize<12, 512>,
-          BitWidthBlockSize<13, 512>, BitWidthBlockSize<14, 512>, BitWidthBlockSize<15, 512>, BitWidthBlockSize<16, 512>,
-          BitWidthBlockSize<17, 512>, BitWidthBlockSize<18, 512>, BitWidthBlockSize<19, 512>, BitWidthBlockSize<20, 512>,
-          BitWidthBlockSize<21, 512>, BitWidthBlockSize<22, 512>, BitWidthBlockSize<23, 512>, BitWidthBlockSize<24, 512>>;
+Types<BitWidthBlockSize<1, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<2, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<3, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<4, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<5, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<6, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<7, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<8, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<9, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<10, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<11, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<12, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<13, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<14, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<15, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<16, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<17, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<18, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<19, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<20, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<21, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<22, PERNIX_TEST_BLOCK_SIZE>,
+      BitWidthBlockSize<23, PERNIX_TEST_BLOCK_SIZE>, BitWidthBlockSize<24, PERNIX_TEST_BLOCK_SIZE> >;
 
 struct BitWidthBlockSizeName {
     template <typename TestConfigT>
@@ -154,7 +150,8 @@ public:
 
     TestSet<BitWidth, float_t, BlockSize> testSet;
 
-    CompressionTest() : testSet(1u << 10) {}
+    CompressionTest() : testSet(1u << 10) {
+    }
 };
 
 template <typename TestConfigT>
@@ -165,7 +162,8 @@ public:
 
     TestSet<BitWidth, float_t, BlockSize> testSet;
 
-    DecompressionTest() : testSet(1u << 10) {}
+    DecompressionTest() : testSet(1u << 10) {
+    }
 };
 
 template <typename TestConfigT>
@@ -176,7 +174,8 @@ public:
 
     TestSet<BitWidth, double_t, BlockSize> testSet;
 
-    CompressionTest64() : testSet(1u << 10) {}
+    CompressionTest64() : testSet(1u << 10) {
+    }
 };
 
 template <typename TestConfigT>
@@ -187,15 +186,16 @@ public:
 
     TestSet<BitWidth, double_t, BlockSize> testSet;
 
-    DecompressionTest64() : testSet(1u << 10) {}
+    DecompressionTest64() : testSet(1u << 10) {
+    }
 };
 
 template <typename FixtureT>
 [[nodiscard]] std::string testContext(const FixtureT& fixture, const uint32_t block) {
     std::ostringstream message;
     message << "bit_width=" << static_cast<uint32_t>(FixtureT::BitWidth) << ", block_size=" << FixtureT::BlockSize
-            << ", block=" << block << ", scale=" << fixture.testSet.getScales()[block]
-            << ", tolerance=" << fixture.testSet.blockTolerance(block) << ", seed=" << fixture.testSet.getSeed();
+        << ", block=" << block << ", scale=" << fixture.testSet.getScales()[block]
+        << ", tolerance=" << fixture.testSet.blockTolerance(block) << ", seed=" << fixture.testSet.getSeed();
     return message.str();
 }
 

@@ -74,7 +74,7 @@ __always_inline auto unpack_epi32_fallback_inner(const uint8_t* __restrict__ inp
     uint8_t bits_in_buffer = 8 - bit_offset;
     uint64_t buffer        = static_cast<uint64_t>(input[idx++]) >> bit_offset;
 
-#pragma GCC unroll 512
+#pragma GCC unroll 64
     for (uint32_t i = 0; i < elements; i++) {
         while (BIT_WIDTH > bits_in_buffer) {
             const auto next_value = static_cast<uint64_t>(input[idx++]) << bits_in_buffer;

@@ -14,12 +14,23 @@ file(GLOB_RECURSE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
 )
 
-add_executable(pernix_tests)
-target_sources(pernix_tests PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(pernix_tests PRIVATE pernix ${GTEST_LDFLAGS})
-target_compile_features(pernix_tests PRIVATE cxx_std_20)
-target_compile_options(pernix_tests PRIVATE ${GTEST_CFLAGS})
-target_include_directories(pernix_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(PERNIX_TEST_BLOCK_SIZES 64 128 256 512 CACHE STRING "Block sizes to build as separate test executables")
+set(PERNIX_TEST_TARGETS)
+
+foreach (BLOCK_SIZE IN LISTS PERNIX_TEST_BLOCK_SIZES)
+    set(TEST_TARGET pernix_tests_${BLOCK_SIZE})
+    list(APPEND PERNIX_TEST_TARGETS ${TEST_TARGET})
+
+    add_executable(${TEST_TARGET})
+    target_sources(${TEST_TARGET} PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
+    target_link_libraries(${TEST_TARGET} PRIVATE pernix ${GTEST_LDFLAGS})
+    target_compile_features(${TEST_TARGET} PRIVATE cxx_std_20)
+    target_compile_options(${TEST_TARGET} PRIVATE ${GTEST_CFLAGS})
+    target_compile_definitions(${TEST_TARGET} PRIVATE PERNIX_TEST_BLOCK_SIZE=${BLOCK_SIZE})
+    target_include_directories(${TEST_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+endforeach ()
+
+add_custom_target(pernix_tests DEPENDS ${PERNIX_TEST_TARGETS})
 
 # check_cxx_compiler_flag(-O3 HAS_OPTIMIZE3_FLAG)
 # if (HAS_OPTIMIZE3_FLAG)
@@ -27,19 +38,23 @@ target_include_directories(pernix_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/incl
 # endif ()
 
 include(GoogleTest)
-gtest_discover_tests(pernix_tests
-        DISCOVERY_MODE PRE_TEST
-        EXTRA_ARGS --gtest_color=yes
-        NO_PRETTY_TYPES
-        PROPERTIES LABELS unit
-)
+foreach (BLOCK_SIZE IN LISTS PERNIX_TEST_BLOCK_SIZES)
+    gtest_discover_tests(pernix_tests_${BLOCK_SIZE}
+            DISCOVERY_MODE PRE_TEST
+            EXTRA_ARGS --gtest_color=yes
+            NO_PRETTY_TYPES
+            PROPERTIES LABELS "unit;block_size_${BLOCK_SIZE}"
+    )
+endforeach ()
 
 if (PERNIX_ENABLE_CODE_COVERAGE)
     message(STATUS "Code coverage enabled for tests")
 
     # set compile and link options for code coverage
-    target_compile_options(pernix_tests PRIVATE -g -O0 --coverage)
-    target_link_options(pernix_tests PRIVATE --coverage)
+    foreach (TEST_TARGET IN LISTS PERNIX_TEST_TARGETS)
+        target_compile_options(${TEST_TARGET} PRIVATE -g -O0 --coverage)
+        target_link_options(${TEST_TARGET} PRIVATE --coverage)
+    endforeach ()
 
     # find lcov and genhtml
     find_program(LCOV_PROGRAM lcov)
@@ -55,7 +70,7 @@ if (PERNIX_ENABLE_CODE_COVERAGE)
             COMMAND ${LCOV_PROGRAM} --remove coverage.info /usr/* ${CMAKE_SOURCE_DIR}/tests/* --output-file coverage.info.cleaned -q
             COMMAND ${GENHTML_PROGRAM} coverage.info.cleaned --output-directory coverage_report -q
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            DEPENDS pernix_tests
+            DEPENDS ${PERNIX_TEST_TARGETS}
             COMMENT "Generating code coverage report"
             VERBATIM
     )

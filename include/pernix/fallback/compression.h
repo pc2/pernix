@@ -69,7 +69,7 @@ void pack_epi32_fallback_inner(const std::vector<uint32_t>& input, const uint8_t
     std::size_t bits_in_buffer = bit_offset;
     uint64_t buffer            = bit_offset ? static_cast<uint64_t>(destination[0] & ((1U << bit_offset) - 1U)) : 0;
 
-#pragma GCC unroll 512
+#pragma GCC unroll 64
     for (uint32_t raw_value : input) {
         const uint32_t next_value = raw_value & bitmask;
 

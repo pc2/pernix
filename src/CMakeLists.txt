@@ -1,7 +1,9 @@
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 file(GLOB_RECURSE
         PERNIX_COMMON_SOURCES
+        CONFIGURE_DEPENDS
         ./fallback/*.cpp
         ./pernix.cpp
         ${PROJECT_SOURCE_DIR}/include/pernix/*.h
@@ -24,6 +26,7 @@ message(STATUS "Pernix architecture backend: ${PERNIX_SELECTED_ARCH_BACKEND}")
 if (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "X86")
     file(GLOB_RECURSE
             PERNIX_X86_SOURCES
+            CONFIGURE_DEPENDS
             ./x86/*.cpp
             ${PROJECT_SOURCE_DIR}/include/pernix/x86/*.h
     )
@@ -31,6 +34,7 @@ if (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "X86")
 elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_NEON")
     file(GLOB_RECURSE
             PERNIX_ARM64_NEON_SOURCES
+            CONFIGURE_DEPENDS
             ./arm64/neon/*.cpp
             ${PROJECT_SOURCE_DIR}/include/pernix/arm64/neon/*.h
     )
@@ -38,6 +42,7 @@ elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_NEON")
 elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE")
     file(GLOB_RECURSE
             PERNIX_ARM64_SVE_SOURCES
+            CONFIGURE_DEPENDS
             ./arm64/sve/*.cpp
             ${PROJECT_SOURCE_DIR}/include/pernix/arm64/sve/*.h
     )
@@ -45,6 +50,7 @@ elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE")
 elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE2")
     file(GLOB_RECURSE
             PERNIX_ARM64_SVE2_SOURCES
+            CONFIGURE_DEPENDS
             ./arm64/sve2/*.cpp
             ${PROJECT_SOURCE_DIR}/include/pernix/arm64/sve2/*.h
     )
@@ -52,13 +58,20 @@ elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE2")
 endif ()
 
 add_library(pernix SHARED ${PERNIX_SOURCES})
+add_library(pernix::pernix ALIAS pernix)
 set_target_properties(pernix PROPERTIES
         OUTPUT_NAME "pernix"
         VERSION ${NORMALIZED_VERSION}
 )
+target_compile_features(pernix PUBLIC cxx_std_20)
+target_compile_options(pernix PRIVATE ${PERNIX_PRIVATE_COMPILE_OPTIONS})
 target_include_directories(pernix PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+if (PERNIX_ENABLE_LTO)
+    set_target_properties(pernix PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
 
 if (PERNIX_USE_SIMDE)
     target_link_libraries(pernix PUBLIC simde::simde)
@@ -85,23 +98,50 @@ configure_file(
 
 if (PERNIX_ENABLE_INSTALL)
     install(TARGETS pernix
+            EXPORT pernixTargets
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/pernix ${PROJECT_BINARY_DIR}/include/pernix
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/pernix"
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
             FILES_MATCHING PATTERN "*.*h"
+    )
+    if (PERNIX_USE_SIMDE AND PERNIX_BUNDLE_SIMDE_FOR_INSTALL)
+        install(DIRECTORY "${simde_SOURCE_DIR}/simde"
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+                FILES_MATCHING PATTERN "*.h"
+        )
+    endif ()
+
+    configure_package_config_file(
+            "${PROJECT_SOURCE_DIR}/cmake/pernixConfig.cmake.in"
+            "${PROJECT_BINARY_DIR}/pernixConfig.cmake"
+            INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/pernix"
+    )
+    write_basic_package_version_file(
+            "${PROJECT_BINARY_DIR}/pernixConfigVersion.cmake"
+            VERSION ${NORMALIZED_VERSION}
+            COMPATIBILITY SameMajorVersion
+    )
+    install(
+            FILES
+            "${PROJECT_BINARY_DIR}/pernixConfig.cmake"
+            "${PROJECT_BINARY_DIR}/pernixConfigVersion.cmake"
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/pernix"
+    )
+    install(
+            EXPORT pernixTargets
+            FILE pernixTargets.cmake
+            NAMESPACE pernix::
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/pernix"
     )
 
     install(
             FILES ${PROJECT_BINARY_DIR}/pernix.pc
             DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
     )
-
-    add_custom_target(uninstall COMMAND xargs rm -vf < ${PROJECT_BINARY_DIR}/install_manifest.txt)
 endif ()
 
 if (PERNIX_ENABLE_DOXYGEN)
@@ -127,7 +167,7 @@ if (PERNIX_ENABLE_DOXYGEN)
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
             COMMENT "Generating documentation with Doxygen."
     )
-    if (BENCHMARK_ENABLE_INSTALL AND BENCHMARK_INSTALL_DOCS)
+    if (PERNIX_ENABLE_INSTALL AND PERNIX_INSTALL_DOCS)
         install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html/"
                 DESTINATION ${CMAKE_INSTALL_DOCDIR})
     endif ()

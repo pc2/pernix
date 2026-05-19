@@ -7,6 +7,9 @@
 #if defined(PERNIX_USE_SIMDE)
 #define SIMDE_ENABLE_NATIVE_ALIASES
 #undef SIMDE_X86_AVX512FP16_NATIVE
+#if defined(__clang__)
+#define SIMDE_X86_AVX512BF16_NATIVE
+#endif
 // #define SIMDE_NO_NATIVE
 #if defined(PERNIX_BACKEND_X86)
 #include <simde/x86/avx2.h>

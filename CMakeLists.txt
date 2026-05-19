@@ -13,6 +13,8 @@ option(PERNIX_DISABLE_AVX2 "Disable AVX2 optimizations" off)
 option(PERNIX_DISABLE_AVX512 "Disable AVX512 optimizations" off)
 
 option(PERNIX_USE_SIMDE "Use SIMDe library for portable SIMD support" off)
+set(PERNIX_SIMDE_PROVIDER "AUTO" CACHE STRING "SIMDe provider when PERNIX_USE_SIMDE is enabled (AUTO, PACKAGE, FETCH)")
+set_property(CACHE PERNIX_SIMDE_PROVIDER PROPERTY STRINGS AUTO PACKAGE FETCH)
 set(PERNIX_ARCH_BACKEND "AUTO" CACHE STRING "Pernix architecture backend (AUTO, FALLBACK, X86, ARM64_NEON, ARM64_SVE, ARM64_SVE2)")
 set_property(CACHE PERNIX_ARCH_BACKEND PROPERTY STRINGS AUTO FALLBACK X86 ARM64_NEON ARM64_SVE ARM64_SVE2)
 
@@ -24,23 +26,41 @@ if (NOT PERNIX_ARCH_BACKEND IN_LIST PERNIX_VALID_ARCH_BACKENDS)
     message(FATAL_ERROR "Unsupported PERNIX_ARCH_BACKEND='${PERNIX_ARCH_BACKEND}'. Expected one of: ${PERNIX_VALID_ARCH_BACKENDS}")
 endif ()
 
+string(TOUPPER "${PERNIX_SIMDE_PROVIDER}" PERNIX_SIMDE_PROVIDER)
+set(PERNIX_VALID_SIMDE_PROVIDERS AUTO PACKAGE FETCH)
+if (NOT PERNIX_SIMDE_PROVIDER IN_LIST PERNIX_VALID_SIMDE_PROVIDERS)
+    message(FATAL_ERROR "Unsupported PERNIX_SIMDE_PROVIDER='${PERNIX_SIMDE_PROVIDER}'. Expected one of: ${PERNIX_VALID_SIMDE_PROVIDERS}")
+endif ()
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+set(PERNIX_BUNDLE_SIMDE_FOR_INSTALL OFF)
 if (PERNIX_USE_SIMDE)
-    include(FetchContent)
-    FetchContent_Declare(
-            simde
-            GIT_REPOSITORY https://github.com/simd-everywhere/simde.git
-            GIT_TAG master
-            GIT_SHALLOW TRUE
-            GIT_PROGRESS TRUE
-            EXCLUDE_FROM_ALL
-    )
-    FetchContent_MakeAvailable(simde)
+    if (PERNIX_SIMDE_PROVIDER STREQUAL "AUTO" OR PERNIX_SIMDE_PROVIDER STREQUAL "PACKAGE")
+        find_package(simde CONFIG QUIET)
+    endif ()
+
+    if (NOT TARGET simde::simde AND (PERNIX_SIMDE_PROVIDER STREQUAL "AUTO" OR PERNIX_SIMDE_PROVIDER STREQUAL "FETCH"))
+        include(FetchContent)
+        set(SIMDE_TEST_CMAKE_PACKAGING OFF CACHE BOOL "Test SIMDe CMake packaging" FORCE)
+        FetchContent_Declare(
+                simde
+                GIT_REPOSITORY https://github.com/simd-everywhere/simde.git
+                GIT_TAG f3e8262173b7089db9a9d57a9ecef8dd07ad9c97
+                GIT_PROGRESS TRUE
+                EXCLUDE_FROM_ALL
+        )
+        FetchContent_MakeAvailable(simde)
+        set(PERNIX_BUNDLE_SIMDE_FOR_INSTALL ON)
+    endif ()
 
     if (NOT TARGET simde::simde AND DEFINED simde_SOURCE_DIR AND EXISTS "${simde_SOURCE_DIR}/simde")
         add_library(simde::simde INTERFACE IMPORTED GLOBAL)
         target_include_directories(simde::simde INTERFACE "${simde_SOURCE_DIR}")
+    endif ()
+
+    if (NOT TARGET simde::simde)
+        message(FATAL_ERROR "PERNIX_USE_SIMDE is enabled, but simde::simde was not found. Set PERNIX_SIMDE_PROVIDER=FETCH or install SIMDe's CMake package.")
     endif ()
 endif ()
 
@@ -62,28 +82,42 @@ else ()
 endif ()
 message(STATUS "Pernix version: ${VERSION}, normalized to ${NORMALIZED_VERSION}")
 
-set(BENCHMARK_CXX_STANDARD 20)
-
-set(CMAKE_CXX_STANDARD ${BENCHMARK_CXX_STANDARD})
-set(CMAKE_CXX_STANDARD_REQUIRED YES)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-include(AddCXXCompilerFlag)
 if (MSVC)
     message(FATAL_ERROR "MSVC compiler is not supported")
 else ()
-    add_cxx_compiler_flag(-Wall)
-    add_cxx_compiler_flag(-Wextra)
-    add_cxx_compiler_flag(-Wshadow)
-    add_cxx_compiler_flag(-Wfloat-equal)
-    add_cxx_compiler_flag(-Wold-style-cast)
-    add_cxx_compiler_flag(-Wconversion)
-    add_cxx_compiler_flag(-fstrict-aliasing)
-    add_cxx_compiler_flag(-Wno-ignored-attributes)
+    include(CheckCXXCompilerFlag)
+    set(PERNIX_PRIVATE_COMPILE_OPTIONS)
+    foreach (PERNIX_CXX_FLAG
+            -Wall
+            -Wextra
+            -Wshadow
+            -Wfloat-equal
+            -Wold-style-cast
+            -Wconversion
+            -fstrict-aliasing
+            -Wno-ignored-attributes
+    )
+        string(MAKE_C_IDENTIFIER "PERNIX_HAS_CXX_FLAG_${PERNIX_CXX_FLAG}" PERNIX_CXX_FLAG_VARIABLE)
+        check_cxx_compiler_flag("${PERNIX_CXX_FLAG}" "${PERNIX_CXX_FLAG_VARIABLE}")
+        if (${PERNIX_CXX_FLAG_VARIABLE})
+            list(APPEND PERNIX_PRIVATE_COMPILE_OPTIONS "${PERNIX_CXX_FLAG}")
+        else ()
+            message(STATUS "Compiler flag not supported: ${PERNIX_CXX_FLAG}")
+        endif ()
+    endforeach ()
 
     if (PERNIX_ENABLE_LTO)
-        add_cxx_compiler_flag(-flto=auto)
-        add_cxx_compiler_flag(-Wno-lto-type-mismatch)
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT PERNIX_IPO_SUPPORTED OUTPUT PERNIX_IPO_ERROR)
+        if (NOT PERNIX_IPO_SUPPORTED)
+            message(FATAL_ERROR "PERNIX_ENABLE_LTO is enabled, but IPO/LTO is not supported: ${PERNIX_IPO_ERROR}")
+        endif ()
+
+        check_cxx_compiler_flag("-Wno-lto-type-mismatch" PERNIX_HAS_CXX_FLAG_WNO_LTO_TYPE_MISMATCH)
+        if (PERNIX_HAS_CXX_FLAG_WNO_LTO_TYPE_MISMATCH)
+            list(APPEND PERNIX_PRIVATE_COMPILE_OPTIONS "-Wno-lto-type-mismatch")
+        endif ()
+
         if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
             find_program(GCC_AR gcc-ar)
             if (GCC_AR)
@@ -105,8 +139,6 @@ else ()
         endif ()
     endif ()
 endif ()
-
-include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 

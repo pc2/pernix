@@ -1,15 +1,15 @@
-#include <../../include/pernix/pernix.h>
+#include <pernix/pernix.h>
 #include <testset.h>
 
-#ifdef PERNIX_AVX512_VBMI_ENABLED
+#ifdef PERNIX_BMI2_ENABLED
 
-TYPED_TEST(DecompressionTest, AVX512VBMIDecompressBlock) {
+TYPED_TEST(DecompressionTest, BMI2DecompressBlock) {
     std::vector<std::vector<float_t>> decompressedData(this->testSet.numberOfBlocks);
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         decompressedData[block].resize(this->testSet.elementsPerBlock);
 
-        pernix::mm512_decompress_block_avx512vbmi<TestFixture::BitWidth, true, TestFixture::BlockSize>(
+        pernix::mm256_decompress_block_bmi2<TestFixture::BitWidth, true, TestFixture::BlockSize>(
             this->testSet.getCompressedData()[block].data(), this->testSet.getScales()[block], decompressedData[block].data());
     }
 
@@ -18,13 +18,13 @@ TYPED_TEST(DecompressionTest, AVX512VBMIDecompressBlock) {
     }
 }
 
-TYPED_TEST(DecompressionTest64, AVX512VBMIDecompressBlock) {
+TYPED_TEST(DecompressionTest64, BMI2DecompressBlock) {
     std::vector<std::vector<double_t>> decompressedData(this->testSet.numberOfBlocks);
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         decompressedData[block].resize(this->testSet.elementsPerBlock);
 
-        pernix::mm512_decompress_block_avx512vbmi<TestFixture::BitWidth, true, TestFixture::BlockSize>(
+        pernix::mm256_decompress_block_bmi2<TestFixture::BitWidth, true, TestFixture::BlockSize>(
             this->testSet.getCompressedData()[block].data(), this->testSet.getScales()[block], decompressedData[block].data());
     }
 
@@ -33,4 +33,4 @@ TYPED_TEST(DecompressionTest64, AVX512VBMIDecompressBlock) {
     }
 }
 
-#endif  // PERNIX_AVX512_VBMI_ENABLED
+#endif  // PERNIX_BMI2_ENABLED

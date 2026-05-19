@@ -1,15 +1,15 @@
-#include <../../include/pernix/pernix.h>
+#include <pernix/pernix.h>
 #include <testset.h>
 
-#ifdef PERNIX_BMI2_ENABLED
+#ifdef PERNIX_AVX2_ENABLED
 
-TYPED_TEST(CompressionTest, BMI2CompressBlock) {
+TYPED_TEST(CompressionTest, AVX2CompressBlock) {
     std::vector<std::vector<uint8_t>> compressedData(this->testSet.numberOfBlocks);
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         compressedData[block].resize(TestFixture::BlockSize);
 
-        pernix::mm256_compress_block_bmi2<TestFixture::BitWidth, TestFixture::BlockSize>(
+        pernix::mm256_compress_block_avx2<TestFixture::BitWidth, TestFixture::BlockSize>(
             this->testSet.getDecompressedData()[block].data(), 1 / this->testSet.getScales()[block],
             reinterpret_cast<uint8_t*>(compressedData[block].data()));
     }
@@ -23,13 +23,13 @@ TYPED_TEST(CompressionTest, BMI2CompressBlock) {
     }
 }
 
-TYPED_TEST(CompressionTest64, BMI2CompressBlock) {
+TYPED_TEST(CompressionTest64, AVX2CompressBlock) {
     std::vector<std::vector<uint8_t>> compressedData(this->testSet.numberOfBlocks);
 
     for (uint32_t block = 0; block < this->testSet.numberOfBlocks; block++) {
         compressedData[block].resize(TestFixture::BlockSize);
 
-        pernix::mm256_compress_block_bmi2<TestFixture::BitWidth, TestFixture::BlockSize>(
+        pernix::mm256_compress_block_avx2<TestFixture::BitWidth, TestFixture::BlockSize>(
             this->testSet.getDecompressedData()[block].data(), 1 / this->testSet.getScales()[block],
             reinterpret_cast<uint8_t*>(compressedData[block].data()));
     }
@@ -43,4 +43,4 @@ TYPED_TEST(CompressionTest64, BMI2CompressBlock) {
     }
 }
 
-#endif  // PERNIX_BMI2_ENABLED
+#endif  // PERNIX_AVX2_ENABLED

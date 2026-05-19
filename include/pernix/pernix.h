@@ -5,7 +5,7 @@
 
 // Include architecture-specific headers based on detected capabilities
 // AVX2
-#ifdef PERNIX_AVX2_ENABLED
+#if defined(PERNIX_BACKEND_X86) && defined(PERNIX_AVX2_ENABLED)
 #include <pernix/x86/avx2/compression.h>
 #include <pernix/x86/avx2/decompression.h>
 
@@ -21,7 +21,22 @@
 #include <pernix/x86/avx512vbmi/decompression.h>
 #endif  // PERNIX_AVX512_VBMI_ENABLED
 
-#endif  // PERNIX_AVX2_ENABLED
+#endif  // PERNIX_BACKEND_X86 && PERNIX_AVX2_ENABLED
+
+#ifdef PERNIX_BACKEND_ARM64_NEON
+#include <pernix/arm64/neon/compression.h>
+#include <pernix/arm64/neon/decompression.h>
+#endif
+
+#ifdef PERNIX_BACKEND_ARM64_SVE
+#include <pernix/arm64/sve/compression.h>
+#include <pernix/arm64/sve/decompression.h>
+#endif
+
+#ifdef PERNIX_BACKEND_ARM64_SVE2
+#include <pernix/arm64/sve2/compression.h>
+#include <pernix/arm64/sve2/decompression.h>
+#endif
 
 // Fallback (non-SIMD) implementations
 #include <pernix/fallback/compression.h>
@@ -167,7 +182,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 int decompress_blocks(const uint8_t* __restrict__ input, double_t scale, double_t* __restrict__ output, uint32_t blocks);
 
 // Use the best available implementation based on detected CPU features at compile time.
-#ifdef PERNIX_AVX2_ENABLED
+#if defined(PERNIX_BACKEND_X86) && defined(PERNIX_AVX2_ENABLED)
 #ifdef PERNIX_AVX512_VBMI_ENABLED
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
@@ -265,6 +280,150 @@ int decompress_blocks(const uint8_t* __restrict__ input, const double_t scale, d
     return mm256_decompress_blocks_avx2<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
 }
 #endif
+#elif defined(PERNIX_BACKEND_ARM64_NEON)
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_block(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
+    return neon_compress_block<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_block(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
+    return neon_compress_block<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_blocks(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
+    return neon_compress_blocks<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_blocks(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
+    return neon_compress_blocks<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_block(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
+    return neon_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_block(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
+    return neon_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_blocks(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output, const uint32_t blocks) {
+    return neon_decompress_blocks<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_blocks(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output, const uint32_t blocks) {
+    return neon_decompress_blocks<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
+}
+#elif defined(PERNIX_BACKEND_ARM64_SVE)
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_block(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
+    return sve_compress_block<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_block(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
+    return sve_compress_block<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_blocks(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
+    return sve_compress_blocks<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_blocks(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
+    return sve_compress_blocks<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_block(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
+    return sve_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_block(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
+    return sve_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_blocks(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output, const uint32_t blocks) {
+    return sve_decompress_blocks<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_blocks(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output, const uint32_t blocks) {
+    return sve_decompress_blocks<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
+}
+#elif defined(PERNIX_BACKEND_ARM64_SVE2)
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_block(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
+    return sve2_compress_block<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_block(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
+    return sve2_compress_block<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_blocks(const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
+    return sve2_compress_blocks<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int compress_blocks(const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output, const uint32_t blocks) {
+    return sve2_compress_blocks<BIT_WIDTH, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_block(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
+    return sve2_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_block(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
+    return sve2_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_blocks(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output, const uint32_t blocks) {
+    return sve2_decompress_blocks<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
+}
+
+template <uint8_t BIT_WIDTH, bool SIGN_VALUES, uint32_t BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int decompress_blocks(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output, const uint32_t blocks) {
+    return sve2_decompress_blocks<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input, scale, output, blocks);
+}
 #else
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)

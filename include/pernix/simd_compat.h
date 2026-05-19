@@ -8,9 +8,15 @@
 #define SIMDE_ENABLE_NATIVE_ALIASES
 #undef SIMDE_X86_AVX512FP16_NATIVE
 // #define SIMDE_NO_NATIVE
+#if defined(PERNIX_BACKEND_X86)
 #include <simde/x86/avx2.h>
 #include <simde/x86/bmi.h>
 #include <simde/x86/avx512.h>
+#elif defined(PERNIX_BACKEND_ARM64_NEON)
+#include <simde/arm/neon.h>
+#elif defined(PERNIX_BACKEND_ARM64_SVE) || defined(PERNIX_BACKEND_ARM64_SVE2)
+#include <simde/arm/sve.h>
+#endif
 
 // #ifndef __mmask8
 // typedef uint8_t __mmask8;
@@ -27,6 +33,8 @@
 
 #elif defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
 #include <immintrin.h>
+#elif defined(__aarch64__)
+#include <arm_neon.h>
 #endif
 
 #ifndef __always_inline

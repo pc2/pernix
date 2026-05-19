@@ -10,6 +10,19 @@
 #define PERNIX_MACHINE_ID_V4 3
 #define PERNIX_MACHINE_ID_V4_VBMI 4
 
+#if defined(PERNIX_BACKEND_ARM64_NEON)
+#define PERNIX_ARM64_NEON_ENABLED
+#endif
+
+#if defined(PERNIX_BACKEND_ARM64_SVE)
+#define PERNIX_ARM64_SVE_ENABLED
+#endif
+
+#if defined(PERNIX_BACKEND_ARM64_SVE2)
+#define PERNIX_ARM64_SVE2_ENABLED
+#endif
+
+#if defined(PERNIX_BACKEND_X86)
 // Map the compiler's enabled ISA set to the highest supported Pernix target level.
 #if (__SSE3__ && __SSE4_1__ && __SSE4_2__)
 #if (__AVX__ && __AVX2__ && __FMA__ && __BMI__ && __BMI2__)
@@ -32,6 +45,10 @@
 #define PERNIX_MACHINE_ID PERNIX_MACHINE_ID_GENERIC
 #endif
 
+#else
+#define PERNIX_MACHINE_ID PERNIX_MACHINE_ID_GENERIC
+#endif
+
 // Feature-selection macros consumed by the public headers.
 #if (PERNIX_MACHINE_ID >= PERNIX_MACHINE_ID_V2)
 #define PERNIX_SSE_ENABLED
@@ -47,7 +64,7 @@
 #define PERNIX_AVX512_VBMI_ENABLED
 #endif
 
-#ifdef PERNIX_USE_SIMDE
+#if defined(PERNIX_USE_SIMDE) && defined(PERNIX_BACKEND_X86)
 #define PERNIX_SSE_ENABLED
 #define PERNIX_AVX2_ENABLED
 #define PERNIX_BMI2_ENABLED

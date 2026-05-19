@@ -1,7 +1,7 @@
 #ifndef PERNIX_TESTSET_H
 #define PERNIX_TESTSET_H
 
-#include <../../include/pernix/pernix.h>
+#include <pernix/pernix.h>
 #include <gtest/gtest.h>
 
 #include <algorithm>

@@ -135,7 +135,7 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
 
             mm512_storeu_elements_epi64(output, BIT_WIDTH, packed);
 
-            input += 64;
+            input  += 64;
             output += 8 * BIT_WIDTH;
         }
     }
@@ -153,7 +153,7 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
         const __m256i packed = m256::mm256_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(make_m256i_from_2x128(converted1, converted2));
         mm256_storeu_elements_epi32(output, BIT_WIDTH, packed);
 
-        input += 32;
+        input  += 32;
         output += 4 * BIT_WIDTH;
     }
 
@@ -165,7 +165,7 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
         const __m128i packed = m128::mm_pack_epi8_avx512vbmi_1to8<BIT_WIDTH>(converted);
         mm_storeu_elements_epi16(output, BIT_WIDTH, packed);
 
-        input += 16;
+        input  += 16;
         output += 2 * BIT_WIDTH;
     }
 
@@ -183,8 +183,8 @@ __always_inline int mm512_compress_block_avx512vbmi_1to8(const float_t* __restri
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_9to16(const float_t* __restrict__ input, const float_t scale,
-                                                                        uint8_t* __restrict__ output) {
+__always_inline int mm512_compress_block_avx512vbmi_9to16(const float_t* __restrict__ input, const float_t scale,
+                                                          uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_32      = elements_per_block / 32;
@@ -210,7 +210,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
             const __m512i packed = m512::mm512_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(make_m512i_from_2x256(converted1, converted2));
             mm512_storeu_elements_epi32(output, BIT_WIDTH, packed);
 
-            input += 32;
+            input  += 32;
             output += 4 * BIT_WIDTH;
         }
     }
@@ -223,7 +223,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
         const __m256i packed = m256::mm256_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
         mm256_storeu_elements_epi16(output, BIT_WIDTH, packed);
 
-        input += 16;
+        input  += 16;
         output += 2 * BIT_WIDTH;
     }
 
@@ -235,7 +235,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
         const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
         mm_storeu_elements_epi8(output, BIT_WIDTH, packed);
 
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -253,8 +253,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_17to24(const float_t* __restrict__ input, const float_t scale,
-                                                                         uint8_t* __restrict__ output) {
+__always_inline int mm512_compress_block_avx512vbmi_17to24(const float_t* __restrict__ input, const float_t scale,
+                                                           uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_16      = elements_per_block / 16;
@@ -272,7 +272,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
             const __m512i packed = m512::mm512_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
             mm512_storeu_elements_epi16(output, BIT_WIDTH, packed);
-            input += 16;
+            input  += 16;
             output += 2 * BIT_WIDTH;
         }
     }
@@ -284,7 +284,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
         const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(packed_input);
         mm256_storeu_elements_epi8(output, BIT_WIDTH, packed);
 
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -301,8 +301,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_1to8(const double_t* __restrict__ input, const double_t scale,
-                                                                       uint8_t* __restrict__ output) {
+__always_inline int mm512_compress_block_avx512vbmi_1to8(const double_t* __restrict__ input, const double_t scale,
+                                                         uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_64      = elements_per_block / 64;
@@ -347,7 +347,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
             mm512_storeu_elements_epi64(output, BIT_WIDTH, packed);
 
-            input += 64;
+            input  += 64;
             output += 8 * BIT_WIDTH;
         }
     }
@@ -373,7 +373,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
         mm256_storeu_elements_epi32(output, BIT_WIDTH, packed);
 
-        input += 32;
+        input  += 32;
         output += 4 * BIT_WIDTH;
     }
 
@@ -390,7 +390,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
         mm_storeu_elements_epi16(output, BIT_WIDTH, packed);
 
-        input += 16;
+        input  += 16;
         output += 2 * BIT_WIDTH;
     }
 
@@ -416,8 +416,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_9to16(const double_t* __restrict__ input, const double_t scale,
-                                                                        uint8_t* __restrict__ output) {
+__always_inline int mm512_compress_block_avx512vbmi_9to16(const double_t* __restrict__ input, const double_t scale,
+                                                          uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_32      = elements_per_block / 32;
@@ -450,7 +450,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
             mm512_storeu_elements_epi32(output, BIT_WIDTH, packed);
 
-            input += 32;
+            input  += 32;
             output += 4 * BIT_WIDTH;
         }
     }
@@ -468,7 +468,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
         mm256_storeu_elements_epi16(output, BIT_WIDTH, packed);
 
-        input += 16;
+        input  += 16;
         output += 2 * BIT_WIDTH;
     }
 
@@ -480,7 +480,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
         const __m128i packed = m128::mm_pack_epi16_avx512vbmi_9to16<BIT_WIDTH>(converted);
         mm_storeu_elements_epi8(output, BIT_WIDTH, packed);
 
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -498,8 +498,8 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_compress_block_avx512vbmi_17to24(const double_t* __restrict__ input, const double_t scale,
-                                                                         uint8_t* __restrict__ output) {
+__always_inline int mm512_compress_block_avx512vbmi_17to24(const double_t* __restrict__ input, const double_t scale,
+                                                           uint8_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_16      = elements_per_block / 16;
@@ -520,7 +520,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
             const __m512i packed = m512::mm512_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(make_m512i_from_2x256(quantized1, quantized2));
             mm512_storeu_elements_epi16(output, BIT_WIDTH, packed);
 
-            input += 16;
+            input  += 16;
             output += 2 * BIT_WIDTH;
         }
     }
@@ -532,7 +532,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
         const __m256i packed = m256::mm256_pack_epi32_avx512vbmi_17to24<BIT_WIDTH>(quantized);
         mm256_storeu_elements_epi8(output, BIT_WIDTH, packed);
 
-        input += 8;
+        input  += 8;
         output += BIT_WIDTH;
     }
 
@@ -546,7 +546,7 @@ template <uint8_t BIT_WIDTH, uint32_t BLOCK_SIZE = 64>
 
     return 0;
 }
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Compress a single 512-bit block using AVX-512 and AVX-512-VBMI instructions.
@@ -621,7 +621,7 @@ int mm512_compress_blocks_avx512vbmi(const float_t* __restrict__ input, const fl
 
     for (uint32_t block = 0; block < blocks; ++block) {
         mm512_compress_block_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
@@ -647,13 +647,13 @@ int mm512_compress_blocks_avx512vbmi(const double_t* __restrict__ input, const d
 
     for (uint32_t block = 0; block < blocks; ++block) {
         mm512_compress_block_avx512vbmi<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
     return 0;
 }
-}  // namespace pernix
+} // namespace pernix
 
 #ifdef __cplusplus
 namespace pernix {
@@ -719,7 +719,7 @@ int mm512_compress_blocks_f64_avx512vbmi(uint8_t bit_width, const double_t* __re
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
+} // namespace pernix
 #endif
 
 #endif  // PERNIX_AVX512VBMI_COMPRESSION_H

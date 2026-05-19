@@ -9,9 +9,8 @@
 #include <tuple>
 
 namespace pernix::internal {
-
 template <typename Vec, typename U, std::size_t N>
-[[gnu::always_inline]] static inline Vec load_table(const std::array<U, N>& table) {
+static __always_inline Vec load_table(const std::array<U, N>& table) {
     static_assert(sizeof(table) >= sizeof(Vec), "table is smaller than requested SIMD vector");
     if constexpr (std::is_same_v<Vec, __m512i>) {
         return _mm512_load_si512(static_cast<const void*>(table.data()));
@@ -529,13 +528,13 @@ struct pack_tables_avx512_16 {
         // clang-format on
     }
 
-    [[gnu::always_inline]] static inline Vec get_permute1() { return load_table<Vec>(permute1); }
-    [[gnu::always_inline]] static inline Vec get_permute2() { return load_table<Vec>(permute2); }
-    [[gnu::always_inline]] static inline Vec get_permute3() { return load_table<Vec>(permute3); }
+    static __always_inline Vec get_permute1() { return load_table<Vec>(permute1); }
+    static __always_inline Vec get_permute2() { return load_table<Vec>(permute2); }
+    static __always_inline Vec get_permute3() { return load_table<Vec>(permute3); }
 
-    [[gnu::always_inline]] static inline Vec get_shift1() { return load_table<Vec>(shift1); }
-    [[gnu::always_inline]] static inline Vec get_shift2() { return load_table<Vec>(shift2); }
-    [[gnu::always_inline]] static inline Vec get_shift3() { return load_table<Vec>(shift3); }
+    static __always_inline Vec get_shift1() { return load_table<Vec>(shift1); }
+    static __always_inline Vec get_shift2() { return load_table<Vec>(shift2); }
+    static __always_inline Vec get_shift3() { return load_table<Vec>(shift3); }
 };
 
 template <std::uint8_t BIT_WIDTH, typename Vec>
@@ -591,7 +590,7 @@ private:
         return plan;
     }
 
-    static inline constexpr std::array<word_plan, 16> word_plans = [] {
+    static constexpr std::array<word_plan, 16> word_plans = [] {
         std::array<word_plan, 16> plans{};
         for (uint32_t i = 0; i < 16; ++i) {
             plans[i] = create_plan(i);
@@ -600,7 +599,7 @@ private:
     }();
 
     template <typename U, typename Getter>
-    [[gnu::always_inline]] static constexpr std::array<U, 16> make_table(Getter getter) {
+    static __always_inline constexpr std::array<U, 16> make_table(Getter getter) {
         std::array<U, 16> values{};
         for (uint32_t i = 0; i < 16; ++i) {
             values[i] = getter(word_plans[i]);
@@ -608,26 +607,26 @@ private:
         return values;
     }
 
-    alignas(64) static inline constexpr auto permute1 = make_table<int32_t>([](const word_plan& p) { return p.left_index1; });
+    alignas(64) static constexpr auto permute1 = make_table<int32_t>([](const word_plan& p) { return p.left_index1; });
 
-    alignas(64) static inline constexpr auto permute2 = make_table<int32_t>([](const word_plan& p) { return p.left_index2; });
+    alignas(64) static constexpr auto permute2 = make_table<int32_t>([](const word_plan& p) { return p.left_index2; });
 
-    alignas(64) static inline constexpr auto permute3 = make_table<int32_t>([](const word_plan& p) { return p.right_index; });
+    alignas(64) static constexpr auto permute3 = make_table<int32_t>([](const word_plan& p) { return p.right_index; });
 
-    alignas(64) static inline constexpr auto shift1 = make_table<uint32_t>([](const word_plan& p) { return p.left_shift1; });
+    alignas(64) static constexpr auto shift1 = make_table<uint32_t>([](const word_plan& p) { return p.left_shift1; });
 
-    alignas(64) static inline constexpr auto shift2 = make_table<uint32_t>([](const word_plan& p) { return p.left_shift2; });
+    alignas(64) static constexpr auto shift2 = make_table<uint32_t>([](const word_plan& p) { return p.left_shift2; });
 
-    alignas(64) static inline constexpr auto shift3 = make_table<uint32_t>([](const word_plan& p) { return p.right_shift; });
+    alignas(64) static constexpr auto shift3 = make_table<uint32_t>([](const word_plan& p) { return p.right_shift; });
 
 public:
-    [[gnu::always_inline]] static inline Vec get_permute1() { return load_table<Vec>(permute1); }
-    [[gnu::always_inline]] static inline Vec get_permute2() { return load_table<Vec>(permute2); }
-    [[gnu::always_inline]] static inline Vec get_permute3() { return load_table<Vec>(permute3); }
+    static __always_inline Vec get_permute1() { return load_table<Vec>(permute1); }
+    static __always_inline Vec get_permute2() { return load_table<Vec>(permute2); }
+    static __always_inline Vec get_permute3() { return load_table<Vec>(permute3); }
 
-    [[gnu::always_inline]] static inline Vec get_shift1() { return load_table<Vec>(shift1); }
-    [[gnu::always_inline]] static inline Vec get_shift2() { return load_table<Vec>(shift2); }
-    [[gnu::always_inline]] static inline Vec get_shift3() { return load_table<Vec>(shift3); }
+    static __always_inline Vec get_shift1() { return load_table<Vec>(shift1); }
+    static __always_inline Vec get_shift2() { return load_table<Vec>(shift2); }
+    static __always_inline Vec get_shift3() { return load_table<Vec>(shift3); }
 };
 
 template <uint8_t BIT_WIDTH, typename Vec>
@@ -693,11 +692,11 @@ private:
     }();
 
 public:
-    [[gnu::always_inline]] static inline Vec get_permute1() { return load_table<Vec>(permute1); }
-    [[gnu::always_inline]] static inline Vec get_permute2() { return load_table<Vec>(permute2); }
+    static __always_inline Vec get_permute1() { return load_table<Vec>(permute1); }
+    static __always_inline Vec get_permute2() { return load_table<Vec>(permute2); }
 
-    [[gnu::always_inline]] static inline Vec get_shift1() { return load_table<Vec>(shift1); }
-    [[gnu::always_inline]] static inline Vec get_shift2() { return load_table<Vec>(shift2); }
+    static __always_inline Vec get_shift1() { return load_table<Vec>(shift1); }
+    static __always_inline Vec get_shift2() { return load_table<Vec>(shift2); }
 };
 
 template <uint8_t BIT_WIDTH, typename Vec>
@@ -768,11 +767,11 @@ private:
     }();
 
 public:
-    [[gnu::always_inline]] static inline Vec get_permute1() { return load_table<Vec>(permute1); }
-    [[gnu::always_inline]] static inline Vec get_permute2() { return load_table<Vec>(permute2); }
+    static __always_inline Vec get_permute1() { return load_table<Vec>(permute1); }
+    static __always_inline Vec get_permute2() { return load_table<Vec>(permute2); }
 
-    [[gnu::always_inline]] static inline Vec get_shift1() { return load_table<Vec>(shift1); }
-    [[gnu::always_inline]] static inline Vec get_shift2() { return load_table<Vec>(shift2); }
+    static __always_inline Vec get_shift1() { return load_table<Vec>(shift1); }
+    static __always_inline Vec get_shift2() { return load_table<Vec>(shift2); }
 };
 
 template <uint8_t BIT_WIDTH, typename Vec>
@@ -813,10 +812,9 @@ private:
     }();
 
 public:
-    [[gnu::always_inline]] static inline Vec get_permute() { return load_table<Vec>(permute); }
-    [[gnu::always_inline]] static inline Vec get_shift() { return load_table<Vec>(shift); }
+    static __always_inline Vec get_permute() { return load_table<Vec>(permute); }
+    static __always_inline Vec get_shift() { return load_table<Vec>(shift); }
 };
-
-}  // namespace pernix::internal
+} // namespace pernix::internal
 
 #endif  // PERNIX_AVX512VBMI_TABLES_H

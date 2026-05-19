@@ -16,20 +16,20 @@ namespace internal {
 /**
  * @brief Dequantize sixteen integer values to floats.
  */
-[[gnu::always_inline]] inline __m512 mm512_dequantize_epi32(const __m512i& input, const __m512& scale) {
+__always_inline __m512 mm512_dequantize_epi32(const __m512i& input, const __m512& scale) {
     const __m512 converted = _mm512_cvtepi32_ps(input);
     return _mm512_mul_ps(converted, scale);
 }
 
-[[gnu::always_inline]] inline __m512d mm512_dequantize_epi64(const __m512i& input, const __m512d& scale) {
+__always_inline __m512d mm512_dequantize_epi64(const __m512i& input, const __m512d& scale) {
     const __m512d converted = _mm512_cvtepi64_pd(input);
     return _mm512_mul_pd(converted, scale);
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_decompress_block_avx512vbmi_1to8(const uint8_t* __restrict__ input, const float_t scale,
-                                                                         float_t* __restrict__ output) {
+__always_inline int mm512_decompress_block_avx512vbmi_1to8(const uint8_t* __restrict__ input, const float_t scale,
+                                                           float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const uint32_t iterations_64      = elements_per_block / 64;
@@ -61,7 +61,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_ps(output + 48, dequantized4);
 
             output += 64;
-            input += 8 * BIT_WIDTH;
+            input  += 8 * BIT_WIDTH;
         }
     }
 
@@ -79,7 +79,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_ps(output + 16, dequantized2);
 
         output += 32;
-        input += 4 * BIT_WIDTH;
+        input  += 4 * BIT_WIDTH;
     }
 
     if constexpr (iterations_16 > 0) {
@@ -93,7 +93,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_ps(output, dequantized);
 
         output += 16;
-        input += 2 * BIT_WIDTH;
+        input  += 2 * BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -112,8 +112,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_decompress_block_avx512vbmi_1to8(const uint8_t* __restrict__ input, const double_t scale,
-                                                                         double_t* __restrict__ output) {
+__always_inline int mm512_decompress_block_avx512vbmi_1to8(const uint8_t* __restrict__ input, const double_t scale,
+                                                           double_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const uint32_t iterations_64      = elements_per_block / 64;
@@ -162,7 +162,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 56, dequantized8);
 
             output += 64;
-            input += 8 * BIT_WIDTH;
+            input  += 8 * BIT_WIDTH;
         }
 
         if constexpr (iterations_32 > 0) {
@@ -188,7 +188,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 24, dequantized4);
 
             output += 32;
-            input += 4 * BIT_WIDTH;
+            input  += 4 * BIT_WIDTH;
         }
 
         if constexpr (iterations_16 > 0) {
@@ -205,7 +205,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 8, dequantized2);
 
             output += 16;
-            input += 2 * BIT_WIDTH;
+            input  += 2 * BIT_WIDTH;
         }
 
         if constexpr (remaining_elements > 0) {
@@ -230,8 +230,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_decompress_block_avx512vbmi_9to16(const uint8_t* __restrict__ input, const float_t scale,
-                                                                          float_t* __restrict__ output) {
+__always_inline int mm512_decompress_block_avx512vbmi_9to16(const uint8_t* __restrict__ input, const float_t scale,
+                                                            float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_32      = elements_per_block / 32;
@@ -258,7 +258,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_ps(output + 16, dequantized2);
 
             output += 32;
-            input += 4 * BIT_WIDTH;
+            input  += 4 * BIT_WIDTH;
         }
     }
 
@@ -272,7 +272,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_ps(output, dequantized);
 
         output += 16;
-        input += 2 * BIT_WIDTH;
+        input  += 2 * BIT_WIDTH;
     }
 
     if constexpr (iterations_8 > 0) {
@@ -285,7 +285,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm256_storeu_ps(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -303,8 +303,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_decompress_block_avx512vbmi_9to16(const uint8_t* __restrict__ input, const double_t scale,
-                                                                          double_t* __restrict__ output) {
+__always_inline int mm512_decompress_block_avx512vbmi_9to16(const uint8_t* __restrict__ input, const double_t scale,
+                                                            double_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_32      = elements_per_block / 32;
@@ -336,7 +336,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 24, dequantized4);
 
             output += 32;
-            input += 4 * BIT_WIDTH;
+            input  += 4 * BIT_WIDTH;
         }
     }
 
@@ -354,7 +354,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_pd(output + 8, dequantized2);
 
         output += 16;
-        input += 2 * BIT_WIDTH;
+        input  += 2 * BIT_WIDTH;
     }
 
     if constexpr (iterations_8 > 0) {
@@ -368,7 +368,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_pd(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -387,8 +387,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_decompress_block_avx512vbmi_17to24(const uint8_t* __restrict__ input, const float_t scale,
-                                                                           float_t* __restrict__ output) {
+__always_inline int mm512_decompress_block_avx512vbmi_17to24(const uint8_t* __restrict__ input, const float_t scale,
+                                                             float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_16      = elements_per_block / 16;
@@ -409,7 +409,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_ps(output, dequantized);
 
             output += 16;
-            input += 2 * BIT_WIDTH;
+            input  += 2 * BIT_WIDTH;
         }
     }
 
@@ -422,7 +422,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm256_storeu_ps(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -439,8 +439,8 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-[[gnu::always_inline]] inline int mm512_decompress_block_avx512vbmi_17to24(const uint8_t* __restrict__ input, const double_t scale,
-                                                                           double_t* __restrict__ output) {
+__always_inline int mm512_decompress_block_avx512vbmi_17to24(const uint8_t* __restrict__ input, const double_t scale,
+                                                             double_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     constexpr uint32_t iterations_16      = elements_per_block / 16;
@@ -465,7 +465,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
             _mm512_storeu_pd(output + 8, dequantized2);
 
             output += 16;
-            input += 2 * BIT_WIDTH;
+            input  += 2 * BIT_WIDTH;
         }
     }
 
@@ -480,7 +480,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
         _mm512_storeu_pd(output, dequantized);
 
         output += 8;
-        input += BIT_WIDTH;
+        input  += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
@@ -496,7 +496,7 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
 
     return 0;
 }
-}  // namespace internal
+} // namespace internal
 
 /**
  * @brief Decompress a single 512\-bit block using AVX-512 and AVX-512-VBMI instructions.
@@ -572,7 +572,7 @@ int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const 
 
     for (uint32_t block = 0; block < blocks; ++block) {
         mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
@@ -599,15 +599,15 @@ int mm512_decompress_blocks_avx512vbmi(const uint8_t* __restrict__ input, const 
 
     for (uint32_t block = 0; block < blocks; ++block) {
         mm512_decompress_block_avx512vbmi<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
     return 0;
 }
-}  // namespace pernix
+} // namespace pernix
 
-#ifdef __cplusplus
 namespace pernix {
+#ifdef __cplusplus
 extern "C" {
 #endif
 /**
@@ -669,7 +669,7 @@ int mm512_decompress_blocks_f64_avx512vbmi(uint8_t bit_width, const uint8_t* __r
 
 #ifdef __cplusplus
 }
-}  // namespace pernix
 #endif
+} // namespace pernix
 
 #endif  // PERNIX_AVX512VBMI_DECOMPRESSION_H

@@ -10,8 +10,8 @@
 // #define SIMDE_NO_NATIVE
 #if defined(PERNIX_BACKEND_X86)
 #include <simde/x86/avx2.h>
-#include <simde/x86/bmi.h>
 #include <simde/x86/avx512.h>
+#include <simde/x86/bmi.h>
 #elif defined(PERNIX_BACKEND_ARM64_NEON)
 #include <simde/arm/neon.h>
 #elif defined(PERNIX_BACKEND_ARM64_SVE) || defined(PERNIX_BACKEND_ARM64_SVE2)
@@ -46,26 +46,5 @@
 #define __always_inline inline
 #endif
 #endif
-
-template <typename T>
-    requires(std::is_integral_v<T> && sizeof(T) <= 8)
-static constexpr T tail_mask(const uint8_t bit_width, const uint32_t remaining_elements) {
-    const uint32_t tail_bits  = remaining_elements * bit_width;
-    const uint32_t tail_bytes = (tail_bits + 7u) / 8u;
-    if (tail_bytes == 0u) {
-        return static_cast<T>(0);
-    }
-    if (tail_bytes >= 64u) {
-        return static_cast<T>(~uint64_t{0});
-    }
-    const uint64_t mask = (uint64_t{1} << tail_bytes) - 1u;
-    return static_cast<T>(mask);
-}
-
-static constexpr uint32_t tail_bytes(const uint8_t bit_width, const uint32_t remaining_elements) {
-    const uint32_t tail_bits  = remaining_elements * bit_width;
-    const uint32_t tail_bytes = (tail_bits + 7u) / 8u;
-    return tail_bytes;
-}
 
 #endif  // PERNIX_SIMD_COMPAT_H

@@ -27,7 +27,21 @@ endif ()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
 if (PERNIX_USE_SIMDE)
-    add_subdirectory(external/simde EXCLUDE_FROM_ALL)
+    include(FetchContent)
+    FetchContent_Declare(
+            simde
+            GIT_REPOSITORY https://github.com/simd-everywhere/simde.git
+            GIT_TAG master
+            GIT_SHALLOW TRUE
+            GIT_PROGRESS TRUE
+            EXCLUDE_FROM_ALL
+    )
+    FetchContent_MakeAvailable(simde)
+
+    if (NOT TARGET simde::simde AND DEFINED simde_SOURCE_DIR AND EXISTS "${simde_SOURCE_DIR}/simde")
+        add_library(simde::simde INTERFACE IMPORTED GLOBAL)
+        target_include_directories(simde::simde INTERFACE "${simde_SOURCE_DIR}")
+    endif ()
 endif ()
 
 include(CTest)

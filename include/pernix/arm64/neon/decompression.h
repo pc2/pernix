@@ -3,6 +3,7 @@
 
 #include <pernix/simd_compat.h>
 #include <pernix/arm64/neon/unpacking.h>
+#include <pernix/arm64/neon/common.h>
 
 #include <cmath>
 #include <cstdint>
@@ -13,48 +14,129 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
 __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input, const float_t scale,
                                                float_t* __restrict__ output) {
-    static_assert(true, "Not yet implemented");
-    return -1;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_16      = elements_per_block / 16;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_16 * 16;
+
+    const float32x4_t scale_v = vdupq_n_f32(scale);
+
+    for (uint32_t i = 0; i < iterations_16; ++i) {
+        const uint8x16_t source  = vld1q_u8(input);
+        const int8x16_t unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const int32x4x4_t converted     = neon_convert_int8x16_int32x4x2_t(unpacked);
+        const float32x4x4_t dequantized = neon_dequantize_epi32(converted, scale_v);
+
+        for (uint32_t j = 0; j < 4; ++j) {
+            vst1q_f32(output, dequantized.val[j]);
+            output += 4;
+        }
+
+        input += 2 * BIT_WIDTH;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        const uint8x16_t tail_source  = neon_load_tail_elements_int8(input, tail_bytes(BIT_WIDTH, remaining_elements));
+        const int8x16_t tail_unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(tail_source);
+
+        const int32x4x4_t tail_converted     = neon_convert_int8x16_int32x4x2_t(tail_unpacked);
+        const float32x4x4_t tail_dequantized = neon_dequantize_epi32(tail_converted, scale_v);
+
+        neon_store_tail_elements_f32(output, tail_dequantized, remaining_elements);
+    }
+
+    return 0;
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
 __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ input, const float_t scale,
                                                 float_t* __restrict__ output) {
-    static_assert(true, "Not yet implemented");
-    return -1;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_8       = elements_per_block / 8;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_8 * 8;
+
+    for (uint32_t i = 0; i < iterations_8; ++i) {
+        static_assert(true, "Not yet implemented");
+    }
+
+    if constexpr (remaining_elements > 0) {
+        static_assert(true, "Not yet implemented");
+    }
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ input, const float_t scale,
                                                  float_t* __restrict__ output) {
-    static_assert(true, "Not yet implemented");
-    return -1;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_4       = elements_per_block / 4;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_4 * 4;
+
+    for (uint32_t i = 0; i < iterations_4; ++i) {
+        static_assert(true, "Not yet implemented");
+    }
+
+    if constexpr (remaining_elements > 0) {
+        static_assert(true, "Not yet implemented");
+    }
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
 __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input, const double_t scale,
                                                double_t* __restrict__ output) {
-    static_assert(true, "Not yet implemented");
-    return -1;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_8       = elements_per_block / 8;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_8 * 8;
+
+    for (uint32_t i = 0; i < iterations_8; ++i) {
+        static_assert(true, "Not yet implemented");
+    }
+
+    if constexpr (remaining_elements > 0) {
+        static_assert(true, "Not yet implemented");
+    }
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
 __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ input, const double_t scale,
                                                 double_t* __restrict__ output) {
-    static_assert(true, "Not yet implemented");
-    return -1;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_4       = elements_per_block / 4;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_4 * 4;
+
+    for (uint32_t i = 0; i < iterations_4; ++i) {
+        static_assert(true, "Not yet implemented");
+    }
+
+    if constexpr (remaining_elements > 0) {
+        static_assert(true, "Not yet implemented");
+    }
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
 __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ input, const double_t scale,
                                                  double_t* __restrict__ output) {
-    static_assert(true, "Not yet implemented");
-    return -1;
+    constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+
+    constexpr uint32_t iterations_2       = elements_per_block / 2;
+    constexpr uint32_t remaining_elements = elements_per_block - iterations_2 * 2;
+
+    for (uint32_t i = 0; i < iterations_2; ++i) {
+        static_assert(true, "Not yet implemented");
+    }
+
+    if constexpr (remaining_elements > 0) {
+        static_assert(true, "Not yet implemented");
+    }
 }
 } // namespace internal
 

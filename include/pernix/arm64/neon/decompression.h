@@ -25,7 +25,7 @@ __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8x16_t source  = vld1q_u8(input);
         const int8x16_t unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const int32x4x4_t converted     = neon_convert_int8x16_int32x4x2_t(unpacked);
+        const int32x4x4_t converted     = neon_convert_int8x16_int32x4x4(unpacked);
         const float32x4x4_t dequantized = neon_dequantize_epi32(converted, scale_v);
 
         for (uint32_t j = 0; j < 4; ++j) {
@@ -40,7 +40,7 @@ __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8x16_t tail_source  = neon_load_tail_elements_int8(input, tail_bytes(BIT_WIDTH, remaining_elements));
         const int8x16_t tail_unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(tail_source);
 
-        const int32x4x4_t tail_converted     = neon_convert_int8x16_int32x4x2_t(tail_unpacked);
+        const int32x4x4_t tail_converted     = neon_convert_int8x16_int32x4x4(tail_unpacked);
         const float32x4x4_t tail_dequantized = neon_dequantize_epi32(tail_converted, scale_v);
 
         neon_store_tail_elements_f32(output, tail_dequantized, remaining_elements);
@@ -58,13 +58,34 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
     constexpr uint32_t iterations_8       = elements_per_block / 8;
     constexpr uint32_t remaining_elements = elements_per_block - iterations_8 * 8;
 
+    const float32x4_t scale_v = vdupq_n_f32(scale);
+
     for (uint32_t i = 0; i < iterations_8; ++i) {
-        static_assert(true, "Not yet implemented");
+        const uint16x8_t source  = vld1q_u16(reinterpret_cast<const uint16_t*>(input));
+        const int16x8_t unpacked = b128::neon_unpack_epi8_9to16<BIT_WIDTH, SIGN_VALUES>(source);
+
+        const int32x4x2_t converted     = neon_convert_int16x8_int32x4x2(unpacked);
+        const float32x4x2_t dequantized = neon_dequantize_epi32(converted, scale_v);
+
+        for (uint32_t j = 0; j < 2; ++j) {
+            vst1q_f32(output, dequantized.val[j]);
+            output += 4;
+        }
+
+        input += BIT_WIDTH;
     }
 
     if constexpr (remaining_elements > 0) {
-        static_assert(true, "Not yet implemented");
+        const uint16x8_t tail_source  = neon_load_tail_elements_int16(input, tail_bytes(BIT_WIDTH, remaining_elements));
+        const int16x8_t tail_unpacked = b128::neon_unpack_epi8_9to16<BIT_WIDTH, SIGN_VALUES>(tail_source);
+
+        const int32x4x2_t tail_converted     = neon_convert_int16x8_int32x4x2(tail_unpacked);
+        const float32x4x2_t tail_dequantized = neon_dequantize_epi32(tail_converted, scale_v);
+
+        neon_store_tail_elements_f32(output, tail_dequantized, remaining_elements);
     }
+
+    return 0;
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
@@ -76,13 +97,52 @@ __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ inp
     constexpr uint32_t iterations_4       = elements_per_block / 4;
     constexpr uint32_t remaining_elements = elements_per_block - iterations_4 * 4;
 
+    const float32x4_t scale_v = vdupq_n_f32(scale);
+
     for (uint32_t i = 0; i < iterations_4; ++i) {
-        static_assert(true, "Not yet implemented");
+        const uint32_t group_bit_start = i * 4u * BIT_WIDTH;
+        const uint8_t* group_input     = input + group_bit_start / 8u;
+        const uint32x4_t source        = vld1q_u32(reinterpret_cast<const uint32_t*>(group_input));
+
+        int32x4_t unpacked;
+        if constexpr (BIT_WIDTH % 2 == 0) {
+            unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
+        } else {
+            if (i % 2 == 0) {
+                unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
+            } else {
+                unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 4>(source);
+            }
+        }
+
+        const float32x4_t dequantized = neon_dequantize_epi32(unpacked, scale_v);
+
+        vst1q_f32(output, dequantized);
+
+        output += 4;
     }
 
     if constexpr (remaining_elements > 0) {
-        static_assert(true, "Not yet implemented");
+        constexpr uint32_t tail_bit_start = iterations_4 * 4u * BIT_WIDTH;
+        constexpr uint32_t tail_bit_offset = tail_bit_start % 8u;
+        const uint8_t* tail_input = input + tail_bit_start / 8u;
+
+        constexpr uint32_t tail_bytes_count = (tail_bit_offset + remaining_elements * BIT_WIDTH + 7u) / 8u;
+        const uint32x4_t tail_source = neon_load_tail_elements_int32(tail_input, tail_bytes_count);
+
+        int32x4_t tail_unpacked;
+        if constexpr (tail_bit_offset == 0) {
+            tail_unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(tail_source);
+        } else {
+            tail_unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, tail_bit_offset>(tail_source);
+        }
+
+        const float32x4_t tail_dequantized = neon_dequantize_epi32(tail_unpacked, scale_v);
+
+        neon_store_tail_elements_f32(output, tail_dequantized, remaining_elements);
     }
+
+    return 0;
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
@@ -101,6 +161,8 @@ __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input
     if constexpr (remaining_elements > 0) {
         static_assert(true, "Not yet implemented");
     }
+
+    return 0;
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
@@ -119,6 +181,8 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
     if constexpr (remaining_elements > 0) {
         static_assert(true, "Not yet implemented");
     }
+
+    return 0;
 }
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
@@ -137,6 +201,8 @@ __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ inp
     if constexpr (remaining_elements > 0) {
         static_assert(true, "Not yet implemented");
     }
+
+    return 0;
 }
 } // namespace internal
 

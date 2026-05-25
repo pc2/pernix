@@ -2,9 +2,14 @@
 #define PERNIX_ARM64_NEON_COMMON_H
 
 #include <pernix/simd_compat.h>
+
 #include <cstring>
 
 namespace pernix::arm64::neon::internal {
+struct float64x2x8_t {
+    float64x2_t val[8];
+};
+
 static constexpr uint32_t tail_bytes(const uint8_t bit_width, const uint32_t remaining_elements) {
     const uint32_t tail_bits  = remaining_elements * bit_width;
     const uint32_t tail_bytes = (tail_bits + 7u) / 8u;
@@ -48,6 +53,47 @@ __always_inline float32x4x2_t neon_dequantize_epi32(const int32x4x2_t& input, co
 
 __always_inline float32x4_t neon_dequantize_epi32(const int32x4_t& input, const float32x4_t& scale) {
     return vmulq_f32(vcvtq_f32_s32(input), scale);
+}
+
+__always_inline float64x2_t neon_dequantize_epi32_f64(const int32x2_t& input, const float64x2_t& scale) {
+    return vmulq_f64(vcvtq_f64_s64(vmovl_s32(input)), scale);
+}
+
+__always_inline float64x2x2_t neon_dequantize_epi32_f64(const int32x4_t& input, const float64x2_t& scale) {
+    return {{
+        neon_dequantize_epi32_f64(vget_low_s32(input), scale),
+        neon_dequantize_epi32_f64(vget_high_s32(input), scale),
+    }};
+}
+
+__always_inline float64x2x4_t neon_dequantize_epi32_f64(const int32x4x2_t& input, const float64x2_t& scale) {
+    const float64x2x2_t dequantized_low  = neon_dequantize_epi32_f64(input.val[0], scale);
+    const float64x2x2_t dequantized_high = neon_dequantize_epi32_f64(input.val[1], scale);
+
+    return {{
+        dequantized_low.val[0],
+        dequantized_low.val[1],
+        dequantized_high.val[0],
+        dequantized_high.val[1],
+    }};
+}
+
+__always_inline float64x2x8_t neon_dequantize_epi32_f64(const int32x4x4_t& input, const float64x2_t& scale) {
+    const float64x2x2_t dequantized0 = neon_dequantize_epi32_f64(input.val[0], scale);
+    const float64x2x2_t dequantized1 = neon_dequantize_epi32_f64(input.val[1], scale);
+    const float64x2x2_t dequantized2 = neon_dequantize_epi32_f64(input.val[2], scale);
+    const float64x2x2_t dequantized3 = neon_dequantize_epi32_f64(input.val[3], scale);
+
+    return {{
+        dequantized0.val[0],
+        dequantized0.val[1],
+        dequantized1.val[0],
+        dequantized1.val[1],
+        dequantized2.val[0],
+        dequantized2.val[1],
+        dequantized3.val[0],
+        dequantized3.val[1],
+    }};
 }
 
 __always_inline uint8x16_t neon_load_tail_elements_int8(const uint8_t* input, const uint32_t tail_bytes_count) {
@@ -127,12 +173,28 @@ __always_inline void neon_store_tail_elements_f32(float32_t* output, const float
 }
 
 __always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x4_t& data, const uint32_t tail_elements) {
-    float64_t buffer[8 * 4];
+    float64_t buffer[2 * 4];
     for (uint32_t i = 0; i < 4; ++i) {
         vst1q_f64(buffer + i * 2, data.val[i]);
     }
     std::memcpy(output, buffer, tail_elements * sizeof(float64_t));
 }
-} // namespace pernix::arm64::neon::internal
 
-#endif //PERNIX_ARM64_NEON_COMMON_H
+__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x2_t& data, const uint32_t tail_elements) {
+    float64_t buffer[2 * 2];
+    for (uint32_t i = 0; i < 2; ++i) {
+        vst1q_f64(buffer + i * 2, data.val[i]);
+    }
+    std::memcpy(output, buffer, tail_elements * sizeof(float64_t));
+}
+
+__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x8_t& data, const uint32_t tail_elements) {
+    float64_t buffer[2 * 8];
+    for (uint32_t i = 0; i < 8; ++i) {
+        vst1q_f64(buffer + i * 2, data.val[i]);
+    }
+    std::memcpy(output, buffer, tail_elements * sizeof(float64_t));
+}
+}  // namespace pernix::arm64::neon::internal
+
+#endif  // PERNIX_ARM64_NEON_COMMON_H

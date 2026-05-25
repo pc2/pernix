@@ -1,8 +1,8 @@
 #ifndef PERNIX_ARM64_NEON_UNPACKING_H
 #define PERNIX_ARM64_NEON_UNPACKING_H
 
-#include <pernix/simd_compat.h>
 #include <pernix/arm64/tables.h>
+#include <pernix/simd_compat.h>
 
 using namespace pernix::arm64::internal;
 
@@ -12,6 +12,13 @@ template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
 __always_inline int8x16_t neon_unpack_epi8_1to8(const uint8x16_t& input) {
     if constexpr (BIT_WIDTH == 8) {
         return vreinterpretq_s8_u8(input);
+    } else if constexpr (BIT_WIDTH == 1) {
+        using tables = table_unpacking<BIT_WIDTH, 128>;
+
+        const uint8x16_t permuted_u8 = vqtbl1q_u8(input, vld1q_u8(tables::permute1.data()));
+        const uint8x16_t shifted     = vshlq_u8(permuted_u8, vld1q_s8(tables::shift1.data()));
+
+        return vreinterpretq_s8_u8(vandq_u8(shifted, vdupq_n_u8(1)));
     } else {
         using tables = table_unpacking<BIT_WIDTH, 128>;
 
@@ -88,6 +95,6 @@ __always_inline int32x4_t neon_unpack_epi8_17to24(const uint32x4_t& input) {
         return vreinterpretq_s32_u32(vandq_u32(value, vdupq_n_u32(mask)));
     }
 }
-} // namespace pernix::arm64::neon::internal::b128
+}  // namespace pernix::arm64::neon::internal::b128
 
 #endif  // PERNIX_ARM64_NEON_UNPACKING_H

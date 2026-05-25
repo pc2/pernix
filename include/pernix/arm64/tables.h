@@ -134,7 +134,7 @@ constexpr std::array<int32_t, ELEMENTS> make_shift_right_32() {
 
     return table;
 }
-} // namespace detail
+}  // namespace detail
 
 template <uint8_t BIT_WIDTH, uint8_t VECTOR_WIDTH, uint8_t START_BIT_OFFSET = 0>
 struct table_unpacking;
@@ -207,6 +207,6 @@ public:
     static_assert(SHIFT_ELEMENTS == 4);
     static_assert(detail::table_indices_are_valid(permute));
 };
-} // namespace pernix::arm64::internal
+}  // namespace pernix::arm64::internal
 
 #endif  // PERNIX_ARM64_TABLES_H

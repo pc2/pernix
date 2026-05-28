@@ -1,24 +1,21 @@
-#ifndef PERNIX_ARM64_TABLES_H
-#define PERNIX_ARM64_TABLES_H
+#ifndef PERNIX_ARM64_NEON_TABLES_H
+#define PERNIX_ARM64_NEON_TABLES_H
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 
-namespace pernix::arm64::internal {
+namespace pernix::arm64::neon::internal {
 namespace detail {
 inline constexpr std::size_t neon_vector_width = 128;
 inline constexpr uint8_t inactive_lane         = 0xff;
 
 template <std::size_t Elements>
 constexpr bool table_indices_are_valid(const std::array<uint8_t, Elements>& table) {
-    for (const uint8_t index : table) {
-        if (index != inactive_lane && index >= Elements) {
-            return false;
-        }
-    }
-
-    return true;
+    return std::ranges::all_of(table, [](const uint8_t index) {
+        return index == inactive_lane || index < Elements;
+    });
 }
 
 template <uint8_t BIT_WIDTH, std::size_t LANE_BITS, std::size_t ELEMENTS>
@@ -134,7 +131,7 @@ constexpr std::array<int32_t, ELEMENTS> make_shift_right_32() {
 
     return table;
 }
-}  // namespace detail
+} // namespace detail
 
 template <uint8_t BIT_WIDTH, uint8_t VECTOR_WIDTH, uint8_t START_BIT_OFFSET = 0>
 struct table_unpacking;
@@ -207,6 +204,9 @@ public:
     static_assert(SHIFT_ELEMENTS == 4);
     static_assert(detail::table_indices_are_valid(permute));
 };
-}  // namespace pernix::arm64::internal
 
-#endif  // PERNIX_ARM64_TABLES_H
+template <uint8_t BIT_WIDTH, uint8_t VECTOR_WIDTH, uint8_t START_BIT_OFFSET = 0>
+struct table_packing;
+} // namespace pernix::arm64::internal
+
+#endif  // PERNIX_ARM64_NEON_TABLES_H

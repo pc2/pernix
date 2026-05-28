@@ -2,20 +2,142 @@
 
 namespace pernix {
 extern "C" {
-int neon_decompress_block(uint8_t, const uint8_t*, float_t, float_t*) {
-    return -1;
+#define PERNIX_NEON_DECOMPRESS_BLOCK_CASE(N) \
+    case N:                                  \
+        return arm64::neon::neon_decompress_block<N>(input, scale, output);
+
+#define PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(N) \
+    case N:                                   \
+        return arm64::neon::neon_decompress_blocks<N>(input, scale, output, blocks);
+
+int neon_decompress_block(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
+    switch (bit_width) {
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(1)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(2)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(3)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(4)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(5)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(6)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(7)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(8)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(9)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(10)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(11)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(12)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(13)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(14)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(15)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(16)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(17)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(18)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(19)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(20)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(21)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(22)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(23)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(24)
+        default:
+            return -1;
+    }
 }
 
-int neon_decompress_block_f64(uint8_t, const uint8_t*, double_t, double_t*) {
-    return -1;
+int neon_decompress_block_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
+                              double_t* __restrict__ output) {
+    switch (bit_width) {
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(1)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(2)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(3)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(4)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(5)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(6)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(7)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(8)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(9)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(10)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(11)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(12)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(13)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(14)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(15)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(16)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(17)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(18)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(19)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(20)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(21)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(22)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(23)
+        PERNIX_NEON_DECOMPRESS_BLOCK_CASE(24)
+        default:
+            return -1;
+    }
 }
 
-int neon_decompress_blocks(uint8_t, const uint8_t*, float_t, float_t*, uint32_t) {
-    return -1;
+int neon_decompress_blocks(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
+                           const uint32_t blocks) {
+    switch (bit_width) {
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(1)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(2)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(3)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(4)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(5)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(6)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(7)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(8)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(9)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(10)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(11)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(12)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(13)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(14)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(15)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(16)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(17)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(18)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(19)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(20)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(21)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(22)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(23)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(24)
+        default:
+            return -1;
+    }
 }
 
-int neon_decompress_blocks_f64(uint8_t, const uint8_t*, double_t, double_t*, uint32_t) {
-    return -1;
+int neon_decompress_blocks_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale,
+                               double_t* __restrict__ output, const uint32_t blocks) {
+    switch (bit_width) {
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(1)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(2)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(3)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(4)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(5)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(6)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(7)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(8)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(9)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(10)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(11)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(12)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(13)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(14)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(15)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(16)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(17)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(18)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(19)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(20)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(21)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(22)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(23)
+        PERNIX_NEON_DECOMPRESS_BLOCKS_CASE(24)
+        default:
+            return -1;
+    }
 }
+
+#undef PERNIX_NEON_DECOMPRESS_BLOCK_CASE
+#undef PERNIX_NEON_DECOMPRESS_BLOCKS_CASE
 }
-} // namespace pernix
+}  // namespace pernix

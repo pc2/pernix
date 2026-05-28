@@ -60,7 +60,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
 
     for (uint32_t i = 0; i < iterations_8; ++i) {
         const uint16x8_t source  = vld1q_u16(reinterpret_cast<const uint16_t*>(input));
-        const int16x8_t unpacked = b128::neon_unpack_epi8_9to16<BIT_WIDTH, SIGN_VALUES>(source);
+        const int16x8_t unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const int32x4x2_t converted     = neon_convert_int16x8_int32x4x2(unpacked);
         const float32x4x2_t dequantized = neon_dequantize_epi32(converted, scale_v);
@@ -75,7 +75,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
 
     if constexpr (remaining_elements > 0) {
         const uint16x8_t tail_source  = neon_load_tail_elements_int16(input, tail_bytes(BIT_WIDTH, remaining_elements));
-        const int16x8_t tail_unpacked = b128::neon_unpack_epi8_9to16<BIT_WIDTH, SIGN_VALUES>(tail_source);
+        const int16x8_t tail_unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(tail_source);
 
         const int32x4x2_t tail_converted     = neon_convert_int16x8_int32x4x2(tail_unpacked);
         const float32x4x2_t tail_dequantized = neon_dequantize_epi32(tail_converted, scale_v);
@@ -103,12 +103,12 @@ __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ inp
 
         int32x4_t unpacked;
         if constexpr (BIT_WIDTH % 2 == 0) {
-            unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
+            unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
         } else {
             if (i % 2 == 0) {
-                unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
+                unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
             } else {
-                unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 4>(source);
+                unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 4>(source);
             }
         }
 
@@ -129,9 +129,9 @@ __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ inp
 
         int32x4_t tail_unpacked;
         if constexpr (tail_bit_offset == 0) {
-            tail_unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(tail_source);
+            tail_unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 0>(tail_source);
         } else {
-            tail_unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, tail_bit_offset>(tail_source);
+            tail_unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, tail_bit_offset>(tail_source);
         }
 
         const float32x4_t tail_dequantized = neon_dequantize_epi32(tail_unpacked, scale_v);
@@ -192,7 +192,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
 
     for (uint32_t i = 0; i < iterations_8; ++i) {
         const uint16x8_t source  = vld1q_u16(reinterpret_cast<const uint16_t*>(input));
-        const int16x8_t unpacked = b128::neon_unpack_epi8_9to16<BIT_WIDTH, SIGN_VALUES>(source);
+        const int16x8_t unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
         const int32x4x2_t converted     = neon_convert_int16x8_int32x4x2(unpacked);
         const float64x2x4_t dequantized = neon_dequantize_epi32_f64(converted, scale_v);
@@ -207,7 +207,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
 
     if constexpr (remaining_elements > 0) {
         const uint16x8_t tail_source  = neon_load_tail_elements_int16(input, tail_bytes(BIT_WIDTH, remaining_elements));
-        const int16x8_t tail_unpacked = b128::neon_unpack_epi8_9to16<BIT_WIDTH, SIGN_VALUES>(tail_source);
+        const int16x8_t tail_unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(tail_source);
 
         const int32x4x2_t tail_converted     = neon_convert_int16x8_int32x4x2(tail_unpacked);
         const float64x2x4_t tail_dequantized = neon_dequantize_epi32_f64(tail_converted, scale_v);
@@ -235,12 +235,12 @@ __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ inp
 
         int32x4_t unpacked;
         if constexpr (BIT_WIDTH % 2 == 0) {
-            unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
+            unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
         } else {
             if (i % 2 == 0) {
-                unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
+                unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 0>(source);
             } else {
-                unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 4>(source);
+                unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 4>(source);
             }
         }
 
@@ -262,9 +262,9 @@ __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ inp
 
         int32x4_t tail_unpacked;
         if constexpr (tail_bit_offset == 0) {
-            tail_unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, 0>(tail_source);
+            tail_unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, 0>(tail_source);
         } else {
-            tail_unpacked = b128::neon_unpack_epi8_17to24<BIT_WIDTH, SIGN_VALUES, tail_bit_offset>(tail_source);
+            tail_unpacked = b128::neon_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES, tail_bit_offset>(tail_source);
         }
 
         const float64x2x2_t tail_dequantized = neon_dequantize_epi32_f64(tail_unpacked, scale_v);
@@ -274,7 +274,7 @@ __always_inline int neon_decompress_block_17to24(const uint8_t* __restrict__ inp
 
     return 0;
 }
-}  // namespace internal
+} // namespace internal
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE = 64>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
@@ -310,7 +310,7 @@ int neon_decompress_blocks(const uint8_t* __restrict__ input, const float_t scal
 
     for (uint32_t block = 0; block < blocks; ++block) {
         neon_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
@@ -325,7 +325,7 @@ int neon_decompress_blocks(const uint8_t* __restrict__ input, const double_t sca
 
     for (uint32_t block = 0; block < blocks; ++block) {
         neon_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input += BLOCK_SIZE;
+        block_input  += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
     return 0;
@@ -348,6 +348,6 @@ int neon_decompress_blocks_f64(uint8_t bit_width, const uint8_t* __restrict__ in
 #ifdef __cplusplus
 }
 #endif
-}  // namespace pernix::arm64::neon
+} // namespace pernix::arm64::neon
 
 #endif  // PERNIX_ARM64_NEON_DECOMPRESSION_H

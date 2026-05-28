@@ -37,7 +37,12 @@
 #elif defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
 #include <immintrin.h>
 #elif defined(__aarch64__) || defined(__arm64ec__)
+#ifdef __ARM_FEATURE_SVE
+#include <arm_sve.h>
+#endif
+#ifdef __ARM_NEON
 #include <arm_neon.h>
+#endif
 #endif
 
 #ifndef __always_inline

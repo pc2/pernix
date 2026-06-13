@@ -21,22 +21,14 @@
 static_assert(PERNIX_TEST_BLOCK_SIZE % 32 == 0,
               "PERNIX_TEST_BLOCK_SIZE must be dividable by 32 bytes");
 
-/**
- * A test set for compression and decompression tests.
- * It generates random float data, compresses it, and verifies the decompression using the fallback implementation.
- *
- * @tparam BIT_WIDTH The bit width used for compression (1 to 24).
- * @tparam SIGN_VALUES Indicates whether the values are signed or unsigned.
- */
 template <uint8_t BIT_WIDTH, typename T = float_t, uint32_t BLOCK_SIZE = 64, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && std::is_floating_point_v<T>
 class TestSet {
-    // using ValueType = std::conditional_t<Signed, int8_t, uint8_t>;
     using ValueType = uint8_t;
     using SeedType  = std::mt19937::result_type;
 
     alignas(64) std::vector<std::vector<ValueType> > compressedData;
-    alignas(64) std::vector<std::vector<T> > decompressedData;
+    alignas(64) std::vector<std::vector<T> > sourceData;
     alignas(64) std::vector<T> scalesData;
 
     SeedType seed;
@@ -55,14 +47,13 @@ public:
     [[nodiscard]] constexpr uint32_t totalElements() const { return numberOfBlocks * elementsPerBlock; }
 
     [[nodiscard]] T blockTolerance(const uint32_t block) const {
-        // Half-step quantization bound + tiny FP slack for rounding edge cases.
         return (std::abs(scalesData[block]) * static_cast<T>(0.5)) + (std::numeric_limits<T>::epsilon() * static_cast<T>(16));
     }
 
     explicit TestSet(const uint32_t number_of_blocks, const SeedType initial_seed = testSeed())
         : seed(initial_seed), gen(seed), numberOfBlocks(number_of_blocks) {
         compressedData.resize(numberOfBlocks);
-        decompressedData.resize(number_of_blocks);
+        sourceData.resize(number_of_blocks);
         scalesData.resize(numberOfBlocks);
 
         generateData();
@@ -72,7 +63,7 @@ public:
 
     [[nodiscard]] const std::vector<std::vector<ValueType> >& getCompressedData() const { return compressedData; }
 
-    [[nodiscard]] const std::vector<std::vector<T> >& getDecompressedData() const { return decompressedData; }
+    [[nodiscard]] const std::vector<std::vector<T> >& getDecompressedData() const { return sourceData; }
 
     [[nodiscard]] SeedType getSeed() const { return seed; }
 
@@ -88,26 +79,29 @@ public:
     }
 
 private:
-    // Generate deterministic source data and its fallback-compressed reference.
     void generateData() {
         for (uint32_t i = 0; i < numberOfBlocks; i++) {
             compressedData[i].resize(BLOCK_SIZE);
-            decompressedData[i].resize(elementsPerBlock);
+            sourceData[i].resize(elementsPerBlock);
 
             for (uint32_t j = 0; j < elementsPerBlock; j++) {
-                decompressedData[i][j] = dis(gen);
+                sourceData[i][j] = dis(gen);
             }
 
-            const T b_max = *std::ranges::max_element(decompressedData[i]);
-            const T b_min = *std::ranges::min_element(decompressedData[i]);
+            const T b_max = *std::ranges::max_element(sourceData[i]);
+            const T b_min = *std::ranges::min_element(sourceData[i]);
             const T b_abs = std::max(std::abs(b_max), std::abs(b_min));
             scalesData[i] = (b_abs > static_cast<T>(0) && quantization_levels > static_cast<T>(0))
                                 ? (b_abs / quantization_levels)
                                 : std::numeric_limits<T>::epsilon();
 
-            // Compress the data using the fallback implementation
-            pernix::compress_block_fallback<BIT_WIDTH, BLOCK_SIZE>(decompressedData[i].data(), 1 / scalesData[i],
-                                                                   reinterpret_cast<uint8_t*>(compressedData[i].data()));
+            if constexpr (std::is_same_v<T, float>) {
+                pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE,
+                    sourceData[i].data(), 1.0f / scalesData[i], compressedData[i].data());
+            } else {
+                pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE,
+                    sourceData[i].data(), 1.0 / scalesData[i], compressedData[i].data());
+            }
         }
     }
 };

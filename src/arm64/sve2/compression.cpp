@@ -1,21 +1,28 @@
+#include <pernix/dispatch/select.h>
 #include <pernix/arm64/sve2/compression.h>
 
-namespace pernix {
-extern "C" {
-int sve2_compress_block(uint8_t, const float_t*, float_t, uint8_t*) {
-    return -1;
+namespace pernix::internal {
+Kernel<KernelBlockF32Func> select_sve2_compress_block_f32(const uint8_t bit_width, const uint32_t block_size) {
+    (void)bit_width;
+    (void)block_size;
+    return {"sve2", nullptr};
 }
 
-int sve2_compress_block_f64(uint8_t, const double_t*, double_t, uint8_t*) {
-    return -1;
+Kernel<KernelBlocksF32Func> select_sve2_compress_blocks_f32(const uint8_t bit_width, const uint32_t block_size) {
+    (void)bit_width;
+    (void)block_size;
+    return {"sve2", nullptr};
 }
 
-int sve2_compress_blocks(uint8_t, const float_t*, float_t, uint8_t*, uint32_t) {
-    return -1;
+Kernel<KernelBlockF64Func> select_sve2_compress_block_f64(const uint8_t bit_width, const uint32_t block_size) {
+    (void)bit_width;
+    (void)block_size;
+    return {"sve2", nullptr};
 }
 
-int sve2_compress_blocks_f64(uint8_t, const double_t*, double_t, uint8_t*, uint32_t) {
-    return -1;
+Kernel<KernelBlocksF64Func> select_sve2_compress_blocks_f64(const uint8_t bit_width, const uint32_t block_size) {
+    (void)bit_width;
+    (void)block_size;
+    return {"sve2", nullptr};
 }
 }
-} // namespace pernix

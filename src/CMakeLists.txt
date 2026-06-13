@@ -1,12 +1,204 @@
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
+add_library(pernix SHARED)
+target_sources(pernix
+        PRIVATE
+        pernix.cpp
+
+        fallback/fallback_compression.cpp
+        fallback/fallback_decompression.cpp
+
+        dispatch/select.cpp
+)
+
+target_compile_features(pernix PUBLIC cxx_std_20)
+
+set_target_properties(pernix PROPERTIES
+        OUTPUT_NAME "pernix"
+        VERSION ${NORMALIZED_VERSION}
+        LINKER_LANGUAGE CXX
+)
+
+target_include_directories(pernix
+        PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/internal
+)
+
+target_compile_definitions(pernix
+        PRIVATE
+        PERNIX_BUILD_LIB=1
+)
+
+if (PERNIX_USE_SIMDE)
+    # target_link_libraries(pernix PUBLIC simde::simde)
+    target_compile_definitions(pernix PUBLIC PERNIX_USE_SIMDE=1)
+endif ()
+
+if (PERNIX_TARGET_IS_X86)
+    target_sources(pernix
+            PRIVATE
+            dispatch/cpu_features_x86.cpp
+    )
+
+    if (MSVC)
+        set_source_files_properties(
+                dispatch/cpu_features_x86.cpp
+                PROPERTIES
+                COMPILE_OPTIONS "/arch:AVX512"
+        )
+    else ()
+        set_source_files_properties(
+                dispatch/cpu_features_x86.cpp
+                PROPERTIES
+                COMPILE_OPTIONS "-mavx;-mbmi;-mbmi2;-mavx2;-mavx512f;-mavx512bw;-mavx512vl;-mavx512dq;-mavx512cd;-mavx512vbmi"
+        )
+    endif ()
+endif ()
+
+if (PERNIX_TARGET_IS_ARM64)
+    target_sources(pernix
+            PRIVATE
+            dispatch/cpu_features_arm.cpp
+    )
+
+    set_target_properties(pernix PROPERTIES
+            COMPILE_OPTIONS "-march=armv8-a+simd+sve2"
+    )
+endif ()
+
+if (PERNIX_ENABLE_X86_BMI2 AND PERNIX_TARGET_IS_X86)
+    target_sources(pernix
+            PRIVATE
+            x86/bmi2/bmi2_compression.cpp
+            x86/bmi2/bmi2_decompression.cpp
+    )
+
+    target_compile_definitions(pernix
+            PRIVATE
+            PERNIX_BUILD_X86_BMI2=1
+    )
+
+    if (MSVC)
+        # BMI2 is not exposed with MSVC
+    else ()
+        set_source_files_properties(
+                x86/bmi2/bmi2_compression.cpp
+                x86/bmi2/bmi2_decompression.cpp
+                PROPERTIES
+                COMPILE_OPTIONS "-mbmi;-mbmi2;-mavx2"
+        )
+    endif ()
+
+endif ()
+
+if (PERNIX_ENABLE_X86_AVX2 AND PERNIX_TARGET_IS_X86)
+    target_sources(pernix
+            PRIVATE
+            x86/avx2/avx2_compression.cpp
+            x86/avx2/avx2_decompression.cpp
+    )
+
+    target_compile_definitions(pernix
+            PRIVATE
+            PERNIX_BUILD_X86_AVX2=1
+    )
+
+    if (MSVC)
+        set_source_files_properties(
+                x86/avx2/avx2_compression.cpp
+                x86/avx2/avx2_decompression.cpp
+                PROPERTIES
+                COMPILE_OPTIONS "/arch:AVX2"
+        )
+    else ()
+        set_source_files_properties(
+                x86/avx2/avx2_compression.cpp
+                x86/avx2/avx2_decompression.cpp
+                PROPERTIES
+                COMPILE_OPTIONS "-mavx2"
+        )
+    endif ()
+endif ()
+
+if (PERNIX_ENABLE_X86_AVX512VBMI AND PERNIX_TARGET_IS_X86)
+    target_sources(pernix
+            PRIVATE
+            x86/avx512vbmi/avx512vbmi_compression.cpp
+            x86/avx512vbmi/avx512vbmi_decompression.cpp
+    )
+
+    target_compile_definitions(pernix
+            PRIVATE
+            PERNIX_BUILD_X86_AVX512_VBMI=1
+    )
+
+    if (MSVC)
+        set_source_files_properties(
+                x86/avx512vbmi/avx512vbmi_compression.cpp
+                x86/avx512vbmi/avx512vbmi_decompression.cpp
+                PROPERTIES
+                COMPILE_OPTIONS "/arch:AVX512"
+        )
+    else ()
+        set_source_files_properties(
+                x86/avx512vbmi/avx512vbmi_compression.cpp
+                x86/avx512vbmi/avx512vbmi_decompression.cpp
+                PROPERTIES
+                COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vl;-mavx512dq;-mavx512cd;-mavx512vbmi"
+        )
+    endif ()
+endif ()
+
+if (PERNIX_ENABLE_ARM64_NEON AND PERNIX_TARGET_IS_ARM64)
+    target_sources(pernix
+            PRIVATE
+            arm64/neon/compression.cpp
+            arm64/neon/decompression.cpp
+    )
+
+    target_compile_definitions(pernix
+            PRIVATE
+            PERNIX_BUILD_ARM64_NEON=1
+    )
+
+    set_source_files_properties(
+            arm64/neon/compression.cpp
+            arm64/neon/decompression.cpp
+            PROPERTIES
+            COMPILE_OPTIONS "-march=armv8-a+simd"
+    )
+endif ()
+
+if (PERNIX_ENABLE_ARM64_SVE2 AND PERNIX_TARGET_IS_ARM64)
+    target_sources(pernix
+            PRIVATE
+            arm64/sve2/compression.cpp
+            arm64/sve2/decompression.cpp
+    )
+
+    target_compile_definitions(pernix
+            PRIVATE
+            PERNIX_BUILD_ARM64_SVE2=1
+    )
+
+    set_source_files_properties(
+            arm64/sve2/compression.cpp
+            arm64/sve2/decompression.cpp
+            PROPERTIES
+            COMPILE_OPTIONS "-march=armv8.2-a+simd+sve2"
+    )
+endif ()
+
+#[===[
 file(GLOB_RECURSE
         PERNIX_COMMON_SOURCES
-        CONFIGURE_DEPENDS
         ./fallback/*.cpp
-        ./pernix.cpp
-        ${PROJECT_SOURCE_DIR}/include/pernix/*.h
+        pernix.cpp
+        dispatch/select.cpp
 )
 
 set(PERNIX_SOURCES ${PERNIX_COMMON_SOURCES})
@@ -16,7 +208,6 @@ if (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "X86")
             PERNIX_X86_SOURCES
             CONFIGURE_DEPENDS
             ./x86/*.cpp
-            ${PROJECT_SOURCE_DIR}/include/pernix/x86/*.h
     )
     list(APPEND PERNIX_SOURCES ${PERNIX_X86_SOURCES})
 elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_NEON")
@@ -24,7 +215,6 @@ elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_NEON")
             PERNIX_ARM64_NEON_SOURCES
             CONFIGURE_DEPENDS
             ./arm64/neon/*.cpp
-            ${PROJECT_SOURCE_DIR}/include/pernix/arm64/neon/*.h
     )
     list(APPEND PERNIX_SOURCES ${PERNIX_ARM64_NEON_SOURCES})
 elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE")
@@ -32,7 +222,6 @@ elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE")
             PERNIX_ARM64_SVE_SOURCES
             CONFIGURE_DEPENDS
             ./arm64/sve/*.cpp
-            ${PROJECT_SOURCE_DIR}/include/pernix/arm64/sve/*.h
     )
     list(APPEND PERNIX_SOURCES ${PERNIX_ARM64_SVE_SOURCES})
 elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE2")
@@ -40,10 +229,10 @@ elseif (PERNIX_SELECTED_ARCH_BACKEND STREQUAL "ARM64_SVE2")
             PERNIX_ARM64_SVE2_SOURCES
             CONFIGURE_DEPENDS
             ./arm64/sve2/*.cpp
-            ${PROJECT_SOURCE_DIR}/include/pernix/arm64/sve2/*.h
     )
     list(APPEND PERNIX_SOURCES ${PERNIX_ARM64_SVE2_SOURCES})
 endif ()
+
 
 add_library(pernix SHARED ${PERNIX_SOURCES})
 add_library(pernix::pernix ALIAS pernix)
@@ -53,9 +242,12 @@ set_target_properties(pernix PROPERTIES
 )
 target_compile_features(pernix PUBLIC cxx_std_20)
 target_compile_options(pernix PRIVATE ${PERNIX_PRIVATE_COMPILE_OPTIONS})
-target_include_directories(pernix PUBLIC
+target_include_directories(pernix
+        PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/internal
 )
 if (PERNIX_ENABLE_LTO)
     set_target_properties(pernix PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
@@ -160,3 +352,5 @@ if (PERNIX_ENABLE_DOXYGEN)
                 DESTINATION ${CMAKE_INSTALL_DOCDIR})
     endif ()
 endif ()
+
+]===]

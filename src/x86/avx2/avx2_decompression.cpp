@@ -1,27 +1,27 @@
 #include <pernix/dispatch/select.h>
-#include <pernix/arm64/neon/decompression.h>
+#include <pernix/x86/avx2/avx2_decompression.h>
 
 namespace pernix::internal {
 #define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlockF32Func>("neon", &arm64::neon::neon_decompress_block<N, true, BS>); \
-    return Kernel<KernelBlockF32Func>("neon", &arm64::neon::neon_decompress_block<N, false, BS>)
+    if (sign_values) return Kernel<KernelBlockF32Func>("avx2", &mm256_decompress_block_avx2<N, true, BS>); \
+    return Kernel<KernelBlockF32Func>("avx2", &mm256_decompress_block_avx2<N, false, BS>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlocksF32Func>("neon", &arm64::neon::neon_decompress_blocks<N, true, BS>); \
-    return Kernel<KernelBlocksF32Func>("neon", &arm64::neon::neon_decompress_blocks<N, false, BS>)
+    if (sign_values) return Kernel<KernelBlocksF32Func>("avx2", &mm256_decompress_blocks_avx2<N, true, BS>); \
+    return Kernel<KernelBlocksF32Func>("avx2", &mm256_decompress_blocks_avx2<N, false, BS>)
+
 
 #define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlockF64Func>("neon", &arm64::neon::neon_decompress_block<N, true, BS>); \
-    return Kernel<KernelBlockF64Func>("neon", &arm64::neon::neon_decompress_block<N, false, BS>)
+    if (sign_values) return Kernel<KernelBlockF64Func>("avx2", &mm256_decompress_block_avx2<N, true, BS>); \
+    return Kernel<KernelBlockF64Func>("avx2", &mm256_decompress_block_avx2<N, false, BS>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlocksF64Func>("neon", &arm64::neon::neon_decompress_blocks<N, true, BS>); \
-    return Kernel<KernelBlocksF64Func>("neon", &arm64::neon::neon_decompress_blocks<N, false, BS>)
-
+    if (sign_values) return Kernel<KernelBlocksF64Func>("avx2", &mm256_decompress_blocks_avx2<N, true, BS>); \
+    return Kernel<KernelBlocksF64Func>("avx2", &mm256_decompress_blocks_avx2<N, false, BS>)
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS) \
     case BS: \
         switch (bit_width) { \
@@ -49,7 +49,7 @@ case N: \
             PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
-            default: return {"neon", nullptr}; \
+            default: return {"avx2", nullptr}; \
         } \
         break
 
@@ -80,7 +80,7 @@ case N: \
             PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS); \
-            default: return {"neon", nullptr}; \
+            default: return {"avx2", nullptr}; \
         } \
         break
 
@@ -111,7 +111,7 @@ case N: \
             PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
-            default: return {"neon", nullptr}; \
+            default: return {"avx2", nullptr}; \
         } \
         break
 
@@ -142,51 +142,51 @@ case N: \
             PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS); \
-            default: return {"neon", nullptr}; \
+            default: return {"avx2", nullptr}; \
         } \
         break
 
-Kernel<KernelBlockF32Func> select_neon_decompress_block_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
+Kernel<KernelBlockF32Func> select_avx2_decompress_block_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(64);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(128);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(256);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(1024);
-        default: return {"neon", nullptr};
+        default: return {"avx2", nullptr};
     }
 }
 
-Kernel<KernelBlocksF32Func> select_neon_decompress_blocks_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
+Kernel<KernelBlocksF32Func> select_avx2_decompress_blocks_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(64);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(128);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(256);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(1024);
-        default: return {"neon", nullptr};
+        default: return {"avx2", nullptr};
     }
 }
 
-Kernel<KernelBlockF64Func> select_neon_decompress_block_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
+Kernel<KernelBlockF64Func> select_avx2_decompress_block_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(64);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(128);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(256);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(1024);
-        default: return {"neon", nullptr};
+        default: return {"avx2", nullptr};
     }
 }
 
-Kernel<KernelBlocksF64Func> select_neon_decompress_blocks_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
+Kernel<KernelBlocksF64Func> select_avx2_decompress_blocks_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(64);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(128);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(256);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(1024);
-        default: return {"neon", nullptr};
+        default: return {"avx2", nullptr};
     }
 }
 

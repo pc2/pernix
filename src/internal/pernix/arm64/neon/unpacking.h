@@ -7,7 +7,7 @@
 using namespace pernix::arm64::neon::internal;
 
 namespace pernix::arm64::neon::internal::b128 {
-    template<uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+    template<u8 BIT_WIDTH, bool SIGN_VALUES = true>
         requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
 __always_inline int8x16_t neon_unpack_epi8_1to8(const uint8x16_t &input) {
         if constexpr (BIT_WIDTH == 8) {
@@ -43,7 +43,7 @@ __always_inline int8x16_t neon_unpack_epi8_1to8(const uint8x16_t &input) {
         }
     }
 
-    template<uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+    template<u8 BIT_WIDTH, bool SIGN_VALUES = true>
         requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 __always_inline int16x8_t neon_unpack_epi16_9to16(const uint16x8_t &input) {
         if constexpr (BIT_WIDTH == 16) {
@@ -77,7 +77,7 @@ __always_inline int16x8_t neon_unpack_epi16_9to16(const uint16x8_t &input) {
         }
     }
 
-    template<uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint8_t START_BIT_OFFSET = 0>
+    template<u8 BIT_WIDTH, bool SIGN_VALUES = true, u8 START_BIT_OFFSET = 0>
         requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
 __always_inline int32x4_t neon_unpack_epi32_17to24(const uint32x4_t &input) {
         using tables = table_unpacking<BIT_WIDTH, 128, START_BIT_OFFSET>;
@@ -92,7 +92,7 @@ __always_inline int32x4_t neon_unpack_epi32_17to24(const uint32x4_t &input) {
             constexpr int sign_shift = 32 - BIT_WIDTH;
             return vshrq_n_s32(vreinterpretq_s32_u32(vshlq_n_u32(value, sign_shift)), sign_shift);
         } else {
-            constexpr uint32_t mask = (uint32_t{1} << BIT_WIDTH) - 1u;
+            constexpr u32 mask = (u32{1} << BIT_WIDTH) - 1u;
             return vreinterpretq_s32_u32(vandq_u32(value, vdupq_n_u32(mask)));
         }
     }

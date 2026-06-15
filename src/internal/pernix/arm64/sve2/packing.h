@@ -4,7 +4,7 @@
 #include <pernix/simd_compat.h>
 
 namespace pernix::arm64::sve2::internal {
-    template<uint8_t>
+    template<u8>
     inline constexpr bool packing_unimplemented_v = false;
 } // namespace pernix::arm64::sve2::internal
 

@@ -146,49 +146,53 @@ case N: \
         } \
         break
 
-Kernel<KernelBlockF32Func> select_avx512vbmi_decompress_block_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(1024);
-        default: return {"avx512vbmi", nullptr};
+    Kernel<KernelBlockF32Func> select_avx512vbmi_decompress_block_f32(const u8 bit_width, const u32 block_size,
+                                                                      bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(1024);
+            default: return {"avx512vbmi", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlocksF32Func> select_avx512vbmi_decompress_blocks_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(1024);
-        default: return {"avx512vbmi", nullptr};
+    Kernel<KernelBlocksF32Func> select_avx512vbmi_decompress_blocks_f32(const u8 bit_width, const u32 block_size,
+                                                                        bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(1024);
+            default: return {"avx512vbmi", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlockF64Func> select_avx512vbmi_decompress_block_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(1024);
-        default: return {"avx512vbmi", nullptr};
+    Kernel<KernelBlockF64Func> select_avx512vbmi_decompress_block_f64(const u8 bit_width, const u32 block_size,
+                                                                      bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(1024);
+            default: return {"avx512vbmi", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlocksF64Func> select_avx512vbmi_decompress_blocks_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(1024);
-        default: return {"avx512vbmi", nullptr};
+    Kernel<KernelBlocksF64Func> select_avx512vbmi_decompress_blocks_f64(const u8 bit_width, const u32 block_size,
+                                                                        bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(1024);
+            default: return {"avx512vbmi", nullptr};
+        }
     }
-}
 
 #undef PERNIX_CASE_DECOMPRESS_BLOCK_32
 #undef PERNIX_CASE_DECOMPRESS_BLOCKS_32

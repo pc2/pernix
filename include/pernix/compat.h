@@ -1,6 +1,10 @@
 #ifndef PERNIX_COMPAT_H
 #define PERNIX_COMPAT_H
 
+#include <cstdint>
+#include <cmath>
+#include <cstddef>
+
 #ifndef __always_inline
 #if defined(__GNUC__) || defined(__clang__)
 #define __always_inline inline __attribute__((always_inline))
@@ -20,5 +24,22 @@
 #else
 #define PERNIX_API
 #endif
+
+// Convenient type declarations
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef uintptr_t uptr;
+
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+
+typedef float_t f32;
+typedef double_t f64;
+
+typedef size_t usize;
 
 #endif //PERNIX_COMPAT_H

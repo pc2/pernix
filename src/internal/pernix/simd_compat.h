@@ -22,19 +22,6 @@
 #include <simde/arm/sve.h>
 #endif
 
-// #ifndef __mmask8
-// typedef uint8_t __mmask8;
-// #endif
-// #ifndef __mmask16
-// typedef uint16_t __mmask16;
-// #endif
-// #ifndef __mmask32
-// typedef uint32_t __mmask32;
-// #endif
-// #ifndef __mmask64
-// typedef uint64_t __mmask64;
-// #endif
-
 #elif defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
 #include <immintrin.h>
 #elif defined(__aarch64__) || defined(__arm64ec__)

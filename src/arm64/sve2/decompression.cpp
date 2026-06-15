@@ -1,26 +1,29 @@
 #include <pernix/dispatch/select.h>
 #include <pernix/arm64/sve2/decompression.h>
 
+using pernix::arm64::sve2::sve2_decompress_block;
+using pernix::arm64::sve2::sve2_decompress_blocks;
+
 namespace pernix::internal {
 #define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlockF32Func>("sve2", &arm64::sve2::sve2_decompress_block<N, true, BS>); \
-    return Kernel<KernelBlockF32Func>("sve2", &arm64::sve2::sve2_decompress_block<N, false, BS>)
+    if (sign_values) return Kernel<KernelBlockF32Func>("sve2", &sve2_decompress_block<N, true, BS>); \
+    return Kernel<KernelBlockF32Func>("sve2", &sve2_decompress_block<N, false, BS>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlocksF32Func>("sve2", &arm64::sve2::sve2_decompress_blocks<N, true, BS>); \
-    return Kernel<KernelBlocksF32Func>("sve2", &arm64::sve2::sve2_decompress_blocks<N, false, BS>)
+    if (sign_values) return Kernel<KernelBlocksF32Func>("sve2", &sve2_decompress_blocks<N, true, BS>); \
+    return Kernel<KernelBlocksF32Func>("sve2", &sve2_decompress_blocks<N, false, BS>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlockF64Func>("sve2", &arm64::sve2::sve2_decompress_block<N, true, BS>); \
-    return Kernel<KernelBlockF64Func>("sve2", &arm64::sve2::sve2_decompress_block<N, false, BS>)
+    if (sign_values) return Kernel<KernelBlockF64Func>("sve2", &sve2_decompress_block<N, true, BS>); \
+    return Kernel<KernelBlockF64Func>("sve2", &sve2_decompress_block<N, false, BS>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS) \
 case N: \
-    if (sign_values) return Kernel<KernelBlocksF64Func>("sve2", &arm64::sve2::sve2_decompress_blocks<N, true, BS>); \
-    return Kernel<KernelBlocksF64Func>("sve2", &arm64::sve2::sve2_decompress_blocks<N, false, BS>)
+    if (sign_values) return Kernel<KernelBlocksF64Func>("sve2", &sve2_decompress_blocks<N, true, BS>); \
+    return Kernel<KernelBlocksF64Func>("sve2", &sve2_decompress_blocks<N, false, BS>)
 
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS) \
     case BS: \
@@ -146,49 +149,53 @@ case N: \
         } \
         break
 
-Kernel<KernelBlockF32Func> select_sve2_decompress_block_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(1024);
-        default: return {"sve2", nullptr};
+    Kernel<KernelBlockF32Func> select_sve2_decompress_block_f32(const u8 bit_width, const u32 block_size,
+                                                                bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(1024);
+            default: return {"sve2", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlocksF32Func> select_sve2_decompress_blocks_f32(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(1024);
-        default: return {"sve2", nullptr};
+    Kernel<KernelBlocksF32Func> select_sve2_decompress_blocks_f32(const u8 bit_width, const u32 block_size,
+                                                                  bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(1024);
+            default: return {"sve2", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlockF64Func> select_sve2_decompress_block_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(1024);
-        default: return {"sve2", nullptr};
+    Kernel<KernelBlockF64Func> select_sve2_decompress_block_f64(const u8 bit_width, const u32 block_size,
+                                                                bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(1024);
+            default: return {"sve2", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlocksF64Func> select_sve2_decompress_blocks_f64(const uint8_t bit_width, const uint32_t block_size, bool sign_values) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(64);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(128);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(256);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(512);
-        PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(1024);
-        default: return {"sve2", nullptr};
+    Kernel<KernelBlocksF64Func> select_sve2_decompress_blocks_f64(const u8 bit_width, const u32 block_size,
+                                                                  bool sign_values) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(64);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(128);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(256);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(512);
+            PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(1024);
+            default: return {"sve2", nullptr};
+        }
     }
-}
 
 #undef PERNIX_CASE_DECOMPRESS_BLOCK_32
 #undef PERNIX_CASE_DECOMPRESS_BLOCKS_32

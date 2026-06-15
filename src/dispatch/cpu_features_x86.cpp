@@ -1,6 +1,6 @@
 #include <pernix/dispatch/cpu_features.h>
 
-#include <cstdint>
+#include <pernix/compat.h>
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
 #if defined(_MSC_VER)
@@ -19,7 +19,7 @@ void cpuid(int out[4], int leaf, int subleaf) {
     __cpuidex(out, leaf, subleaf);
 }
 
-std::uint64_t xgetbv(unsigned int index) {
+u64 xgetbv(unsigned int index) {
     return _xgetbv(index);
 }
 
@@ -29,7 +29,7 @@ void cpuid(int out[4], int leaf, int subleaf) {
     __cpuid_count(leaf, subleaf, out[0], out[1], out[2], out[3]);
 }
 
-std::uint64_t xgetbv(unsigned int index) {
+u64 xgetbv(unsigned int index) {
     return _xgetbv(index);
 }
 
@@ -54,7 +54,7 @@ CpuFeatures detect_cpu_features() {
         return features;
     }
 
-    const std::uint64_t xcr0 = xgetbv(0);
+    const u64 xcr0 = xgetbv(0);
 
     const bool xmm_enabled = (xcr0 & 0x2) != 0;
     const bool ymm_enabled = (xcr0 & 0x4) != 0;

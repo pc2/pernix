@@ -7,50 +7,50 @@
 // SIMD compress: compress via backend, decompress via fallback, compare source
 // ---------------------------------------------------------------------------
 
-template <typename FixtureT>
-void testBackendCompressBlock(FixtureT& fixture, pernix_backend backend) {
+template<typename FixtureT>
+void testBackendCompressBlock(FixtureT &fixture, pernix_backend backend) {
     using T = std::remove_cvref_t<decltype(fixture.testSet.getScales()[0])>;
 
     {
-        std::vector<uint8_t> probe(FixtureT::BlockSize);
+        std::vector<u8> probe(FixtureT::BlockSize);
         pernix_status st;
         if constexpr (std::is_same_v<T, float>) {
             st = pernix_compress_block_f32(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getDecompressedData()[0].data(),
-                1.0f / fixture.testSet.getScales()[0], probe.data());
+                                           fixture.testSet.getDecompressedData()[0].data(),
+                                           1.0f / fixture.testSet.getScales()[0], probe.data());
         } else {
             st = pernix_compress_block_f64(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getDecompressedData()[0].data(),
-                1.0 / fixture.testSet.getScales()[0], probe.data());
+                                           fixture.testSet.getDecompressedData()[0].data(),
+                                           1.0 / fixture.testSet.getScales()[0], probe.data());
         }
         if (st != PERNIX_STATUS_OK) {
-            SUCCEED();
+            GTEST_SKIP();
             return;
         }
     }
 
-    for (uint32_t b = 0; b < fixture.testSet.numberOfBlocks; b++) {
-        std::vector<uint8_t> compressed(FixtureT::BlockSize);
+    for (u32 b = 0; b < fixture.testSet.numberOfBlocks; b++) {
+        std::vector<u8> compressed(FixtureT::BlockSize);
 
         pernix_status st;
         if constexpr (std::is_same_v<T, float>) {
             st = pernix_compress_block_f32(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getDecompressedData()[b].data(),
-                1.0f / fixture.testSet.getScales()[b], compressed.data());
+                                           fixture.testSet.getDecompressedData()[b].data(),
+                                           1.0f / fixture.testSet.getScales()[b], compressed.data());
         } else {
             st = pernix_compress_block_f64(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getDecompressedData()[b].data(),
-                1.0 / fixture.testSet.getScales()[b], compressed.data());
+                                           fixture.testSet.getDecompressedData()[b].data(),
+                                           1.0 / fixture.testSet.getScales()[b], compressed.data());
         }
         ASSERT_EQ(st, PERNIX_STATUS_OK);
 
         std::vector<T> restored(fixture.testSet.elementsPerBlock);
         if constexpr (std::is_same_v<T, float>) {
             st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, FixtureT::BitWidth, FixtureT::BlockSize,
-                compressed.data(), fixture.testSet.getScales()[b], restored.data(), true);
+                                             compressed.data(), fixture.testSet.getScales()[b], restored.data(), true);
         } else {
             st = pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK, FixtureT::BitWidth, FixtureT::BlockSize,
-                compressed.data(), fixture.testSet.getScales()[b], restored.data(), true);
+                                             compressed.data(), fixture.testSet.getScales()[b], restored.data(), true);
         }
         ASSERT_EQ(st, PERNIX_STATUS_OK);
 
@@ -62,8 +62,8 @@ void testBackendCompressBlock(FixtureT& fixture, pernix_backend backend) {
 // SIMD decompress: decompress fallback-compressed data via backend, compare source
 // ---------------------------------------------------------------------------
 
-template <typename FixtureT>
-void testBackendDecompressBlock(FixtureT& fixture, pernix_backend backend) {
+template<typename FixtureT>
+void testBackendDecompressBlock(FixtureT &fixture, pernix_backend backend) {
     using T = std::remove_cvref_t<decltype(fixture.testSet.getScales()[0])>;
 
     {
@@ -71,31 +71,31 @@ void testBackendDecompressBlock(FixtureT& fixture, pernix_backend backend) {
         pernix_status st;
         if constexpr (std::is_same_v<T, float>) {
             st = pernix_decompress_block_f32(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getCompressedData()[0].data(),
-                fixture.testSet.getScales()[0], probe.data(), true);
+                                             fixture.testSet.getCompressedData()[0].data(),
+                                             fixture.testSet.getScales()[0], probe.data(), true);
         } else {
             st = pernix_decompress_block_f64(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getCompressedData()[0].data(),
-                fixture.testSet.getScales()[0], probe.data(), true);
+                                             fixture.testSet.getCompressedData()[0].data(),
+                                             fixture.testSet.getScales()[0], probe.data(), true);
         }
         if (st != PERNIX_STATUS_OK) {
-            SUCCEED();
+            GTEST_SKIP();
             return;
         }
     }
 
-    for (uint32_t b = 0; b < fixture.testSet.numberOfBlocks; b++) {
+    for (u32 b = 0; b < fixture.testSet.numberOfBlocks; b++) {
         std::vector<T> decompressed(fixture.testSet.elementsPerBlock);
 
         pernix_status st;
         if constexpr (std::is_same_v<T, float>) {
             st = pernix_decompress_block_f32(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getCompressedData()[b].data(),
-                fixture.testSet.getScales()[b], decompressed.data(), true);
+                                             fixture.testSet.getCompressedData()[b].data(),
+                                             fixture.testSet.getScales()[b], decompressed.data(), true);
         } else {
             st = pernix_decompress_block_f64(backend, FixtureT::BitWidth, FixtureT::BlockSize,
-                fixture.testSet.getCompressedData()[b].data(),
-                fixture.testSet.getScales()[b], decompressed.data(), true);
+                                             fixture.testSet.getCompressedData()[b].data(),
+                                             fixture.testSet.getScales()[b], decompressed.data(), true);
         }
         ASSERT_EQ(st, PERNIX_STATUS_OK);
 

@@ -135,53 +135,53 @@ case N: return Kernel<KernelBlocksF64Func>("fallback", &compress_blocks_fallback
             default: return {"fallback", nullptr}; \
         }
 
-Kernel<KernelBlockF32Func> select_fallback_compress_block_f32(const uint8_t bit_width, const uint32_t block_size) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(64);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(128);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(256);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(512);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(1024);
-        default:
-            return {"fallback", nullptr};
+    Kernel<KernelBlockF32Func> select_fallback_compress_block_f32(const u8 bit_width, const u32 block_size) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(64);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(128);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(256);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(512);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(1024);
+            default:
+                return {"fallback", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlocksF32Func> select_fallback_compress_blocks_f32(const uint8_t bit_width, const uint32_t block_size) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(64);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(128);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(256);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(512);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(1024);
-        default:
-            return {"fallback", nullptr};
+    Kernel<KernelBlocksF32Func> select_fallback_compress_blocks_f32(const u8 bit_width, const u32 block_size) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(64);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(128);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(256);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(512);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(1024);
+            default:
+                return {"fallback", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlockF64Func> select_fallback_compress_block_f64(const uint8_t bit_width, const uint32_t block_size) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(64);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(128);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(256);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(512);
-        PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(1024);
-        default:
-            return {"fallback", nullptr};
+    Kernel<KernelBlockF64Func> select_fallback_compress_block_f64(const u8 bit_width, const u32 block_size) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(64);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(128);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(256);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(512);
+            PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(1024);
+            default:
+                return {"fallback", nullptr};
+        }
     }
-}
 
-Kernel<KernelBlocksF64Func> select_fallback_compress_blocks_f64(const uint8_t bit_width, const uint32_t block_size) {
-    switch (block_size) {
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(64);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(128);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(256);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(512);
-        PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(1024);
-        default:
-            return {"fallback", nullptr};
+    Kernel<KernelBlocksF64Func> select_fallback_compress_blocks_f64(const u8 bit_width, const u32 block_size) {
+        switch (block_size) {
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(64);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(128);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(256);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(512);
+            PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(1024);
+            default:
+                return {"fallback", nullptr};
+        }
     }
-}
 
 #undef PERNIX_CASE_COMPRESS_BLOCK_32
 #undef PERNIX_CASE_COMPRESS_BLOCKS_32

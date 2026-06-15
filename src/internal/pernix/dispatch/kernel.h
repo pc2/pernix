@@ -1,14 +1,14 @@
 #ifndef PERNIX_KERNEL_H
 #define PERNIX_KERNEL_H
 
-#include <cstdint>
+#include <pernix/compat.h>
 #include <string_view>
 
 namespace pernix::internal {
-using KernelBlockF32Func  = int (*)(const void*, float, void*);
-using KernelBlocksF32Func = int (*)(const void*, float, void*, unsigned int);
-using KernelBlockF64Func  = int (*)(const void*, double, void*);
-using KernelBlocksF64Func = int (*)(const void*, double, void*, unsigned int);
+using KernelBlockF32Func  = i32 (*)(const void*, f32, void*);
+using KernelBlocksF32Func = i32 (*)(const void*, f32, void*, u32);
+using KernelBlockF64Func  = i32 (*)(const void*, f64, void*);
+using KernelBlocksF64Func = i32 (*)(const void*, f64, void*, u32);
 
 template <typename FuncType>
 struct Kernel {

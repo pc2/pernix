@@ -2,8 +2,6 @@
 #define PERNIX_H
 
 #include <pernix/compat.h>
-#include <cstdint>
-#include <span>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -27,29 +25,37 @@ typedef enum pernix_backend {
     PERNIX_BACKEND_ARM64_SVE = 6
 } pernix_backend;
 
-PERNIX_API pernix_status pernix_compress_block_f32(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
+PERNIX_API pernix_status pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                   const void* input,
                                                    float scale, void* output);
 
-PERNIX_API pernix_status pernix_compress_blocks_f32(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
-                                                    float scale, void* output, uint32_t blocks);
+PERNIX_API pernix_status pernix_compress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                    const void* input,
+                                                    float scale, void* output, u32 blocks);
 
-PERNIX_API pernix_status pernix_decompress_block_f32(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
+PERNIX_API pernix_status pernix_decompress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                     const void* input,
                                                      float scale, void* output, bool sign_values);
 
-PERNIX_API pernix_status pernix_decompress_blocks_f32(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
-                                                      float scale, void* output, uint32_t blocks, bool sign_values);
+PERNIX_API pernix_status pernix_decompress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                      const void* input,
+                                                      float scale, void* output, u32 blocks, bool sign_values);
 
-PERNIX_API pernix_status pernix_compress_block_f64(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
+PERNIX_API pernix_status pernix_compress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                   const void* input,
                                                    double scale, void* output);
 
-PERNIX_API pernix_status pernix_compress_blocks_f64(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
-                                                    double scale, void* output, uint32_t blocks);
+PERNIX_API pernix_status pernix_compress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                    const void* input,
+                                                    double scale, void* output, u32 blocks);
 
-PERNIX_API pernix_status pernix_decompress_block_f64(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
+PERNIX_API pernix_status pernix_decompress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                     const void* input,
                                                      double scale, void* output, bool sign_values);
 
-PERNIX_API pernix_status pernix_decompress_blocks_f64(pernix_backend backend, uint8_t bit_width, uint32_t block_size, const void* input,
-                                                      double scale, void* output, uint32_t blocks, bool sign_values);
+PERNIX_API pernix_status pernix_decompress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size,
+                                                      const void* input,
+                                                      double scale, void* output, u32 blocks, bool sign_values);
 
 #if defined(__cplusplus)
 }

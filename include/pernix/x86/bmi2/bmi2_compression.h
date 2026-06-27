@@ -2,7 +2,7 @@
 #define PERNIX_BMI2_COMPRESSION_H
 
 #include <pernix/x86/avx2/avx2_compression.h>
-#include <pernix/fallback/avx2_compression.h>
+#include <pernix/fallback/scalar_compression.h>
 #include <pernix/simd_compat.h>
 
 #include <cmath>

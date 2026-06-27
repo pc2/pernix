@@ -2,6 +2,7 @@ find_package(PkgConfig)
 pkg_search_module(GTEST REQUIRED gtest)
 
 file(GLOB PERNIX_TEST_SOURCE_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+list(FILTER PERNIX_TEST_SOURCE_FILES EXCLUDE REGEX ".*/header_only_tests\\.cpp$")
 
 set(PERNIX_TEST_BLOCK_SIZES 64 128 256 512 CACHE STRING "Block sizes to build as separate test executables")
 set(PERNIX_TEST_TARGETS)
@@ -17,6 +18,15 @@ foreach (BLOCK_SIZE IN LISTS PERNIX_TEST_BLOCK_SIZES)
     target_compile_options(${TEST_TARGET} PRIVATE ${GTEST_CFLAGS})
     target_compile_definitions(${TEST_TARGET} PRIVATE PERNIX_TEST_BLOCK_SIZE=${BLOCK_SIZE})
     target_include_directories(${TEST_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    set(HEADER_ONLY_TARGET pernix_header_only_tests_${BLOCK_SIZE})
+    list(APPEND PERNIX_TEST_TARGETS ${HEADER_ONLY_TARGET})
+    add_executable(${HEADER_ONLY_TARGET} header_only_tests.cpp main.cpp)
+    target_link_libraries(${HEADER_ONLY_TARGET} PRIVATE pernix_header_only ${GTEST_LDFLAGS})
+    target_compile_features(${HEADER_ONLY_TARGET} PRIVATE cxx_std_20)
+    target_compile_options(${HEADER_ONLY_TARGET} PRIVATE ${GTEST_CFLAGS})
+    target_compile_definitions(${HEADER_ONLY_TARGET} PRIVATE PERNIX_TEST_BLOCK_SIZE=${BLOCK_SIZE})
+    target_include_directories(${HEADER_ONLY_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endforeach ()
 
 add_custom_target(pernix_tests DEPENDS ${PERNIX_TEST_TARGETS})
@@ -28,6 +38,11 @@ foreach (BLOCK_SIZE IN LISTS PERNIX_TEST_BLOCK_SIZES)
             EXTRA_ARGS --gtest_color=yes
             NO_PRETTY_TYPES
             PROPERTIES LABELS "unit;block_size_${BLOCK_SIZE}"
+    )
+    gtest_discover_tests(pernix_header_only_tests_${BLOCK_SIZE}
+            DISCOVERY_MODE PRE_TEST
+            EXTRA_ARGS --gtest_color=yes
+            PROPERTIES LABELS "unit;header_only;block_size_${BLOCK_SIZE}"
     )
 endforeach ()
 

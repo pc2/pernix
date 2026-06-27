@@ -1,5 +1,5 @@
 #include <pernix/dispatch/select.h>
-#include <pernix/fallback/avx2_decompression.h>
+#include <pernix/fallback/scalar_decompression.h>
 
 namespace pernix::internal {
 #define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS) \

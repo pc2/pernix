@@ -2,7 +2,7 @@
 #define PERNIX_AVX2_DECOMPRESSION_H
 
 #include <pernix/x86/avx2/avx2_tables.h>
-#include <pernix/fallback/avx2_decompression.h>
+#include <pernix/fallback/scalar_decompression.h>
 #include <pernix/simd_compat.h>
 
 #include <cmath>

@@ -7,6 +7,16 @@
 #include <limits>
 #include <vector>
 
+#if defined(__linux__) && defined(__aarch64__)
+#include <sys/auxv.h>
+#ifndef HWCAP_SVE
+#define HWCAP_SVE (1 << 22)
+#endif
+#ifndef HWCAP2_SVE2
+#define HWCAP2_SVE2 (1 << 1)
+#endif
+#endif
+
 // ---------------------------------------------------------------------------
 // Fallback compress: verify byte-exact match against the reference
 // ---------------------------------------------------------------------------
@@ -313,4 +323,75 @@ TEST(ErrorCodeTest, NullPointerReturnsError) {
 
     st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, 8, 64, src, 1.0f, nullptr);
     EXPECT_EQ(st, PERNIX_STATUS_INVALID_ARGUMENT);
+}
+
+TEST(ErrorCodeTest, FallbackAliasMatchesScalar) {
+    EXPECT_EQ(PERNIX_BACKEND_FALLBACK, PERNIX_BACKEND_FALLBACK_SCALAR);
+}
+
+TEST(ErrorCodeTest, FallbackStdparReturnsUnsupportedImplementationByDefault) {
+    constexpr u32 BS = 64;
+    constexpr u8 BW = 8;
+
+    f32 src[(BS * 8U) / BW] = {};
+    u8 dst[BS] = {};
+
+    const auto st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, src, 1.0f, dst);
+    EXPECT_EQ(st, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
+}
+
+TEST(ErrorCodeTest, FallbackSimdReturnsUnsupportedImplementationByDefault) {
+    constexpr u32 BS = 64;
+    constexpr u8 BW = 8;
+
+    f32 src[(BS * 8U) / BW] = {};
+    u8 dst[BS] = {};
+
+    const auto st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_SIMD, BW, BS, src, 1.0f, dst);
+    EXPECT_EQ(st, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
+}
+
+TEST(ErrorCodeTest, UnsupportedImplementationReturnsError) {
+    constexpr u32 BS = 64;
+    constexpr u8 BW = 8;
+
+    f32 src[(BS * 8U) / BW] = {};
+    u8 dst[BS] = {};
+
+    pernix_backend backend = PERNIX_BACKEND_FALLBACK;
+    bool found = false;
+
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
+    if (!__builtin_cpu_supports("avx512vbmi")) {
+        backend = PERNIX_BACKEND_X86_AVX512_VBMI;
+        found = true;
+    } else if (!(__builtin_cpu_supports("avx2") && __builtin_cpu_supports("bmi2"))) {
+        backend = PERNIX_BACKEND_X86_BMI2;
+        found = true;
+    } else if (!__builtin_cpu_supports("avx2")) {
+        backend = PERNIX_BACKEND_X86_AVX2;
+        found = true;
+    }
+#elif defined(__aarch64__) || defined(_M_ARM64)
+    const bool neon = true;
+#if defined(__linux__) && defined(__aarch64__)
+    const bool sve2 = (getauxval(AT_HWCAP2) & HWCAP2_SVE2) != 0;
+#else
+    const bool sve2 = false;
+#endif
+    if (!sve2) {
+        backend = PERNIX_BACKEND_ARM64_SVE;
+        found = true;
+    } else if (!neon) {
+        backend = PERNIX_BACKEND_ARM64_NEON;
+        found = true;
+    }
+#endif
+
+    if (!found) {
+        GTEST_SKIP() << "No compiled explicit backend is unsupported on this machine";
+    }
+
+    const auto st = pernix_compress_block_f32(backend, BW, BS, src, 1.0f, dst);
+    EXPECT_EQ(st, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
 }

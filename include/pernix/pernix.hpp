@@ -1,78 +1,58 @@
 #ifndef PERNIX_HPP
 #define PERNIX_HPP
 
+#include <pernix/backend.hpp>
+#include <pernix/detail/api.hpp>
+
 #include <span>
-#include <pernix/pernix.h>
 
 namespace pernix {
-enum class Backend {
-    Auto = PERNIX_BACKEND_AUTO,
-    Fallback = PERNIX_BACKEND_FALLBACK,
-    X86Avx2 = PERNIX_BACKEND_X86_AVX2,
-    X86Bmi2 = PERNIX_BACKEND_X86_BMI2,
-    X86Avx512Vbmi = PERNIX_BACKEND_X86_AVX512_VBMI,
-    Arm64Neon = PERNIX_BACKEND_ARM64_NEON,
-    Arm64Sve = PERNIX_BACKEND_ARM64_SVE
-};
-
 __always_inline int compress_block(Backend backend, const u8 bit_width, const u32 block_size,
                                    const std::span<const float> input, const float scale, std::span<u8> output) {
-    return pernix_compress_block_f32(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                     scale, output.data());
+    return detail::compress_block(backend, bit_width, block_size, input.data(), scale, output.data());
 }
 
 __always_inline int compress_block(Backend backend, const u8 bit_width, const u32 block_size,
                                    const std::span<const double> input, const double scale, std::span<u8> output) {
-    return pernix_compress_block_f64(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                     scale, output.data());
+    return detail::compress_block(backend, bit_width, block_size, input.data(), scale, output.data());
 }
 
 __always_inline int decompress_block(Backend backend, const u8 bit_width, const u32 block_size,
                                      const std::span<const u8> input, const float scale, std::span<float> output,
                                      const bool sign_values = true) {
-    return pernix_decompress_block_f32(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                       scale, output.data(),
-                                       sign_values);
+    return detail::decompress_block(backend, bit_width, block_size, input.data(), scale, output.data(), sign_values);
 }
 
 __always_inline int decompress_block(Backend backend, const u8 bit_width, const u32 block_size,
                                      const std::span<const u8> input, const double scale, std::span<double> output,
                                      const bool sign_values = true) {
-    return pernix_decompress_block_f64(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                       scale, output.data(),
-                                       sign_values);
+    return detail::decompress_block(backend, bit_width, block_size, input.data(), scale, output.data(), sign_values);
 }
 
 __always_inline int compress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
                                     const std::span<const float> input, const float scale, std::span<u8> output,
                                     const u32 blocks) {
-    return pernix_compress_blocks_f32(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                      scale, output.data(),
-                                      blocks);
+    return detail::compress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks);
 }
 
 __always_inline int compress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
                                     const std::span<const double> input, const double scale, std::span<u8> output,
                                     const u32 blocks) {
-    return pernix_compress_blocks_f64(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                      scale, output.data(),
-                                      blocks);
+    return detail::compress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks);
 }
 
 __always_inline int decompress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
                                       const std::span<const u8> input, const float scale, std::span<float> output,
                                       const u32 blocks, const bool sign_values = true) {
-    return pernix_decompress_blocks_f32(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                        scale, output.data(),
-                                        blocks, sign_values);
+    return detail::decompress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks,
+                                     sign_values);
 }
 
 __always_inline int decompress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
                                       const std::span<const u8> input, const double scale, std::span<double> output,
                                       const u32 blocks, const bool sign_values = true) {
-    return pernix_decompress_blocks_f64(static_cast<pernix_backend>(backend), bit_width, block_size, input.data(),
-                                        scale, output.data(),
-                                        blocks, sign_values);
+    return detail::decompress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks,
+                                     sign_values);
 }
 
 // convenience overloads without backend (defaults to Auto)
@@ -161,6 +141,6 @@ __always_inline int decompress_blocks(const u8 bit_width, const std::span<const 
                                       const bool sign_values = true) {
     return decompress_blocks(Backend::Auto, bit_width, 64, input, scale, output, blocks, sign_values);
 }
-}
+} // namespace pernix
 
 #endif //PERNIX_HPP

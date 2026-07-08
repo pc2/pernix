@@ -81,9 +81,7 @@ The C ABI returns `pernix_status`:
 * `PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE`: unsupported block size
 * `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`: backend was requested but is not available for this build or CPU
 
-Use `pernix_status_string(status)` or `pernix::status_string(status)` for diagnostic text. The misspelled historical
-enumerator `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTAION` remains as a deprecated source-compatibility alias for
-`PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`.
+Use `pernix_status_string(status)` or `pernix::status_string(status)` for diagnostic text.
 
 ## f32 and f64 APIs
 

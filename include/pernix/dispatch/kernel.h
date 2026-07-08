@@ -19,7 +19,7 @@ struct Kernel {
         return func != nullptr;
     }
 
-    Kernel(const std::string_view name, FuncType func) : name(name), func(func) {
+    Kernel(const std::string_view kernel_name, FuncType kernel_func) : name(kernel_name), func(kernel_func) {
     }
 };
 }

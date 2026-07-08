@@ -475,6 +475,56 @@ TEST(FallbackEdgeTest, SignValuesFalseTreatsPackedValuesAsUnsigned) {
     EXPECT_EQ(unsigned_output[0], 15.0f);
 }
 
+TEST(FallbackEdgeTest, FixedBlockInvariantAndMixedSignMultiBlockRoundTrip) {
+    constexpr u32 BS = 64;
+    constexpr u32 BW = 12;
+    constexpr u32 blocks = 3;
+    constexpr u32 EPB = (BS * 8) / BW;
+    constexpr u32 total = EPB * blocks;
+
+    static_assert(BS == 64);
+    static_assert(EPB == 42);
+    EXPECT_EQ(pernix_compressed_block_size(), BS);
+    EXPECT_EQ(pernix_elements_per_block(BW), EPB);
+
+    std::array<f32, total> input_f32{};
+    std::array<f64, total> input_f64{};
+    for (u32 i = 0; i < total; ++i) {
+        const auto centered = static_cast<i32>(i % 31U) - 15;
+        input_f32[i] = static_cast<f32>(centered) * 0.25f;
+        input_f64[i] = static_cast<f64>(centered) * 0.25;
+    }
+
+    std::array<u8, BS * blocks> compressed_f32{};
+    std::array<u8, BS * blocks> compressed_f64{};
+    std::array<f32, total> restored_f32{};
+    std::array<f64, total> restored_f64{};
+
+    auto status = pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input_f32.data(), 4.0f,
+                                             compressed_f32.data(), blocks);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+    status = pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK, BW, BS, compressed_f32.data(), 0.25f,
+                                          restored_f32.data(), blocks, true);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+
+    status = pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK, BW, BS, input_f64.data(), 4.0,
+                                        compressed_f64.data(), blocks);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+    status = pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK, BW, BS, compressed_f64.data(), 0.25,
+                                          restored_f64.data(), blocks, true);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+
+    for (u32 i = 0; i < total; ++i) {
+        EXPECT_FLOAT_EQ(restored_f32[i], input_f32[i]) << "f32 element " << i;
+        EXPECT_DOUBLE_EQ(restored_f64[i], input_f64[i]) << "f64 element " << i;
+    }
+
+    std::array<f32, (BS * 8) / 4> unsigned_output{};
+    status = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, compressed_f32.data(), 1.0f,
+                                         unsigned_output.data(), false);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+}
+
 TEST(FallbackEdgeTest, CApiRejectsInvalidScale) {
     constexpr u32 BS = 64;
     constexpr u32 BW = 8;

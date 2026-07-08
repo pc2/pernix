@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <span>
 #include <type_traits>
 #include <vector>
 
@@ -54,7 +55,7 @@ __always_inline i32 clamp_signed_quantized(const i64 value) {
 
 template <typename T, u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
-void pack_epi32_fallback_inner(const std::vector<u32>& input, const u8 bit_offset,
+void pack_epi32_fallback_inner(const std::span<const u32> input, const u8 bit_offset,
                                u8* __restrict__ destination) {
     constexpr u32 bits_in_type = sizeof(T) * 8;
     constexpr u32 bitmask      = BIT_WIDTH == bits_in_type
@@ -86,13 +87,67 @@ void pack_epi32_fallback_inner(const std::vector<u32>& input, const u8 bit_offse
 
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-void pack_epi32_fallback(const std::vector<u32>& input, u8* __restrict__ destination) {
+void pack_epi32_fallback(const std::span<const u32> input, u8* __restrict__ destination) {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
         return internal::pack_epi32_fallback_inner<u8, BIT_WIDTH>(input, 0, destination);
     } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 16) {
         return internal::pack_epi32_fallback_inner<u16, BIT_WIDTH>(input, 0, destination);
     } else {
         return internal::pack_epi32_fallback_inner<u32, BIT_WIDTH>(input, 0, destination);
+    }
+}
+
+template <u8 BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+void pack_epi32_fallback(const std::vector<u32>& input, u8* __restrict__ destination) {
+    return pack_epi32_fallback<BIT_WIDTH>(std::span<const u32>(input.data(), input.size()), destination);
+}
+
+template <typename T, u8 BIT_WIDTH, typename FloatT>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T> &&
+             std::is_floating_point_v<FloatT>)
+void quantize_and_pack_fallback_inner(const FloatT* __restrict__ input, const FloatT scale,
+                                      const u32 elements, const u8 bit_offset,
+                                      u8* __restrict__ destination) {
+    constexpr u32 bits_in_type = sizeof(T) * 8;
+    constexpr u32 bitmask      = BIT_WIDTH == bits_in_type
+                                ? std::numeric_limits<T>::max()
+                                : (1U << BIT_WIDTH) - 1U;
+
+    std::size_t idx            = 0;
+    std::size_t bits_in_buffer = bit_offset;
+    u64 buffer                 = bit_offset ? static_cast<u64>(destination[0] & ((1U << bit_offset) - 1U)) : 0;
+
+#pragma GCC unroll 64
+    for (u32 i = 0; i < elements; i++) {
+        const i32 quantized  = quantize_clamped<BIT_WIDTH>(input[i], scale);
+        const u32 next_value = static_cast<u32>(quantized) & bitmask;
+
+        buffer         |= static_cast<u64>(next_value) << bits_in_buffer;
+        bits_in_buffer += BIT_WIDTH;
+
+        while (bits_in_buffer >= 8) {
+            destination[idx++] = static_cast<u8>(buffer & 0xFFU);
+            buffer             >>= 8;
+            bits_in_buffer     -= 8;
+        }
+    }
+
+    if (bits_in_buffer > 0) {
+        destination[idx] = static_cast<u8>(buffer & 0xFFU);
+    }
+}
+
+template <u8 BIT_WIDTH, typename FloatT>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<FloatT>)
+void quantize_and_pack_fallback(const FloatT* __restrict__ input, const FloatT scale,
+                                const u32 elements, u8* __restrict__ destination) {
+    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
+        return quantize_and_pack_fallback_inner<u8, BIT_WIDTH>(input, scale, elements, 0, destination);
+    } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 16) {
+        return quantize_and_pack_fallback_inner<u16, BIT_WIDTH>(input, scale, elements, 0, destination);
+    } else {
+        return quantize_and_pack_fallback_inner<u32, BIT_WIDTH>(input, scale, elements, 0, destination);
     }
 }
 }
@@ -108,14 +163,7 @@ int compress_block_fallback(const void* __restrict__ input_ptr, const f32 scale,
 
     std::memset(output, 0, BLOCK_SIZE);
 
-    std::vector<u32> block_values(elements_per_block);
-#pragma GCC unroll 64
-    for (u32 i = 0; i < elements_per_block; i++) {
-        const i32 quantized = internal::quantize_clamped<BIT_WIDTH>(input[i], scale);
-        block_values[i]     = static_cast<u32>(quantized);
-    }
-
-    internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+    internal::quantize_and_pack_fallback<BIT_WIDTH>(input, scale, elements_per_block, output);
     return 0;
 }
 
@@ -130,14 +178,7 @@ int compress_block_fallback(const void* __restrict__ input_ptr, const f64 scale,
 
     std::memset(output, 0, BLOCK_SIZE);
 
-    std::vector<u32> block_values(elements_per_block);
-#pragma GCC unroll 32
-    for (u32 i = 0; i < elements_per_block; i++) {
-        const i32 quantized = internal::quantize_clamped<BIT_WIDTH>(input[i], scale);
-        block_values[i]     = static_cast<u32>(quantized);
-    }
-
-    internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+    internal::quantize_and_pack_fallback<BIT_WIDTH>(input, scale, elements_per_block, output);
     return 0;
 }
 

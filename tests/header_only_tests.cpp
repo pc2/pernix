@@ -81,12 +81,11 @@ TEST(HeaderOnlyPernix, ScaleHelpersNameCompressionAndDecompressionConventions) {
     EXPECT_EQ(pernix::compression_scale_from_bmax(1.0f, 0, compression_scale), PERNIX_STATUS_INVALID_ARGUMENT);
 }
 
-TEST(HeaderOnlyPernix, StatusAliasAndStringsArePublic) {
+TEST(HeaderOnlyPernix, StatusStringsArePublic) {
     pernix::Status status = PERNIX_STATUS_OK;
     EXPECT_EQ(status, PERNIX_STATUS_OK);
     EXPECT_STREQ(pernix::status_string(status), "PERNIX_STATUS_OK");
-    EXPECT_EQ(PERNIX_STATUS_UNSUPPORTED_IMPLEMENTAION, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
-    EXPECT_STREQ(pernix::status_string(PERNIX_STATUS_UNSUPPORTED_IMPLEMENTAION),
+    EXPECT_STREQ(pernix::status_string(PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION),
                  "PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION");
     EXPECT_STREQ(pernix::status_string(static_cast<pernix_status>(123)), "PERNIX_STATUS_UNKNOWN");
 }

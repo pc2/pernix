@@ -136,10 +136,10 @@ __always_inline static __m256i mm256_blend_epi8(const __m256i X, const __m256i Y
 * @brief Emulate per-byte left shifts on 128-bit vectors.
 */
 __always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi16(0xff00);
+    const __m128i mask      = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i low_half  = _mm_sllv_epi16(a, _mm_andnot_si128(mask, count));
     const __m128i high_half = _mm_sllv_epi16(_mm_and_si128(mask, a), _mm_srli_epi16(count, 8));
-    return mm_blend_epi8(low_half, high_half, 0xaa);
+    return mm_blend_epi8(low_half, high_half, static_cast<i8>(0xaau));
 }
 
 /**
@@ -149,17 +149,17 @@ __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i coun
     const __m128i mask      = _mm_set1_epi16(0x00ff);
     const __m128i low_half  = _mm_srlv_epi16(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
     const __m128i high_half = _mm_srlv_epi16(a, _mm_srli_epi16(count, 8));
-    return mm_blend_epi8(low_half, high_half, 0xaa);
+    return mm_blend_epi8(low_half, high_half, static_cast<i8>(0xaau));
 }
 
 /**
 * @brief Emulate per-byte left shifts on 256-bit vectors.
 */
 __always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi16(0xff00);
+    const __m256i mask      = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m256i low_half  = _mm256_sllv_epi16(a, _mm256_andnot_si256(mask, count));
     const __m256i high_half = _mm256_sllv_epi16(_mm256_and_si256(mask, a), _mm256_srli_epi16(count, 8));
-    return mm256_blend_epi8(low_half, high_half, 0xaa);
+    return mm256_blend_epi8(low_half, high_half, static_cast<i8>(0xaau));
 }
 
 /**
@@ -169,7 +169,7 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
     const __m256i mask      = _mm256_set1_epi16(0x00ff);
     const __m256i low_half  = _mm256_srlv_epi16(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
     const __m256i high_half = _mm256_srlv_epi16(a, _mm256_srli_epi16(count, 8));
-    return mm256_blend_epi8(low_half, high_half, 0xaa);
+    return mm256_blend_epi8(low_half, high_half, static_cast<i8>(0xaau));
 }
 #endif
 
@@ -310,7 +310,7 @@ __always_inline auto mm256_pack_epi32_avx2_5to7(const __m256i& input) -> __m256i
     const __m256i packed8  = _mm256_packus_epi16(permuted, zero);
 
     const __m256i even = _mm256_and_si256(packed8, _mm256_set1_epi16(0x00FF));
-    const __m256i odd  = _mm256_and_si256(packed8, _mm256_set1_epi16(0xFF00));
+    const __m256i odd  = _mm256_and_si256(packed8, _mm256_set1_epi16(static_cast<i16>(0xFF00u)));
 
     const __m256i pair16   = _mm256_or_si256(even, _mm256_srli_epi16(odd, 8 - BIT_WIDTH));
     const __m256i extended = _mm256_cvtepi16_epi32(_mm256_castsi256_si128(pair16));

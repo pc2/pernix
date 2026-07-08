@@ -79,6 +79,56 @@ __always_inline auto unpack_epi32_fallback(const u8* __restrict__ input,
         return unpack_epi32_fallback_inner<u32, BIT_WIDTH, SIGN_VALUES>(input, 0, elements);
     }
 }
+
+template <typename T, u8 BIT_WIDTH, bool SIGN_VALUES = true, typename ScaleType>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T> &&
+             std::is_floating_point_v<ScaleType>)
+__always_inline void unpack_and_dequantize_fallback_inner(const u8* __restrict__ input, const u8 bit_offset,
+                                                         const u32 elements, const ScaleType scale,
+                                                         ScaleType* __restrict__ output) {
+    constexpr u32 bits_in_type = sizeof(T) * 8;
+    constexpr u32 bitmask      = BIT_WIDTH == bits_in_type
+                                ? std::numeric_limits<T>::max()
+                                : (1U << BIT_WIDTH) - 1U;
+
+    std::size_t idx   = 0;
+    u8 bits_in_buffer = 8 - bit_offset;
+    u64 buffer        = static_cast<u64>(input[idx++]) >> bit_offset;
+
+#pragma GCC unroll 64
+    for (u32 i = 0; i < elements; i++) {
+        while (BIT_WIDTH > bits_in_buffer) {
+            const auto next_value = static_cast<u64>(input[idx++]) << bits_in_buffer;
+            buffer                |= next_value;
+            bits_in_buffer        += 8;
+        }
+
+        const u32 raw_value = static_cast<u32>(buffer & bitmask);
+        i32 unpacked        = 0;
+        if constexpr (SIGN_VALUES) {
+            unpacked = sign_extend<BIT_WIDTH>(raw_value);
+        } else {
+            unpacked = static_cast<i32>(raw_value);
+        }
+        output[i] = static_cast<ScaleType>(unpacked) * scale;
+
+        buffer         >>= BIT_WIDTH;
+        bits_in_buffer -= BIT_WIDTH;
+    }
+}
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true, typename ScaleType>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<ScaleType>)
+__always_inline void unpack_and_dequantize_fallback(const u8* __restrict__ input, const u32 elements,
+                                                   const ScaleType scale, ScaleType* __restrict__ output) {
+    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
+        return unpack_and_dequantize_fallback_inner<u8, BIT_WIDTH, SIGN_VALUES>(input, 0, elements, scale, output);
+    } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 16) {
+        return unpack_and_dequantize_fallback_inner<u16, BIT_WIDTH, SIGN_VALUES>(input, 0, elements, scale, output);
+    } else {
+        return unpack_and_dequantize_fallback_inner<u32, BIT_WIDTH, SIGN_VALUES>(input, 0, elements, scale, output);
+    }
+}
 }
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE>
@@ -90,14 +140,7 @@ int decompress_block_fallback(const void* __restrict__ input_ptr, const f32 scal
 
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
-    const std::vector<i32> block_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(
-        input, elements_per_block);
-
-#pragma GCC unroll 512
-    for (u32 i = 0; i < elements_per_block; i++) {
-        output[i] = internal::dequantize_epi32(block_values[i], scale);
-    }
-
+    internal::unpack_and_dequantize_fallback<BIT_WIDTH, SIGN_VALUES>(input, elements_per_block, scale, output);
     return 0;
 }
 
@@ -110,14 +153,7 @@ int decompress_block_fallback(const void* __restrict__ input_ptr, const f64 scal
 
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
-    const std::vector<i32> block_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(
-        input, elements_per_block);
-
-#pragma GCC unroll 512
-    for (u32 i = 0; i < elements_per_block; i++) {
-        output[i] = internal::dequantize_epi64(block_values[i], scale);
-    }
-
+    internal::unpack_and_dequantize_fallback<BIT_WIDTH, SIGN_VALUES>(input, elements_per_block, scale, output);
     return 0;
 }
 

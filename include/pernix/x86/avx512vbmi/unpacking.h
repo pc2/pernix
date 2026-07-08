@@ -17,7 +17,7 @@ __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i coun
 }
 
 __always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi16(0xff00);
+    const __m128i mask      = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i low_half  = _mm_sllv_epi16(a, _mm_andnot_si128(mask, count));
     const __m128i high_half = _mm_sllv_epi16(_mm_and_si128(mask, a), _mm_srli_epi16(count, 8));
     return _mm_mask_blend_epi8(kAlternateByteMask16, low_half, high_half);
@@ -29,7 +29,7 @@ __always_inline static __m128i _mm_slli_epi8(const __m128i a, const i8 imm8) {
 
 __always_inline static __m128i _mm_srli_epi8(const __m128i a, const int imm8) {
     const __m128i lo_mask = _mm_set1_epi16(0x00ff);
-    const __m128i hi_mask = _mm_set1_epi16(0xff00);
+    const __m128i hi_mask = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m128i lo = _mm_srl_epi16(_mm_and_si128(a, lo_mask), shift);
@@ -40,7 +40,7 @@ __always_inline static __m128i _mm_srli_epi8(const __m128i a, const int imm8) {
 
 __always_inline static __m128i _mm_srai_epi8(const __m128i a, const i8 imm8) {
     const __m128i lo_mask = _mm_set1_epi16(0x00ff);
-    const __m128i hi_mask = _mm_set1_epi16(0xff00);
+    const __m128i hi_mask = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m128i hi = _mm_and_si128(_mm_sra_epi16(a, shift), hi_mask);
@@ -187,7 +187,7 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
 }
 
 __always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi16(0xff00);
+    const __m256i mask      = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m256i low_half  = _mm256_sllv_epi16(a, _mm256_andnot_si256(mask, count));
     const __m256i high_half = _mm256_sllv_epi16(_mm256_and_si256(mask, a), _mm256_srli_epi16(count, 8));
     return _mm256_mask_blend_epi8(kAlternateByteMask32, low_half, high_half);
@@ -199,7 +199,7 @@ __always_inline static __m256i _mm256_slli_epi8(const __m256i a, const i8 imm8) 
 
 __always_inline static __m256i _mm256_srli_epi8(const __m256i a, const i8 imm8) {
     const __m256i lo_mask = _mm256_set1_epi16(0x00ff);
-    const __m256i hi_mask = _mm256_set1_epi16(0xff00);
+    const __m256i hi_mask = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m256i lo = _mm256_srl_epi16(_mm256_and_si256(a, lo_mask), shift);
@@ -210,7 +210,7 @@ __always_inline static __m256i _mm256_srli_epi8(const __m256i a, const i8 imm8) 
 
 __always_inline static __m256i _mm256_srai_epi8(const __m256i a, const i8 imm8) {
     const __m256i lo_mask = _mm256_set1_epi16(0x00ff);
-    const __m256i hi_mask = _mm256_set1_epi16(0xff00);
+    const __m256i hi_mask = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m256i hi = _mm256_and_si256(_mm256_sra_epi16(a, shift), hi_mask);
@@ -357,7 +357,7 @@ __always_inline static __m512i _mm512_srlv_epi8(const __m512i a, const __m512i c
 }
 
 __always_inline static __m512i _mm512_sllv_epi8(const __m512i a, const __m512i count) {
-    const __m512i mask      = _mm512_set1_epi16(0xff00);
+    const __m512i mask      = _mm512_set1_epi16(static_cast<i16>(0xff00u));
     const __m512i low_half  = _mm512_sllv_epi16(a, _mm512_andnot_si512(mask, count));
     const __m512i high_half = _mm512_sllv_epi16(_mm512_and_si512(mask, a), _mm512_srli_epi16(count, 8));
     return _mm512_mask_blend_epi8(kAlternateByteMask64, low_half, high_half);
@@ -369,7 +369,7 @@ __always_inline static __m512i _mm512_slli_epi8(const __m512i a, const i8 imm8) 
 
 __always_inline static __m512i _mm512_srli_epi8(const __m512i a, const i8 imm8) {
     const __m512i lo_mask = _mm512_set1_epi16(0x00ff);
-    const __m512i hi_mask = _mm512_set1_epi16(0xff00);
+    const __m512i hi_mask = _mm512_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m512i lo = _mm512_srl_epi16(_mm512_and_si512(a, lo_mask), shift);
@@ -380,7 +380,7 @@ __always_inline static __m512i _mm512_srli_epi8(const __m512i a, const i8 imm8) 
 
 __always_inline static __m512i _mm512_srai_epi8(const __m512i a, const i8 imm8) {
     const __m512i lo_mask = _mm512_set1_epi16(0x00ff);
-    const __m512i hi_mask = _mm512_set1_epi16(0xff00);
+    const __m512i hi_mask = _mm512_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m512i hi = _mm512_and_si512(_mm512_sra_epi16(a, shift), hi_mask);

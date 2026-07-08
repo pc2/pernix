@@ -749,7 +749,7 @@ struct unpack_tables_avx2 {
         std::array<i32, 8> shifts{};
 
         for (std::size_t lane = 0; lane < 8; ++lane) {
-            const int bit_offset  = lane * BIT_WIDTH;
+            const int bit_offset  = static_cast<int>(lane * BIT_WIDTH);
             const int bit_in_byte = bit_offset % 8;
             const int left_shift  = 32 - BIT_WIDTH - bit_in_byte;
             shifts[lane]          = left_shift;

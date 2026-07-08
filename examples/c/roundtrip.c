@@ -1,0 +1,38 @@
+#include <pernix/pernix.h>
+
+int main(void) {
+    enum { bit_width = 16, block_size = 64, elements = (block_size * 8) / bit_width };
+    float input[elements];
+    float restored[elements];
+    u8 compressed[block_size];
+    float bmax = 0.0f;
+
+    for (int i = 0; i < elements; ++i) {
+        input[i] = ((float)i - 16.0f) * 0.125f;
+        const float magnitude = input[i] < 0.0f ? -input[i] : input[i];
+        bmax = bmax < magnitude ? magnitude : bmax;
+    }
+
+    float scale = 0.0f;
+    if (pernix_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK) {
+        return 1;
+    }
+
+    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, 1.0f / scale,
+                                  compressed) != PERNIX_STATUS_OK) {
+        return 1;
+    }
+    if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, scale, restored,
+                                    true) != PERNIX_STATUS_OK) {
+        return 2;
+    }
+
+    for (int i = 0; i < elements; ++i) {
+        const float diff = restored[i] - input[i];
+        const float error = diff < 0.0f ? -diff : diff;
+        if (error > scale) {
+            return 3;
+        }
+    }
+    return 0;
+}

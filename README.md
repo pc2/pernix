@@ -32,9 +32,16 @@ Decompression expects the forward scale, because decompression computes:
 output = quantized * scale
 ```
 
-In practice, compute `scale` from `bmax`, pass `1 / scale` to `compress_block`, and pass `scale` to
-`decompress_block`. The helper functions `pernix_scale_f32`, `pernix_scale_f64`, and
-`pernix::scale_from_bmax` compute this scale and return a small positive scale for `bmax == 0`.
+In practice, compute the decompression scale from `bmax`, pass its inverse to `compress_block`, and pass the forward
+scale to `decompress_block`. The clearer helper names are:
+
+* `pernix_decompression_scale_f32` / `pernix_decompression_scale_f64`
+* `pernix_compression_scale_f32` / `pernix_compression_scale_f64`
+* `pernix_inverse_scale_f32` / `pernix_inverse_scale_f64`
+* `pernix::decompression_scale_from_bmax`, `pernix::compression_scale_from_bmax`, and `pernix::inverse_scale`
+
+The older `pernix_scale_f32`, `pernix_scale_f64`, and `pernix::scale_from_bmax` names are kept as compatibility aliases
+for the forward decompression scale. Scale-from-`bmax` helpers return a small positive scale for `bmax == 0`.
 
 Scale arguments passed to compression and decompression must be finite and greater than zero. Passing zero, negative,
 NaN, or infinity returns `PERNIX_STATUS_INVALID_ARGUMENT`.
@@ -56,6 +63,9 @@ The public helper APIs expose the fixed-format constants:
 * `pernix_compressed_block_size()` / `pernix::compressed_block_size()` return `64`
 * `pernix_elements_per_block(bit_width)` / `pernix::elements_per_block(bit_width)` return `(64 * 8) / bit_width`, or
   `0` for an invalid bit width
+* `pernix_is_valid_bit_width(bit_width)` / `pernix::is_valid_bit_width(bit_width)` validate the public `1..24` range
+* `pernix_is_valid_block_size(block_size)` / `pernix::is_valid_block_size(block_size)` validate the currently accepted
+  block sizes
 
 Input values should be finite for portable behavior. The scalar fallback clamps non-finite or out-of-range values before
 narrowing, but that behavior is not a cross-backend contract.
@@ -71,11 +81,20 @@ The C ABI returns `pernix_status`:
 * `PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE`: unsupported block size
 * `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`: backend was requested but is not available for this build or CPU
 
+Use `pernix_status_string(status)` or `pernix::status_string(status)` for diagnostic text. The misspelled historical
+enumerator `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTAION` remains as a deprecated source-compatibility alias for
+`PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`.
+
 ## f32 and f64 APIs
 
 Use the `_f32` functions for `float` input/output and `_f64` functions for `double` input/output. Both variants pack to
 the same integer bit stream for the selected bit width. The scale type matches the floating-point type:
 `float` for `_f32`, `double` for `_f64`.
+
+The C++ wrapper overloads return `pernix::Status`, an alias for the C ABI `pernix_status`. `std::span` arguments are
+borrowed only for the duration of the call. For one 64-byte block, compression reads at least
+`pernix::elements_per_block(bit_width)` input values and writes `pernix::compressed_block_size()` bytes. Multi-block
+calls multiply those counts by `blocks`.
 
 ## Compiling
 
@@ -121,14 +140,16 @@ int main() {
         bmax = std::max(bmax, std::abs(value));
     }
     float scale = 0.0f;
-    if (pernix::scale_from_bmax(bmax, bit_width, scale) != PERNIX_STATUS_OK) {
+    float inverse_scale = 0.0f;
+    if (pernix::decompression_scale_from_bmax(bmax, bit_width, scale) != PERNIX_STATUS_OK ||
+        pernix::inverse_scale(scale, inverse_scale) != PERNIX_STATUS_OK) {
         return 1;
     }
 
     std::array<u8, block_size> compressed{};
     std::array<float, elements> restored{};
 
-    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, 1.0f / scale,
+    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, inverse_scale,
                                compressed) != PERNIX_STATUS_OK) {
         return 1;
     }
@@ -159,11 +180,13 @@ int main(void) {
     }
 
     float scale = 0.0f;
-    if (pernix_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK) {
+    float inverse_scale = 0.0f;
+    if (pernix_decompression_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK ||
+        pernix_inverse_scale_f32(scale, &inverse_scale) != PERNIX_STATUS_OK) {
         return 1;
     }
 
-    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, 1.0f / scale,
+    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, inverse_scale,
                                   compressed) != PERNIX_STATUS_OK) {
         return 1;
     }

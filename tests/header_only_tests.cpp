@@ -65,6 +65,32 @@ TEST(HeaderOnlyPernix, PublicHelpersDescribeFixedBlockFormat) {
     EXPECT_GT(scale_f64, 0.0);
 }
 
+TEST(HeaderOnlyPernix, ScaleHelpersNameCompressionAndDecompressionConventions) {
+    float decompression_scale = 0.0f;
+    float compression_scale = 0.0f;
+    float inverse_scale = 0.0f;
+
+    EXPECT_EQ(pernix::decompression_scale_from_bmax(127.0f, 8, decompression_scale), PERNIX_STATUS_OK);
+    EXPECT_FLOAT_EQ(decompression_scale, 1.0f);
+    EXPECT_EQ(pernix::compression_scale_from_bmax(127.0f, 8, compression_scale), PERNIX_STATUS_OK);
+    EXPECT_FLOAT_EQ(compression_scale, 1.0f);
+    EXPECT_EQ(pernix::inverse_scale(decompression_scale, inverse_scale), PERNIX_STATUS_OK);
+    EXPECT_FLOAT_EQ(inverse_scale, compression_scale);
+
+    EXPECT_EQ(pernix::inverse_scale(0.0f, inverse_scale), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix::compression_scale_from_bmax(1.0f, 0, compression_scale), PERNIX_STATUS_INVALID_ARGUMENT);
+}
+
+TEST(HeaderOnlyPernix, StatusAliasAndStringsArePublic) {
+    pernix::Status status = PERNIX_STATUS_OK;
+    EXPECT_EQ(status, PERNIX_STATUS_OK);
+    EXPECT_STREQ(pernix::status_string(status), "PERNIX_STATUS_OK");
+    EXPECT_EQ(PERNIX_STATUS_UNSUPPORTED_IMPLEMENTAION, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
+    EXPECT_STREQ(pernix::status_string(PERNIX_STATUS_UNSUPPORTED_IMPLEMENTAION),
+                 "PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION");
+    EXPECT_STREQ(pernix::status_string(static_cast<pernix_status>(123)), "PERNIX_STATUS_UNKNOWN");
+}
+
 TEST(HeaderOnlyPernix, RejectsUndersizedCompressInputSpan) {
     std::vector<float> input(kBlockElements - 1U, 0.0f);
     std::vector<u8> output(kBlockSize);

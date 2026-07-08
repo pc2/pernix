@@ -18,7 +18,6 @@ typedef enum pernix_status {
     PERNIX_STATUS_UNSUPPORTED_BACKEND = -3,
     PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE = -4,
     PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION = -5,
-    PERNIX_STATUS_UNSUPPORTED_IMPLEMENTAION = PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION
 } pernix_status;
 
 typedef enum pernix_backend {
@@ -46,17 +45,39 @@ PERNIX_API u32 pernix_compressed_block_size(void);
 
 PERNIX_API u32 pernix_elements_per_block(u8 bit_width);
 
+PERNIX_API const char* pernix_status_string(pernix_status status);
+
+/* Computes the forward decompression scale from bmax and bit width. */
 PERNIX_API pernix_status pernix_scale_f32(float bmax, u8 bit_width, float* scale);
 
+/* Computes the forward decompression scale from bmax and bit width. */
 PERNIX_API pernix_status pernix_scale_f64(double bmax, u8 bit_width, double* scale);
+
+/* Clearer alias for pernix_scale_f32. */
+PERNIX_API pernix_status pernix_decompression_scale_f32(float bmax, u8 bit_width, float* scale);
+
+/* Clearer alias for pernix_scale_f64. */
+PERNIX_API pernix_status pernix_decompression_scale_f64(double bmax, u8 bit_width, double* scale);
+
+/* Computes 1 / scale for the compression API from a valid forward scale. */
+PERNIX_API pernix_status pernix_inverse_scale_f32(float scale, float* inverse_scale);
+
+/* Computes 1 / scale for the compression API from a valid forward scale. */
+PERNIX_API pernix_status pernix_inverse_scale_f64(double scale, double* inverse_scale);
+
+/* Computes the inverse compression scale directly from bmax and bit width. */
+PERNIX_API pernix_status pernix_compression_scale_f32(float bmax, u8 bit_width, float* inverse_scale);
+
+/* Computes the inverse compression scale directly from bmax and bit width. */
+PERNIX_API pernix_status pernix_compression_scale_f64(double bmax, u8 bit_width, double* inverse_scale);
 
 PERNIX_API pernix_status pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size,
                                                    const void* input,
-                                                   float scale, void* output);
+                                                   float inverse_scale, void* output);
 
 PERNIX_API pernix_status pernix_compress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size,
                                                     const void* input,
-                                                    float scale, void* output, u32 blocks);
+                                                    float inverse_scale, void* output, u32 blocks);
 
 PERNIX_API pernix_status pernix_decompress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size,
                                                      const void* input,
@@ -68,11 +89,11 @@ PERNIX_API pernix_status pernix_decompress_blocks_f32(pernix_backend backend, u8
 
 PERNIX_API pernix_status pernix_compress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size,
                                                    const void* input,
-                                                   double scale, void* output);
+                                                   double inverse_scale, void* output);
 
 PERNIX_API pernix_status pernix_compress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size,
                                                     const void* input,
-                                                    double scale, void* output, u32 blocks);
+                                                    double inverse_scale, void* output, u32 blocks);
 
 PERNIX_API pernix_status pernix_decompress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size,
                                                      const void* input,

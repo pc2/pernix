@@ -20,14 +20,16 @@ int main() {
         bmax = std::max(bmax, std::abs(value));
     }
     float scale = 0.0f;
-    if (pernix::scale_from_bmax(bmax, bit_width, scale) != PERNIX_STATUS_OK) {
+    float inverse_scale = 0.0f;
+    if (pernix::decompression_scale_from_bmax(bmax, bit_width, scale) != PERNIX_STATUS_OK ||
+        pernix::inverse_scale(scale, inverse_scale) != PERNIX_STATUS_OK) {
         return 1;
     }
 
     std::array<u8, block_size> compressed{};
     std::array<float, elements> restored{};
 
-    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, 1.0f / scale, compressed) !=
+    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, inverse_scale, compressed) !=
         PERNIX_STATUS_OK) {
         return 1;
     }

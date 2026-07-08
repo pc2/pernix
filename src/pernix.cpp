@@ -25,12 +25,40 @@ u32 pernix_elements_per_block(u8 bit_width) {
     return pernix::detail::elements_per_block(bit_width);
 }
 
+const char *pernix_status_string(pernix_status status) {
+    return pernix::detail::status_string(status);
+}
+
 pernix_status pernix_scale_f32(float bmax, u8 bit_width, float *scale) {
     return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
 }
 
 pernix_status pernix_scale_f64(double bmax, u8 bit_width, double *scale) {
     return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
+}
+
+pernix_status pernix_decompression_scale_f32(float bmax, u8 bit_width, float *scale) {
+    return pernix_scale_f32(bmax, bit_width, scale);
+}
+
+pernix_status pernix_decompression_scale_f64(double bmax, u8 bit_width, double *scale) {
+    return pernix_scale_f64(bmax, bit_width, scale);
+}
+
+pernix_status pernix_inverse_scale_f32(float scale, float *inverse_scale) {
+    return pernix::detail::inverse_scale(scale, inverse_scale);
+}
+
+pernix_status pernix_inverse_scale_f64(double scale, double *inverse_scale) {
+    return pernix::detail::inverse_scale(scale, inverse_scale);
+}
+
+pernix_status pernix_compression_scale_f32(float bmax, u8 bit_width, float *inverse_scale) {
+    return pernix::detail::compression_scale_from_bmax(bmax, bit_width, inverse_scale);
+}
+
+pernix_status pernix_compression_scale_f64(double bmax, u8 bit_width, double *inverse_scale) {
+    return pernix::detail::compression_scale_from_bmax(bmax, bit_width, inverse_scale);
 }
 
 pernix_status pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void *input,

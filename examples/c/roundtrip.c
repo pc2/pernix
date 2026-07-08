@@ -14,11 +14,13 @@ int main(void) {
     }
 
     float scale = 0.0f;
-    if (pernix_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK) {
+    float inverse_scale = 0.0f;
+    if (pernix_decompression_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK ||
+        pernix_inverse_scale_f32(scale, &inverse_scale) != PERNIX_STATUS_OK) {
         return 1;
     }
 
-    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, 1.0f / scale,
+    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, inverse_scale,
                                   compressed) != PERNIX_STATUS_OK) {
         return 1;
     }

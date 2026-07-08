@@ -51,6 +51,46 @@ inline bool is_valid_scale(const ScaleType scale) {
     return std::isfinite(scale) && scale > ScaleType{0};
 }
 
+template <typename ScaleType>
+inline pernix_status inverse_scale(const ScaleType scale, ScaleType *inverse_scale_value) {
+    if (inverse_scale_value == nullptr || !is_valid_scale(scale)) {
+        return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
+
+    *inverse_scale_value = ScaleType{1} / scale;
+    return PERNIX_STATUS_OK;
+}
+
+template <typename ScaleType>
+inline pernix_status compression_scale_from_bmax(const ScaleType bmax, const u8 bit_width,
+                                                 ScaleType *inverse_scale_value) {
+    ScaleType scale = ScaleType{0};
+    const auto status = scale_from_bmax(bmax, bit_width, &scale);
+    if (status != PERNIX_STATUS_OK) {
+        return status;
+    }
+    return inverse_scale(scale, inverse_scale_value);
+}
+
+inline const char *status_string(const pernix_status status) {
+    switch (status) {
+    case PERNIX_STATUS_OK:
+        return "PERNIX_STATUS_OK";
+    case PERNIX_STATUS_INVALID_ARGUMENT:
+        return "PERNIX_STATUS_INVALID_ARGUMENT";
+    case PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH:
+        return "PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH";
+    case PERNIX_STATUS_UNSUPPORTED_BACKEND:
+        return "PERNIX_STATUS_UNSUPPORTED_BACKEND";
+    case PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE:
+        return "PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE";
+    case PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION:
+        return "PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION";
+    default:
+        return "PERNIX_STATUS_UNKNOWN";
+    }
+}
+
 inline pernix_status select_error_status(const std::string_view kernel_name) {
     if (kernel_name == "invalid_backend") {
         return PERNIX_STATUS_UNSUPPORTED_BACKEND;

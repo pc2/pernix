@@ -5,6 +5,7 @@
 #include <pernix/fallback/scalar_compression.h>
 #include <pernix/simd_compat.h>
 
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -422,6 +423,19 @@ __m256i mm256_pack_epi32_avx2(const __m256i& input) {
     }
     return _mm256_setzero_si256();
 }
+
+template <u8 BIT_WIDTH>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+void store_packed_epi32_fallback_8(const __m256i& input, u8* __restrict__ output) {
+    alignas(32) std::array<i32, 8> lanes{};
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(lanes.data()), input);
+
+    std::vector<u32> block_values(lanes.size());
+    for (usize i = 0; i < lanes.size(); ++i) {
+        block_values[i] = static_cast<u32>(lanes[i]);
+    }
+    pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+}
 } // namespace internal
 
 /**
@@ -456,8 +470,7 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scal
         const __m256 source        = _mm256_loadu_ps(input);
         const __m256i quantized    = internal::mm256_quantize_ps_epi32(source, scale_v);
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
-        const __m256i packed       = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(packed_input);
-        std::memcpy(output, &packed, BIT_WIDTH);
+        internal::store_packed_epi32_fallback_8<BIT_WIDTH>(packed_input, output);
 
         input  += 8;
         output += BIT_WIDTH;
@@ -513,10 +526,8 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
         const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
         __m256i combined         = _mm256_castsi128_si256(quantized1);
         combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
-        const __m256i packed     = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(
-            internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined));
-        // _mm_storeu_si128(reinterpret_cast<__m128i*>(output), _mm256_castsi256_si128(packed));
-        std::memcpy(output, &packed, BIT_WIDTH);
+        const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined);
+        internal::store_packed_epi32_fallback_8<BIT_WIDTH>(packed_input, output);
         input  += 8;
         output += BIT_WIDTH;
     }

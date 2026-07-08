@@ -36,6 +36,11 @@ target_link_libraries(pernix_c_api_roundtrip PRIVATE pernix)
 target_include_directories(pernix_c_api_roundtrip PRIVATE ${PROJECT_SOURCE_DIR}/include)
 add_test(NAME pernix_c_api_roundtrip COMMAND pernix_c_api_roundtrip)
 
+add_executable(pernix_c_api_validation c_api_validation.c)
+target_link_libraries(pernix_c_api_validation PRIVATE pernix)
+target_include_directories(pernix_c_api_validation PRIVATE ${PROJECT_SOURCE_DIR}/include)
+add_test(NAME pernix_c_api_validation COMMAND pernix_c_api_validation)
+
 include(GoogleTest)
 foreach (BLOCK_SIZE IN LISTS PERNIX_TEST_BLOCK_SIZES)
     gtest_discover_tests(pernix_tests_${BLOCK_SIZE}

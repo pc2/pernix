@@ -83,6 +83,9 @@ __always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(const __m128i& input) {
 
             values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0303));
 
+            if constexpr (SIGN_VALUES) {
+                values_shift0 = _mm_srai_epi8(_mm_slli_epi8(values_shift0, 6), 6);
+            }
             return values_shift0;
         } else if constexpr (BIT_WIDTH == 4) {
             __m128i values_shift0       = input;
@@ -95,6 +98,9 @@ __always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(const __m128i& input) {
 
             values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0F0F));
 
+            if constexpr (SIGN_VALUES) {
+                values_shift0 = _mm_srai_epi8(_mm_slli_epi8(values_shift0, 4), 4);
+            }
             return values_shift0;
         } else {
             using tables = unpack_tables_avx512_8<BIT_WIDTH, __m128i>;
@@ -247,6 +253,9 @@ __always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) 
 
             values_shift0 = _mm256_and_si256(values_shift0, _mm256_set1_epi16(0x0303));
 
+            if constexpr (SIGN_VALUES) {
+                values_shift0 = _mm256_srai_epi8(_mm256_slli_epi8(values_shift0, 6), 6);
+            }
             return values_shift0;
         } else if constexpr (BIT_WIDTH == 4) {
             __m256i values_shift0       = input;
@@ -259,6 +268,9 @@ __always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) 
 
             values_shift0 = _mm256_and_si256(values_shift0, _mm256_set1_epi16(0x0F0F));
 
+            if constexpr (SIGN_VALUES) {
+                values_shift0 = _mm256_srai_epi8(_mm256_slli_epi8(values_shift0, 4), 4);
+            }
             return values_shift0;
         } else {
             using tables = unpack_tables_avx512_8<BIT_WIDTH, __m256i>;
@@ -411,6 +423,9 @@ __always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) 
 
             values_shift0 = _mm512_and_si512(values_shift0, _mm512_set1_epi16(0x0303));
 
+            if constexpr (SIGN_VALUES) {
+                values_shift0 = _mm512_srai_epi8(_mm512_slli_epi8(values_shift0, 6), 6);
+            }
             return values_shift0;
         } else if constexpr (BIT_WIDTH == 4) {
             __m512i values_shift0       = input;
@@ -423,6 +438,9 @@ __always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) 
 
             values_shift0 = _mm512_and_si512(values_shift0, _mm512_set1_epi16(0x0F0F));
 
+            if constexpr (SIGN_VALUES) {
+                values_shift0 = _mm512_srai_epi8(_mm512_slli_epi8(values_shift0, 4), 4);
+            }
             return values_shift0;
         } else {
             using tables = unpack_tables_avx512_8<BIT_WIDTH, __m512i>;

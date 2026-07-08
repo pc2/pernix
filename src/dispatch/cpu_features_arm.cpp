@@ -31,4 +31,9 @@ CpuFeatures detect_cpu_features() {
 
     return features;
 }
+
+CpuFeatures get_cached_cpu_features() {
+    static const CpuFeatures features = detect_cpu_features();
+    return features;
+}
 }

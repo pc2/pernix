@@ -5,7 +5,22 @@ add_library(pernix SHARED)
 add_library(pernix_header_only INTERFACE)
 add_library(pernix::pernix_header_only ALIAS pernix_header_only)
 
-target_sources(pernix PRIVATE pernix.cpp)
+set(PERNIX_GENERIC_SOURCE_FILES
+        pernix.cpp
+        dispatch/select.cpp
+        fallback/fallback_compression.cpp
+        fallback/fallback_decompression.cpp
+)
+
+if (PERNIX_TARGET_IS_X86)
+    list(APPEND PERNIX_GENERIC_SOURCE_FILES dispatch/cpu_features_x86.cpp)
+elseif (PERNIX_TARGET_IS_ARM64)
+    list(APPEND PERNIX_GENERIC_SOURCE_FILES dispatch/cpu_features_arm.cpp)
+else ()
+    list(APPEND PERNIX_GENERIC_SOURCE_FILES dispatch/cpu_features_x86.cpp)
+endif ()
+
+target_sources(pernix PRIVATE ${PERNIX_GENERIC_SOURCE_FILES})
 target_compile_features(pernix PUBLIC cxx_std_23)
 target_compile_features(pernix_header_only INTERFACE cxx_std_23)
 target_compile_options(pernix PRIVATE ${PERNIX_PRIVATE_COMPILE_OPTIONS})
@@ -30,6 +45,18 @@ target_include_directories(pernix_header_only
 
 target_compile_definitions(pernix PRIVATE PERNIX_BUILD_LIB=1)
 
+function(pernix_set_source_options)
+    set(options)
+    set(one_value_args)
+    set(multi_value_args SOURCES OPTIONS)
+    cmake_parse_arguments(PERNIX_SOURCE_OPTIONS "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
+    foreach (PERNIX_SOURCE_FILE IN LISTS PERNIX_SOURCE_OPTIONS_SOURCES)
+        set_source_files_properties("${PERNIX_SOURCE_FILE}" PROPERTIES
+                COMPILE_OPTIONS "${PERNIX_SOURCE_OPTIONS_OPTIONS}"
+        )
+    endforeach ()
+endfunction()
+
 if (PERNIX_ENABLE_LTO)
     set_target_properties(pernix PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif ()
@@ -41,61 +68,94 @@ endif ()
 
 if (PERNIX_ENABLE_FALLBACK_STDPAR)
     find_package(TBB REQUIRED)
-    target_compile_definitions(pernix PUBLIC PERNIX_BUILD_FALLBACK_STDPAR=1)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_STDPAR=1)
     target_link_libraries(pernix PUBLIC TBB::tbb)
     target_link_libraries(pernix_header_only INTERFACE TBB::tbb)
 endif ()
 
 if (PERNIX_ENABLE_FALLBACK_SIMD)
-    target_compile_definitions(pernix PUBLIC PERNIX_BUILD_FALLBACK_SIMD=1)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_SIMD=1)
 endif ()
 
 if (PERNIX_ENABLE_X86_BMI2 AND PERNIX_TARGET_IS_X86)
     target_compile_definitions(pernix PRIVATE PERNIX_BUILD_X86_BMI2=1)
+    target_sources(pernix PRIVATE
+            x86/bmi2/bmi2_compression.cpp
+            x86/bmi2/bmi2_decompression.cpp
+    )
+    if (MSVC)
+        pernix_set_source_options(SOURCES
+                x86/bmi2/bmi2_compression.cpp
+                x86/bmi2/bmi2_decompression.cpp
+                OPTIONS /arch:AVX2)
+    else ()
+        pernix_set_source_options(SOURCES
+                x86/bmi2/bmi2_compression.cpp
+                x86/bmi2/bmi2_decompression.cpp
+                OPTIONS -mavx2 -mbmi -mbmi2)
+    endif ()
 endif ()
 
 if (PERNIX_ENABLE_X86_AVX2 AND PERNIX_TARGET_IS_X86)
     target_compile_definitions(pernix PRIVATE PERNIX_BUILD_X86_AVX2=1)
+    target_sources(pernix PRIVATE
+            x86/avx2/avx2_compression.cpp
+            x86/avx2/avx2_decompression.cpp
+    )
+    if (MSVC)
+        pernix_set_source_options(SOURCES
+                x86/avx2/avx2_compression.cpp
+                x86/avx2/avx2_decompression.cpp
+                OPTIONS /arch:AVX2)
+    else ()
+        pernix_set_source_options(SOURCES
+                x86/avx2/avx2_compression.cpp
+                x86/avx2/avx2_decompression.cpp
+                OPTIONS -mavx2)
+    endif ()
 endif ()
 
 if (PERNIX_ENABLE_X86_AVX512VBMI AND PERNIX_TARGET_IS_X86)
     target_compile_definitions(pernix PRIVATE PERNIX_BUILD_X86_AVX512_VBMI=1)
+    target_sources(pernix PRIVATE
+            x86/avx512vbmi/avx512vbmi_compression.cpp
+            x86/avx512vbmi/avx512vbmi_decompression.cpp
+    )
+    if (MSVC)
+        pernix_set_source_options(SOURCES
+                x86/avx512vbmi/avx512vbmi_compression.cpp
+                x86/avx512vbmi/avx512vbmi_decompression.cpp
+                OPTIONS /arch:AVX512)
+    else ()
+        pernix_set_source_options(SOURCES
+                x86/avx512vbmi/avx512vbmi_compression.cpp
+                x86/avx512vbmi/avx512vbmi_decompression.cpp
+                OPTIONS -mavx -mbmi -mbmi2 -mavx2 -mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512cd -mavx512vbmi)
+    endif ()
 endif ()
 
 if (PERNIX_ENABLE_ARM64_NEON AND PERNIX_TARGET_IS_ARM64)
     target_compile_definitions(pernix PRIVATE PERNIX_BUILD_ARM64_NEON=1)
+    target_sources(pernix PRIVATE
+            arm64/neon/compression.cpp
+            arm64/neon/decompression.cpp
+    )
+    pernix_set_source_options(SOURCES
+            arm64/neon/compression.cpp
+            arm64/neon/decompression.cpp
+            OPTIONS -march=armv8-a+simd)
 endif ()
 
 if (PERNIX_ENABLE_ARM64_SVE2 AND PERNIX_TARGET_IS_ARM64)
     target_compile_definitions(pernix PRIVATE PERNIX_BUILD_ARM64_SVE2=1)
-endif ()
-
-if (PERNIX_TARGET_IS_X86)
-    if (MSVC)
-        if (PERNIX_ENABLE_X86_AVX512VBMI)
-            target_compile_options(pernix PRIVATE /arch:AVX512)
-        elseif (PERNIX_ENABLE_X86_AVX2 OR PERNIX_ENABLE_X86_BMI2)
-            target_compile_options(pernix PRIVATE /arch:AVX2)
-        endif ()
-    else ()
-        if (PERNIX_ENABLE_X86_AVX512VBMI)
-            target_compile_options(pernix PRIVATE -mavx -mbmi -mbmi2 -mavx2 -mavx512f -mavx512bw -mavx512vl -mavx512dq -mavx512cd -mavx512vbmi)
-        elseif (PERNIX_ENABLE_X86_BMI2)
-            target_compile_options(pernix PRIVATE -mbmi -mbmi2 -mavx2)
-        elseif (PERNIX_ENABLE_X86_AVX2)
-            target_compile_options(pernix PRIVATE -mavx2)
-        endif ()
-    endif ()
-endif ()
-
-if (PERNIX_TARGET_IS_ARM64)
-    if (PERNIX_ENABLE_ARM64_SVE2)
-        target_compile_options(pernix PRIVATE -march=armv8.2-a+simd+sve2)
-    elseif (PERNIX_ENABLE_ARM64_NEON)
-        target_compile_options(pernix PRIVATE -march=armv8-a+simd)
-    endif ()
+    target_sources(pernix PRIVATE
+            arm64/sve2/compression.cpp
+            arm64/sve2/decompression.cpp
+    )
+    pernix_set_source_options(SOURCES
+            arm64/sve2/compression.cpp
+            arm64/sve2/decompression.cpp
+            OPTIONS -march=armv8.2-a+simd+sve2)
 endif ()
 
 if (PERNIX_DISABLE_BMI2)

@@ -36,6 +36,10 @@ struct CpuFeatures {
     bool sve2       = false;
 };
 
+#if defined(PERNIX_BUILD_LIB)
+CpuFeatures detect_cpu_features();
+CpuFeatures get_cached_cpu_features();
+#else
 inline CpuFeatures detect_cpu_features() {
     CpuFeatures features{};
 
@@ -108,6 +112,7 @@ inline CpuFeatures get_cached_cpu_features() {
     static const CpuFeatures features = detect_cpu_features();
     return features;
 }
+#endif
 }
 
 #endif //PERNIX_CPU_FEATURES_H

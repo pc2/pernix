@@ -30,7 +30,10 @@ void cpuid(int out[4], int leaf, int subleaf) {
 }
 
 u64 xgetbv(unsigned int index) {
-    return _xgetbv(index);
+    u32 eax = 0;
+    u32 edx = 0;
+    __asm__ volatile("xgetbv" : "=a"(eax), "=d"(edx) : "c"(index));
+    return static_cast<u64>(eax) | (static_cast<u64>(edx) << 32U);
 }
 
 #endif
@@ -82,6 +85,11 @@ CpuFeatures detect_cpu_features() {
 
     return features;
 }
+
+CpuFeatures get_cached_cpu_features() {
+    static const CpuFeatures features = detect_cpu_features();
+    return features;
+}
 } // namespace pernix::internal
 #else
 
@@ -89,7 +97,11 @@ namespace pernix::internal {
 CpuFeatures detect_cpu_features() {
     return {};
 }
+
+CpuFeatures get_cached_cpu_features() {
+    static const CpuFeatures features = detect_cpu_features();
+    return features;
+}
 } // namespace pernix::internal
 
 #endif
-

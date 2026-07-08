@@ -258,6 +258,8 @@ namespace pernix::internal {
 #endif
 }
 
+#if !defined(PERNIX_BUILD_LIB)
 #include <pernix/dispatch/select_impl.h>
+#endif
 
 #endif //PERNIX_SELECT_H

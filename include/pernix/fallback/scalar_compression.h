@@ -1,6 +1,8 @@
 #ifndef PERNIX_FALLBACK_SCALAR_COMPRESSION_H
 #define PERNIX_FALLBACK_SCALAR_COMPRESSION_H
 
+#include <pernix/compat.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstring>

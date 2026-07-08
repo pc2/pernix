@@ -1,6 +1,8 @@
 #ifndef PERNIX_FALLBACK_SCALAR_DECOMPRESSION_H
 #define PERNIX_FALLBACK_SCALAR_DECOMPRESSION_H
 
+#include <pernix/compat.h>
+
 #include <limits>
 #include <type_traits>
 #include <vector>
@@ -30,9 +32,8 @@ __always_inline auto sign_extend(const u32 value) -> i32 {
 
 template <typename T, u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_integral_v<T> && std::is_unsigned_v<T>)
-__always_inline auto unpack_epi32_fallback_inner(const u8* __restrict__ input, const u8 bit_offset,
-                                                 const std::size_t elements)
-    -> std::vector<i32> {
+__always_inline std::vector<i32> unpack_epi32_fallback_inner(const u8* __restrict__ input, const u8 bit_offset,
+                                                             const std::size_t elements) {
     constexpr u32 bits_in_type = sizeof(T) * 8;
     constexpr u32 bitmask      = BIT_WIDTH == bits_in_type
                                 ? std::numeric_limits<T>::max()

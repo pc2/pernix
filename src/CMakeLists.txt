@@ -6,8 +6,8 @@ add_library(pernix_header_only INTERFACE)
 add_library(pernix::pernix_header_only ALIAS pernix_header_only)
 
 target_sources(pernix PRIVATE pernix.cpp)
-target_compile_features(pernix PUBLIC cxx_std_20)
-target_compile_features(pernix_header_only INTERFACE cxx_std_20)
+target_compile_features(pernix PUBLIC cxx_std_23)
+target_compile_features(pernix_header_only INTERFACE cxx_std_23)
 target_compile_options(pernix PRIVATE ${PERNIX_PRIVATE_COMPILE_OPTIONS})
 
 set_target_properties(pernix PROPERTIES
@@ -40,18 +40,16 @@ if (PERNIX_USE_SIMDE)
 endif ()
 
 if (PERNIX_ENABLE_FALLBACK_STDPAR)
+    find_package(TBB REQUIRED)
     target_compile_definitions(pernix PUBLIC PERNIX_BUILD_FALLBACK_STDPAR=1)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_STDPAR=1)
+    target_link_libraries(pernix PUBLIC TBB::tbb)
+    target_link_libraries(pernix_header_only INTERFACE TBB::tbb)
 endif ()
 
 if (PERNIX_ENABLE_FALLBACK_SIMD)
     target_compile_definitions(pernix PUBLIC PERNIX_BUILD_FALLBACK_SIMD=1)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_SIMD=1)
-endif ()
-
-if (PERNIX_ENABLE_FALLBACK_STDPAR_NVCC)
-    target_compile_definitions(pernix PUBLIC PERNIX_FALLBACK_STDPAR_USE_NVCC=1)
-    target_compile_definitions(pernix_header_only INTERFACE PERNIX_FALLBACK_STDPAR_USE_NVCC=1)
 endif ()
 
 if (PERNIX_ENABLE_X86_BMI2 AND PERNIX_TARGET_IS_X86)

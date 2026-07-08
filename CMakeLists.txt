@@ -13,9 +13,8 @@ option(PERNIX_ENABLE_X86_AVX2 "Build x86 AVX2 backend" ON)
 option(PERNIX_ENABLE_X86_AVX512VBMI "Build x86 AVX512-VBMI backend" ON)
 option(PERNIX_ENABLE_ARM64_NEON "Build arm64 NEON backend" ON)
 option(PERNIX_ENABLE_ARM64_SVE2 "Build arm64 SVE2 backend" ON)
-option(PERNIX_ENABLE_FALLBACK_STDPAR "Build fallback stdpar skeleton backend" OFF)
+option(PERNIX_ENABLE_FALLBACK_STDPAR "Build fallback stdpar backend" ON)
 option(PERNIX_ENABLE_FALLBACK_SIMD "Build fallback simd skeleton backend" OFF)
-option(PERNIX_ENABLE_FALLBACK_STDPAR_NVCC "Enable NVCC-oriented stdpar skeleton wiring" OFF)
 
 option(PERNIX_USE_SIMDE "Use SIMDe library for portable SIMD support" off)
 
@@ -73,7 +72,7 @@ else ()
 endif ()
 message(STATUS "Pernix version: ${VERSION}, normalized to ${NORMALIZED_VERSION}")
 
-if (NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|Intel")
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|Intel|NVHPC")
     message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif ()
 

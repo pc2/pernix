@@ -50,9 +50,15 @@ TEST(HeaderOnlyPernix, FallbackStdparReturnsUnsupportedImplementation) {
     auto input = make_input<float>();
     std::vector<u8> compressed(kBlockSize);
 
+#if defined(PERNIX_BUILD_FALLBACK_STDPAR)
+    EXPECT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, kBitWidth, kBlockSize,
+                                     std::span<const float>(input), 1.0f, std::span<u8>(compressed)),
+              PERNIX_STATUS_OK);
+#else
     EXPECT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, kBitWidth, kBlockSize,
                                      std::span<const float>(input), 1.0f, std::span<u8>(compressed)),
               PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
+#endif
 }
 
 TEST(HeaderOnlyPernix, FallbackSimdReturnsUnsupportedImplementation) {

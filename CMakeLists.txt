@@ -7,6 +7,7 @@ option(PERNIX_ENABLE_LTO "Enable Link Time Optimization (LTO)" off)
 option(PERNIX_ENABLE_INSTALL "Enable installation of pernix" on)
 option(PERNIX_ENABLE_DOXYGEN "Build documentation with Doxygen." off)
 option(PERNIX_INSTALL_DOCS "Install documentation with pernix" off)
+option(PERNIX_ENABLE_EXAMPLES "Build pernix example programs" off)
 
 option(PERNIX_ENABLE_X86_BMI2 "Build x86 BMI2 backend" ON)
 option(PERNIX_ENABLE_X86_AVX2 "Build x86 AVX2 backend" ON)
@@ -144,8 +145,12 @@ add_subdirectory(src)
 
 if (PERNIX_ENABLE_FORTRAN_BINDINGS)
     message(STATUS "Building Fortran bindings for pernix")
-    include(CMakeAddFortranSubdirectory)
-    cmake_add_fortran_subdirectory(bindings/fortran NO_EXTERNAL_INSTALL)
+    enable_language(Fortran)
+    add_subdirectory(bindings/fortran)
+endif ()
+
+if (PERNIX_ENABLE_EXAMPLES)
+    add_subdirectory(examples)
 endif ()
 
 if (PERNIX_ENABLE_TESTS)

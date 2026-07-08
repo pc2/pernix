@@ -3,6 +3,10 @@
 
 #include <pernix/compat.h>
 
+#if !defined(__cplusplus)
+#include <stdbool.h>
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -29,6 +33,22 @@ typedef enum pernix_backend {
     PERNIX_BACKEND_FALLBACK_STDPAR = 7,
     PERNIX_BACKEND_FALLBACK_SIMD = 8
 } pernix_backend;
+
+PERNIX_API u8 pernix_min_bit_width(void);
+
+PERNIX_API u8 pernix_max_bit_width(void);
+
+PERNIX_API bool pernix_is_valid_bit_width(u8 bit_width);
+
+PERNIX_API bool pernix_is_valid_block_size(u32 block_size);
+
+PERNIX_API u32 pernix_compressed_block_size(void);
+
+PERNIX_API u32 pernix_elements_per_block(u8 bit_width);
+
+PERNIX_API pernix_status pernix_scale_f32(float bmax, u8 bit_width, float* scale);
+
+PERNIX_API pernix_status pernix_scale_f64(double bmax, u8 bit_width, double* scale);
 
 PERNIX_API pernix_status pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size,
                                                    const void* input,

@@ -1,9 +1,13 @@
 #ifndef PERNIX_COMPAT_H
 #define PERNIX_COMPAT_H
 
-#include <cstdint>
-#include <cmath>
+#if defined(__cplusplus)
 #include <cstddef>
+#include <cstdint>
+#else
+#include <stddef.h>
+#include <stdint.h>
+#endif
 
 #ifndef __always_inline
 #if defined(__GNUC__) || defined(__clang__)
@@ -37,8 +41,8 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
-typedef float_t f32;
-typedef double_t f64;
+typedef float f32;
+typedef double f64;
 
 typedef size_t usize;
 

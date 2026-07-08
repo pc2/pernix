@@ -1,6 +1,38 @@
 #include <pernix/detail/api.hpp>
 
 extern "C" {
+u8 pernix_min_bit_width(void) {
+    return pernix::detail::min_bit_width;
+}
+
+u8 pernix_max_bit_width(void) {
+    return pernix::detail::max_bit_width;
+}
+
+bool pernix_is_valid_bit_width(u8 bit_width) {
+    return pernix::detail::is_valid_bit_width(bit_width);
+}
+
+bool pernix_is_valid_block_size(u32 block_size) {
+    return pernix::detail::is_valid_block_size(block_size);
+}
+
+u32 pernix_compressed_block_size(void) {
+    return pernix::detail::fixed_block_size;
+}
+
+u32 pernix_elements_per_block(u8 bit_width) {
+    return pernix::detail::elements_per_block(bit_width);
+}
+
+pernix_status pernix_scale_f32(float bmax, u8 bit_width, float *scale) {
+    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
+}
+
+pernix_status pernix_scale_f64(double bmax, u8 bit_width, double *scale) {
+    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
+}
+
 pernix_status pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void *input,
                                         float scale, void *output) {
     return pernix::detail::compress_block(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale,

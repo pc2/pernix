@@ -457,6 +457,74 @@ TEST(FallbackEdgeTest, ClampsNonFiniteAndOutOfRangeBeforeNarrowing) {
     EXPECT_EQ(restored[2], 0.0f);
 }
 
+TEST(FallbackEdgeTest, SignValuesFalseTreatsPackedValuesAsUnsigned) {
+    constexpr u32 BS = 64;
+    const std::array<u8, BS> input{0x0F};
+
+    std::array<f32, (BS * 8) / 4> signed_output{};
+    std::array<f32, (BS * 8) / 4> unsigned_output{};
+
+    auto st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, input.data(), 1.0f, signed_output.data(),
+                                          true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, input.data(), 1.0f, unsigned_output.data(),
+                                     false);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    EXPECT_EQ(signed_output[0], -1.0f);
+    EXPECT_EQ(unsigned_output[0], 15.0f);
+}
+
+TEST(FallbackEdgeTest, CApiRejectsInvalidScale) {
+    constexpr u32 BS = 64;
+    constexpr u32 BW = 8;
+    constexpr u32 EPB = (BS * 8) / BW;
+
+    std::array<f32, EPB> input{};
+    std::array<u8, BS> compressed{};
+    std::array<f32, EPB> output{};
+
+    EXPECT_EQ(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input.data(), 0.0f, compressed.data()),
+              PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, compressed.data(), -1.0f, output.data(),
+                                          true),
+              PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input.data(),
+                                        std::numeric_limits<f32>::infinity(), compressed.data()),
+              PERNIX_STATUS_INVALID_ARGUMENT);
+}
+
+TEST(FallbackEdgeTest, CApiRejectsInvalidScaleF64) {
+    constexpr u32 BS = 64;
+    constexpr u32 BW = 8;
+    constexpr u32 EPB = (BS * 8) / BW;
+
+    std::array<f64, EPB> input{};
+    std::array<u8, BS> compressed{};
+    std::array<f64, EPB> output{};
+
+    EXPECT_EQ(pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, BW, BS, input.data(), 0.0, compressed.data()),
+              PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK, BW, BS, compressed.data(), -1.0, output.data(),
+                                          true),
+              PERNIX_STATUS_INVALID_ARGUMENT);
+}
+
+TEST(FallbackEdgeTest, ScaleHelpersValidateInputs) {
+    float scale_f32 = 0.0f;
+    double scale_f64 = 0.0;
+
+    EXPECT_EQ(pernix_scale_f32(32767.0f, 16, &scale_f32), PERNIX_STATUS_OK);
+    EXPECT_FLOAT_EQ(scale_f32, 1.0f);
+    EXPECT_EQ(pernix_scale_f64(32767.0, 16, &scale_f64), PERNIX_STATUS_OK);
+    EXPECT_DOUBLE_EQ(scale_f64, 1.0);
+    EXPECT_EQ(pernix_scale_f32(1.0f, 0, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_scale_f32(-1.0f, 16, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_scale_f64(std::numeric_limits<double>::infinity(), 16, &scale_f64),
+              PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_scale_f64(1.0, 16, nullptr), PERNIX_STATUS_INVALID_ARGUMENT);
+}
+
 #if defined(PERNIX_BUILD_FALLBACK_STDPAR)
 TEST(FallbackStdparEdgeTest, SignExtensionIsWellDefinedForNegativeValues) {
     constexpr u32 BS = 64;

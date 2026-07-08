@@ -1,42 +1,36 @@
-! Hello World Fortran program
-program main
-    use iso_c_binding, only : c_int8_t, c_int32_t, c_float, c_loc, c_ptr
-    use iso_fortran_env, only : real64, int64
-    use pernix_decompression
+program pernix_fortran_roundtrip
+    use iso_c_binding, only : c_bool, c_float, c_int, c_int8_t, c_int32_t, c_loc
     use pernix_compression
-    use omp_lib
+    use pernix_decompression
     implicit none
 
-    integer(c_int8_t) :: bit_width = 16_c_int8_t
+    integer(c_int8_t), parameter :: bit_width = 16_c_int8_t
+    integer(c_int32_t), parameter :: block_size = 64_c_int32_t
+    integer, parameter :: elements = (64 * 8) / 16
+    real(c_float), target :: input(elements)
+    real(c_float), target :: restored(elements)
+    integer(c_int8_t), target :: compressed(block_size)
+    real(c_float) :: bmax
     real(c_float) :: scale
-    integer(c_int8_t), target :: input_data(512)
-    real(c_float), target :: output_data(512)
-    integer :: i, j, gb, iter
-    real(real64) :: t0, t1, diff
+    integer(c_int) :: status
+    integer :: i
 
-    ! Initialize example data
-    scale = 1.5_c_float
-    output_data = 0.0_c_float
-
-    iter = 50000000_int64
-    t0 = omp_get_wtime()
-    do i = 1_int64, iter
-        do j = 1, size(input_data)
-            input_data(j) = mod(i + j, 256_int64)
-        end do
-
-        ! call the C-binding Fortran subroutine using C pointers
-        call decompress_block(bit_width, c_loc(input_data), scale, c_loc(output_data))
+    do i = 1, elements
+        input(i) = real(i - 17, c_float) * 0.125_c_float
     end do
-    t1 = omp_get_wtime()
-    diff = t1 - t0
-    gb = iter * (512_int64 + 1024_int64) / (1024_int64 * 1024_int64 * 1024_int64)
 
-    print *, "Time taken for ", iter, " decompressions: ", diff, " seconds"
-    print *, "Throughput: ", gb / diff, " GB/s"
+    bmax = maxval(abs(input))
+    scale = bmax / real((2 ** (int(bit_width) - 1)) - 1, c_float)
 
-    ! Print the output data
-    !    do i = 1, size(output_data)
-    !        print *, "output_data(", i, ") = ", output_data(i)
-    !    end do
-end program main
+    status = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, c_loc(input), &
+                                       1.0_c_float / scale, c_loc(compressed))
+    if (status /= PERNIX_STATUS_OK) stop 1
+
+    status = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, c_loc(compressed), &
+                                         scale, c_loc(restored), .true._c_bool)
+    if (status /= PERNIX_STATUS_OK) stop 2
+
+    do i = 1, elements
+        if (abs(restored(i) - input(i)) > scale) stop 3
+    end do
+end program pernix_fortran_roundtrip

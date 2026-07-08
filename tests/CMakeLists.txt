@@ -31,6 +31,11 @@ endforeach ()
 
 add_custom_target(pernix_tests DEPENDS ${PERNIX_TEST_TARGETS})
 
+add_executable(pernix_c_api_roundtrip c_api_roundtrip.c)
+target_link_libraries(pernix_c_api_roundtrip PRIVATE pernix)
+target_include_directories(pernix_c_api_roundtrip PRIVATE ${PROJECT_SOURCE_DIR}/include)
+add_test(NAME pernix_c_api_roundtrip COMMAND pernix_c_api_roundtrip)
+
 include(GoogleTest)
 foreach (BLOCK_SIZE IN LISTS PERNIX_TEST_BLOCK_SIZES)
     gtest_discover_tests(pernix_tests_${BLOCK_SIZE}

@@ -41,6 +41,20 @@ target_link_libraries(pernix_c_api_validation PRIVATE pernix)
 target_include_directories(pernix_c_api_validation PRIVATE ${PROJECT_SOURCE_DIR}/include)
 add_test(NAME pernix_c_api_validation COMMAND pernix_c_api_validation)
 
+if (PERNIX_ENABLE_INSTALL_CONSUMER_TESTS)
+    add_test(NAME pernix_install_consumer
+            COMMAND ${CMAKE_COMMAND}
+            -DPERNIX_BUILD_DIR=${PROJECT_BINARY_DIR}
+            -DPERNIX_CONSUMER_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/install_consumer
+            -DPERNIX_CONSUMER_BUILD_DIR=${PROJECT_BINARY_DIR}/install-consumer-build
+            -DPERNIX_INSTALL_PREFIX=${PROJECT_BINARY_DIR}/install-consumer-prefix
+            -DPERNIX_TEST_CONFIG=$<CONFIG>
+            -DPERNIX_C_COMPILER=${CMAKE_C_COMPILER}
+            -DPERNIX_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/install_consumer/run.cmake
+    )
+endif ()
+
 include(GoogleTest)
 foreach (BLOCK_SIZE IN LISTS PERNIX_TEST_BLOCK_SIZES)
     gtest_discover_tests(pernix_tests_${BLOCK_SIZE}

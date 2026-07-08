@@ -1,7 +1,8 @@
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-add_library(pernix SHARED)
+add_library(pernix)
+add_library(pernix::pernix ALIAS pernix)
 add_library(pernix_header_only INTERFACE)
 add_library(pernix::pernix_header_only ALIAS pernix_header_only)
 
@@ -44,6 +45,9 @@ target_include_directories(pernix_header_only
 )
 
 target_compile_definitions(pernix PRIVATE PERNIX_BUILD_LIB=1)
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(pernix PUBLIC PERNIX_SHARED=1)
+endif ()
 
 function(pernix_set_source_options)
     set(options)
@@ -66,14 +70,26 @@ if (PERNIX_USE_SIMDE)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_USE_SIMDE=1)
 endif ()
 
-if (PERNIX_ENABLE_FALLBACK_STDPAR)
-    find_package(TBB REQUIRED)
-    target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_STDPAR=1)
-    target_link_libraries(pernix PUBLIC TBB::tbb)
-    target_link_libraries(pernix_header_only INTERFACE TBB::tbb)
+set(PERNIX_BUILD_FALLBACK_STDPAR OFF)
+if (NOT PERNIX_ENABLE_FALLBACK_STDPAR STREQUAL "OFF")
+    if (PERNIX_ENABLE_FALLBACK_STDPAR STREQUAL "ON")
+        find_package(TBB REQUIRED)
+    else ()
+        find_package(TBB QUIET)
+    endif ()
+
+    if (TARGET TBB::tbb)
+        set(PERNIX_BUILD_FALLBACK_STDPAR ON)
+        target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_STDPAR=1)
+        target_link_libraries(pernix_header_only INTERFACE TBB::tbb)
+        message(STATUS "PERNIX header-only fallback stdpar backend enabled (TBB found)")
+    elseif (PERNIX_ENABLE_FALLBACK_STDPAR STREQUAL "AUTO")
+        message(STATUS "PERNIX header-only fallback stdpar backend disabled (TBB not found; set PERNIX_ENABLE_FALLBACK_STDPAR=ON to require it)")
+    endif ()
 endif ()
 
 if (PERNIX_ENABLE_FALLBACK_SIMD)
+    target_compile_definitions(pernix PUBLIC PERNIX_BUILD_FALLBACK_SIMD=1)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_SIMD=1)
 endif ()
 
@@ -173,6 +189,8 @@ if (PERNIX_DISABLE_AVX512)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_DISABLE_AVX512=1)
 endif ()
 
+set(PERNIX_PC_REQUIRES "")
+
 configure_file("${PROJECT_SOURCE_DIR}/cmake/pernix.pc.in" "${PROJECT_BINARY_DIR}/pernix.pc" @ONLY)
 
 if (PERNIX_ENABLE_INSTALL)
@@ -185,7 +203,9 @@ if (PERNIX_ENABLE_INSTALL)
 
     install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/pernix"
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-            FILES_MATCHING PATTERN "*.*h"
+            FILES_MATCHING
+            PATTERN "*.h"
+            PATTERN "*.hpp"
     )
 
     if (PERNIX_USE_SIMDE AND PERNIX_BUNDLE_SIMDE_FOR_INSTALL)

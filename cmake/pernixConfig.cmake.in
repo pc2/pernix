@@ -1,5 +1,7 @@
 @PACKAGE_INIT@
 
+include(CMakeFindDependencyMacro)
+
 if (@PERNIX_USE_SIMDE@)
     find_package(simde CONFIG QUIET)
     if (NOT TARGET simde::simde AND @PERNIX_BUNDLE_SIMDE_FOR_INSTALL@)
@@ -11,6 +13,10 @@ if (@PERNIX_USE_SIMDE@)
         set(pernix_NOT_FOUND_MESSAGE "pernix was built with SIMDe support, but simde::simde was not found. Install SIMDe's CMake package or use a Pernix package built with bundled SIMDe headers.")
         return()
     endif ()
+endif ()
+
+if (@PERNIX_BUILD_FALLBACK_STDPAR@)
+    find_dependency(TBB)
 endif ()
 
 include("${CMAKE_CURRENT_LIST_DIR}/pernixTargets.cmake")

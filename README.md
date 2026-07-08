@@ -102,14 +102,22 @@ cmake -E chdir build cmake -DCMAKE_BUILD_TYPE=Release -DPERNIX_ENABLE_TESTS=off 
 cmake --build build --config Release
 ```
 
-The shared library is written under `build/src`.
+The library is written under `build/src`. Shared builds are the default; pass `-DBUILD_SHARED_LIBS=OFF` for a static
+library.
 
 Optional build flags:
 
 * `-DPERNIX_ENABLE_TESTS=ON` builds the test suite.
 * `-DPERNIX_ENABLE_EXAMPLES=ON` builds the C and C++ examples.
 * `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON` builds the Fortran bindings and Fortran round-trip program.
-* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF` disables the stdpar fallback backend and its TBB dependency.
+* `-DPERNIX_ENABLE_INSTALL=ON` installs the library, headers, pkg-config file, and CMake package files.
+* `-DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON` adds a CTest that installs PERNIX into a temporary prefix and verifies
+  C and C++ consumers with `find_package(pernix CONFIG REQUIRED)`.
+* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF` is the default and avoids the TBB dependency. Use `AUTO` to enable the
+  header-only stdpar fallback backend only when TBB is found, or `ON` to require TBB and fail if missing. The compiled
+  library target does not currently export stdpar dispatch.
+* `-DPERNIX_ENABLE_X86_AVX2=OFF`, `-DPERNIX_ENABLE_X86_BMI2=OFF`, and
+  `-DPERNIX_ENABLE_X86_AVX512VBMI=OFF` disable individual x86 SIMD backends.
 
 ## Usage Examples
 

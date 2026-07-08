@@ -12,6 +12,8 @@ program pernix_example_fortran
     integer(c_int8_t), target :: compressed(block_size)
     real(c_float) :: bmax
     real(c_float) :: scale
+    real(c_float) :: inverse_scale
+    real(c_float) :: error
     integer(c_int) :: status
     integer :: i
 
@@ -21,12 +23,16 @@ program pernix_example_fortran
 
     bmax = maxval(abs(input))
     scale = bmax / real((2 ** (int(bit_width) - 1)) - 1, c_float)
+    inverse_scale = 1.0_c_float / scale
 
     status = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, c_loc(input), &
-                                       1.0_c_float / scale, c_loc(compressed))
+                                       inverse_scale, c_loc(compressed))
     if (status /= PERNIX_STATUS_OK) stop 1
 
     status = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, c_loc(compressed), &
                                          scale, c_loc(restored), .true._c_bool)
     if (status /= PERNIX_STATUS_OK) stop 2
+
+    error = maxval(abs(restored - input))
+    if (error > scale) stop 3
 end program pernix_example_fortran

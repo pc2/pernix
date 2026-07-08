@@ -1,127 +1,132 @@
-# PERNIX: Floating-Point Number De/Compression on CPUs
+# PERNIX
 
-PERNIX is a high-throughput floating-point compression library for CPU-based scientific workloads. It quantizes
-floating-point values to a configurable bit width and packs them into fixed-size compressed blocks, reducing memory and
-communication bandwidth while keeping decompression fast.
+PERNIX is a small C/C++ library for CPU-based scientific data compression. It quantizes `float` or `double` values to a
+user-chosen bit width and packs the quantized integers into fixed 64-byte blocks. The main goal is fast block
+decompression with a portable fallback path and optional SIMD backends.
 
-The library provides:
+The public API includes:
 
-* C++ API functions such as `pernix::compress_block` and `pernix::decompress_block`
-* C ABI wrappers named `pernix_compress_block_f32`, `pernix_decompress_block_f32`, and matching `_f64` variants
-* Optional Fortran bindings in `bindings/fortran`
-* SIMD-optimized backends where available, with a portable fallback backend
+* C++ functions in `<pernix/pernix.hpp>`, including `pernix::compress_block` and `pernix::decompress_block`
+* a plain C ABI in `<pernix/pernix.h>`, including `pernix_compress_block_f32` and `pernix_decompress_block_f32`
+* `_f64` variants for double-precision input/output
+* optional Fortran bindings that call the C ABI
 
-## Quantization Convention
+## Block Format
 
-For a block of floating-point numbers `x_i` and a bit width `N`, PERNIX uses the block maximum magnitude:
+The normal PERNIX block is exactly 64 bytes, or 512 bits. For bit width `N`, one block stores:
 
 ```text
-bmax = max(abs(x_i))
+elements_per_block = (64 * 8) / N
+```
+
+Valid public bit widths are `1..24`. Public helpers expose these constants and calculations:
+
+* `pernix::compressed_block_size()` / `pernix_compressed_block_size()` returns `64`
+* `pernix::elements_per_block(bit_width)` / `pernix_elements_per_block(bit_width)` returns the 64-byte element count
+* `pernix::is_valid_bit_width(bit_width)` / `pernix_is_valid_bit_width(bit_width)` checks `1..24`
+* `pernix::min_bit_width()` and `pernix::max_bit_width()` return `1` and `24`
+
+The implementation also accepts explicit block sizes `128`, `256`, `512`, and `1024` for internal/test coverage. The
+documented interchange format is the 64-byte block.
+
+Packed values are written as a byte stream, least-significant bits first within each value and byte. Compression
+zero-fills the output block before packing, so unused tail bits in a block are zero. When `sign_values=true`, decompression
+sign-extends each `N`-bit value before multiplying by scale. When `sign_values=false`, decompression treats the packed
+value as unsigned. For `bit_width == 1`, signed fallback compression clamps to binary `0/1`.
+
+The scalar fallback packs and unpacks byte-by-byte, so the serialized 64-byte block is not a native integer dump. Backends
+are expected to produce compatible blocks for the same inputs, bit width, scale, and sign mode.
+
+## Quantization And Scale
+
+For a block with maximum magnitude `bmax` and bit width `N`, PERNIX uses this forward decompression scale:
+
+```text
 scale = bmax / (2^(N - 1) - 1)
 ```
 
-The current compression API expects the inverse scale, because compression computes:
+For `N == 1`, the denominator is treated as `1`. For `bmax == 0`, helper functions return a small positive scale rather
+than zero.
+
+The current compression API expects the inverse scale:
 
 ```text
-quantized = round(input * scale_inverse)
+quantized = round(input * inverse_scale)
 ```
 
-Decompression expects the forward scale, because decompression computes:
+The decompression API expects the forward scale:
 
 ```text
 output = quantized * scale
 ```
 
-In practice, compute the decompression scale from `bmax`, pass its inverse to `compress_block`, and pass the forward
-scale to `decompress_block`. The clearer helper names are:
+Use these helpers to avoid mixing the two conventions:
 
-* `pernix_decompression_scale_f32` / `pernix_decompression_scale_f64`
-* `pernix_compression_scale_f32` / `pernix_compression_scale_f64`
-* `pernix_inverse_scale_f32` / `pernix_inverse_scale_f64`
-* `pernix::decompression_scale_from_bmax`, `pernix::compression_scale_from_bmax`, and `pernix::inverse_scale`
+* C++: `pernix::decompression_scale_from_bmax`, `pernix::compression_scale_from_bmax`, `pernix::inverse_scale`
+* C: `pernix_decompression_scale_f32`, `pernix_compression_scale_f32`, `pernix_inverse_scale_f32`
+* C f64: the same names with `_f64`
 
-The older `pernix_scale_f32`, `pernix_scale_f64`, and `pernix::scale_from_bmax` names are kept as compatibility aliases
-for the forward decompression scale. Scale-from-`bmax` helpers return a small positive scale for `bmax == 0`.
+Compatibility aliases `pernix::scale_from_bmax`, `pernix_scale_f32`, and `pernix_scale_f64` compute the forward
+decompression scale.
 
-Scale arguments passed to compression and decompression must be finite and greater than zero. Passing zero, negative,
-NaN, or infinity returns `PERNIX_STATUS_INVALID_ARGUMENT`.
+Scale arguments passed to compression and decompression must be finite and greater than zero. Zero, negative, NaN, or
+infinite scales return `PERNIX_STATUS_INVALID_ARGUMENT`.
 
-## Block Format and Limits
+## API Contracts
 
-PERNIX uses 64-byte (512-bit) compressed blocks by default. For bit width `N`, one 64-byte block stores
-`(64 * 8) / N` values. The fallback implementation currently supports bit widths `1..24`. Public APIs also accept an
-explicit `block_size`; supported values are `64`, `128`, `256`, `512`, and `1024`, but the documented default and normal
-format is a fixed 64-byte block.
+All public compression and decompression calls return `pernix_status` (`pernix::Status` in C++).
 
-Packed values are signed by default during decompression. A `sign_values` argument is available in the C ABI and in the
-C++ API to request unsigned interpretation.
-
-The public helper APIs expose the fixed-format constants:
-
-* `pernix_min_bit_width()` / `pernix::min_bit_width()` return `1`
-* `pernix_max_bit_width()` / `pernix::max_bit_width()` return `24`
-* `pernix_compressed_block_size()` / `pernix::compressed_block_size()` return `64`
-* `pernix_elements_per_block(bit_width)` / `pernix::elements_per_block(bit_width)` return `(64 * 8) / bit_width`, or
-  `0` for an invalid bit width
-* `pernix_is_valid_bit_width(bit_width)` / `pernix::is_valid_bit_width(bit_width)` validate the public `1..24` range
-* `pernix_is_valid_block_size(block_size)` / `pernix::is_valid_block_size(block_size)` validate the currently accepted
-  block sizes
-
-Input values should be finite for portable behavior. The scalar fallback clamps non-finite or out-of-range values before
-narrowing, but that behavior is not a cross-backend contract.
-
-## Status Codes
-
-The C ABI returns `pernix_status`:
+Status values:
 
 * `PERNIX_STATUS_OK`: success
-* `PERNIX_STATUS_INVALID_ARGUMENT`: null pointer or invalid parameter
-* `PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH`: unsupported bit width
-* `PERNIX_STATUS_UNSUPPORTED_BACKEND`: unknown backend value
-* `PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE`: unsupported block size
-* `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`: backend was requested but is not available for this build or CPU
+* `PERNIX_STATUS_INVALID_ARGUMENT`: null pointer, invalid span size, zero block count, or invalid scale
+* `PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH`: bit width outside `1..24`
+* `PERNIX_STATUS_UNSUPPORTED_BACKEND`: backend enum value is unknown
+* `PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE`: block size is not supported
+* `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`: backend is not compiled in or is unavailable on this CPU
 
-Use `pernix_status_string(status)` or `pernix::status_string(status)` for diagnostic text.
+Use `pernix::status_string(status)` or `pernix_status_string(status)` for readable names.
 
-## f32 and f64 APIs
+For one block:
 
-Use the `_f32` functions for `float` input/output and `_f64` functions for `double` input/output. Both variants pack to
-the same integer bit stream for the selected bit width. The scale type matches the floating-point type:
-`float` for `_f32`, `double` for `_f64`.
+* compression reads at least `(block_size * 8) / bit_width` `float` or `double` values
+* compression writes exactly `block_size` bytes
+* decompression reads exactly `block_size` bytes
+* decompression writes at least `(block_size * 8) / bit_width` `float` or `double` values
 
-The C++ wrapper overloads return `pernix::Status`, an alias for the C ABI `pernix_status`. `std::span` arguments are
-borrowed only for the duration of the call. For one 64-byte block, compression reads at least
-`pernix::elements_per_block(bit_width)` input values and writes `pernix::compressed_block_size()` bytes. Multi-block
-calls multiply those counts by `blocks`.
+For `*_blocks` calls, multiply those sizes by `blocks`. `blocks == 0` is invalid. The C ABI validates null pointers and
+basic parameters, but it cannot validate buffer lengths. The C++ `std::span` wrappers validate span sizes before calling
+the lower-level kernels.
 
-## Compiling
+The `_f32` APIs operate on `float` data and take `float` scale values. The `_f64` APIs operate on `double` data and take
+`double` scale values. Both use the same packed integer block format for a given bit width.
 
-```bash
-cmake -E make_directory build
-cmake -E chdir build cmake -DCMAKE_BUILD_TYPE=Release -DPERNIX_ENABLE_TESTS=off ../
-cmake --build build --config Release
-```
+Given the same backend, inputs, bit width, scale, and sign mode, behavior is deterministic. Different backends are tested
+for compatible results, but exact floating-point details should not be treated as a cross-backend ABI guarantee beyond the
+documented quantization model.
 
-The library is written under `build/src`. Shared builds are the default; pass `-DBUILD_SHARED_LIBS=OFF` for a static
-library.
+## Backends
 
-Optional build flags:
+`PERNIX_BACKEND_FALLBACK` is the portable scalar backend and is always available. `PERNIX_BACKEND_AUTO` selects an
+available optimized backend when one is compiled and supported on the host CPU, otherwise it falls back.
 
-* `-DPERNIX_ENABLE_TESTS=ON` builds the test suite.
-* `-DPERNIX_ENABLE_EXAMPLES=ON` builds the C and C++ examples.
-* `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON` builds the Fortran bindings and Fortran round-trip program.
-* `-DPERNIX_ENABLE_INSTALL=ON` installs the library, headers, pkg-config file, and CMake package files.
-* `-DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON` adds a CTest that installs PERNIX into a temporary prefix and verifies
-  C and C++ consumers with `find_package(pernix CONFIG REQUIRED)`.
-* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF` is the default and avoids the TBB dependency. Use `AUTO` to enable the
-  header-only stdpar fallback backend only when TBB is found, or `ON` to require TBB and fail if missing. The compiled
-  library target does not currently export stdpar dispatch.
-* `-DPERNIX_ENABLE_X86_AVX2=OFF`, `-DPERNIX_ENABLE_X86_BMI2=OFF`, and
-  `-DPERNIX_ENABLE_X86_AVX512VBMI=OFF` disable individual x86 SIMD backends.
+Current backend enum values:
 
-## Usage Examples
+* `PERNIX_BACKEND_AUTO`
+* `PERNIX_BACKEND_FALLBACK`
+* `PERNIX_BACKEND_X86_AVX2`
+* `PERNIX_BACKEND_X86_BMI2`
+* `PERNIX_BACKEND_X86_AVX512_VBMI`
+* `PERNIX_BACKEND_ARM64_NEON`
+* `PERNIX_BACKEND_ARM64_SVE`
+* `PERNIX_BACKEND_FALLBACK_STDPAR`
+* `PERNIX_BACKEND_FALLBACK_SIMD`
 
-### C++ API
+x86 SIMD kernels are compiled with per-source ISA flags when enabled. Generic dispatch and fallback code are built for the
+baseline target. ARM decompression paths exist, but ARM compression is incomplete/stubbed. The stdpar fallback is currently
+a header-only target feature, disabled by default, and the compiled library target does not export stdpar dispatch.
+
+## C++ Example
 
 ```cpp
 #include <pernix/pernix.hpp>
@@ -133,8 +138,8 @@ Optional build flags:
 
 int main() {
     constexpr u8 bit_width = 16;
-    constexpr u32 block_size = 64;
-    constexpr std::size_t elements = (block_size * 8U) / bit_width;
+    constexpr u32 block_size = pernix::compressed_block_size();
+    constexpr std::size_t elements = pernix::elements_per_block(bit_width);
 
     std::array<float, elements> input{};
     for (std::size_t i = 0; i < input.size(); ++i) {
@@ -145,6 +150,7 @@ int main() {
     for (float value : input) {
         bmax = std::max(bmax, std::abs(value));
     }
+
     float scale = 0.0f;
     float inverse_scale = 0.0f;
     if (pernix::decompression_scale_from_bmax(bmax, bit_width, scale) != PERNIX_STATUS_OK ||
@@ -157,17 +163,16 @@ int main() {
 
     if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, inverse_scale,
                                compressed) != PERNIX_STATUS_OK) {
-        return 1;
+        return 2;
     }
     if (pernix::decompress_block(pernix::Backend::Fallback, bit_width, block_size, compressed, scale,
                                  restored) != PERNIX_STATUS_OK) {
-        return 1;
+        return 3;
     }
-    return 0;
 }
 ```
 
-### C ABI
+## C Example
 
 ```c
 #include <pernix/pernix.h>
@@ -194,22 +199,99 @@ int main(void) {
 
     if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, inverse_scale,
                                   compressed) != PERNIX_STATUS_OK) {
-        return 1;
+        return 2;
     }
     if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, scale, restored,
                                     true) != PERNIX_STATUS_OK) {
-        return 1;
+        return 3;
     }
-    return 0;
 }
 ```
 
-### Fortran
+Complete examples are in `examples/cpp`, `examples/c`, and `examples/fortran`.
 
-Fortran bindings call the same C ABI symbols. Enable them with `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON`. A minimal
-round-trip program is provided in `bindings/fortran/main.f90`, and a standalone example is in
-`examples/fortran/roundtrip.f90`.
+## Fortran
 
-## Benchmarking
+Fortran bindings are optional. Enable them with:
 
-A benchmark framework for PERNIX can be found at https://github.com/pc2/pernix-benchmark.
+```bash
+cmake -S . -B build -DPERNIX_ENABLE_FORTRAN_BINDINGS=ON
+```
+
+The modules in `bindings/fortran/src` bind directly to the C ABI names and currently expose f32 and f64 compression and
+decompression entry points. The bindings do not yet install Fortran module files as a packaged Fortran SDK; they are meant
+for in-tree builds and examples.
+
+## Building
+
+Release build:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -j12
+```
+
+Common options:
+
+* `-DBUILD_SHARED_LIBS=OFF`: build a static library instead of the default shared library
+* `-DPERNIX_ENABLE_TESTS=ON`: build tests
+* `-DPERNIX_ENABLE_EXAMPLES=ON`: build examples
+* `-DPERNIX_ENABLE_INSTALL=ON`: install library, headers, CMake package files, and pkg-config metadata
+* `-DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON`: add a CTest that installs PERNIX and builds C/C++ consumers
+* `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON`: build Fortran bindings and Fortran example/test
+* `-DPERNIX_ENABLE_X86_AVX2=OFF`, `-DPERNIX_ENABLE_X86_BMI2=OFF`,
+  `-DPERNIX_ENABLE_X86_AVX512VBMI=OFF`: disable specific x86 backends
+* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF|AUTO|ON`: control the header-only stdpar fallback and TBB dependency
+
+Install:
+
+```bash
+cmake --install build --prefix /path/to/prefix --config Release
+```
+
+CMake consumers can use:
+
+```cmake
+find_package(pernix CONFIG REQUIRED)
+target_link_libraries(my_target PRIVATE pernix::pernix)
+```
+
+## Testing
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPERNIX_ENABLE_TESTS=ON -DPERNIX_ENABLE_EXAMPLES=ON
+cmake --build build --config Release -j12
+ctest --test-dir build --output-on-failure
+```
+
+Examples are built when `PERNIX_ENABLE_EXAMPLES=ON`:
+
+```bash
+./build/examples/pernix_example_cpp
+./build/examples/pernix_example_c
+```
+
+If Fortran bindings are enabled:
+
+```bash
+./build/examples/pernix_example_fortran
+```
+
+## Limitations
+
+* Public documentation is centered on fixed 64-byte blocks; larger accepted block sizes are compatibility/internal paths.
+* Input values should be finite and within the intended quantization range for portable cross-backend behavior. The scalar
+  fallback clamps NaN, infinity, and out-of-range scaled values, but that is not yet specified as a cross-backend policy.
+* Scale must be positive and finite.
+* ARM64 compression backends are incomplete/stubbed.
+* `PERNIX_BACKEND_FALLBACK_STDPAR` is not exported by the compiled library target.
+* Fortran bindings are buildable in-tree but not yet packaged for installation.
+* The packed format is intended to be stable for a given bit width and sign mode, but PERNIX is still pre-1.0.
+
+## Performance Notes
+
+Decompression is the performance-sensitive path. Prefer `PERNIX_BACKEND_AUTO` for normal use so PERNIX can select an
+available optimized backend. Use `PERNIX_BACKEND_FALLBACK` when deterministic portable fallback behavior is more important
+than backend selection.
+
+A separate benchmark framework exists at <https://github.com/pc2/pernix-benchmark>.

@@ -66,8 +66,13 @@ pernix_status compute_scale(const FloatT bmax, const u8 bit_width, FloatT& scale
 }
 
 template <typename FloatT>
-FloatT tolerance_for_scale(const FloatT scale) {
-    return (abs_value(scale) * static_cast<FloatT>(0.55)) + (std::numeric_limits<FloatT>::epsilon() * static_cast<FloatT>(64));
+FloatT tolerance_for_value(const FloatT input, const FloatT scale) {
+    // Quantization contributes half a step in exact arithmetic. Reciprocal scaling and
+    // dequantization add magnitude-dependent rounding error, which is visible for f32
+    // inputs whose magnitude approaches the number of exactly representable integers.
+    const FloatT epsilon = std::numeric_limits<FloatT>::epsilon();
+    return (abs_value(scale) * static_cast<FloatT>(0.55)) +
+           (epsilon * ((abs_value(input) * static_cast<FloatT>(2)) + static_cast<FloatT>(64)));
 }
 
 template <typename FloatT>
@@ -134,8 +139,8 @@ std::vector<FloatT> make_dataset(const Pattern pattern, const u8 bit_width, cons
 template <typename FloatT>
 void expect_near_input(const std::vector<FloatT>& input, const std::vector<FloatT>& restored, const FloatT scale) {
     ASSERT_EQ(restored.size(), input.size());
-    const FloatT tolerance = tolerance_for_scale(scale);
     for (usize i = 0; i < input.size(); ++i) {
+        const FloatT tolerance = tolerance_for_value(input[i], scale);
         ASSERT_NEAR(restored[i], input[i], tolerance) << "element=" << i << ", scale=" << scale;
     }
 }

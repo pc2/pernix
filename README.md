@@ -228,7 +228,7 @@ Release build:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release -j12
+cmake --build build --config Release -j"$(nproc)"
 ```
 
 Common options:
@@ -260,7 +260,7 @@ target_link_libraries(my_target PRIVATE pernix::pernix)
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPERNIX_ENABLE_TESTS=ON -DPERNIX_ENABLE_EXAMPLES=ON
-cmake --build build --config Release -j12
+cmake --build build --config Release -j"$(nproc)"
 ctest --test-dir build --output-on-failure
 ```
 

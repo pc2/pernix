@@ -22,8 +22,8 @@ else ()
 endif ()
 
 target_sources(pernix PRIVATE ${PERNIX_GENERIC_SOURCE_FILES})
-target_compile_features(pernix PUBLIC cxx_std_23)
-target_compile_features(pernix_header_only INTERFACE cxx_std_23)
+target_compile_features(pernix PUBLIC cxx_std_20)
+target_compile_features(pernix_header_only INTERFACE cxx_std_20)
 target_compile_options(pernix PRIVATE ${PERNIX_PRIVATE_COMPILE_OPTIONS})
 
 set_target_properties(pernix PROPERTIES

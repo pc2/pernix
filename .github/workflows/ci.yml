@@ -42,7 +42,7 @@ jobs:
           sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++ clang
 
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
           key: ccache-${{ runner.os }}-${{ matrix.compiler }}-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
@@ -76,6 +76,60 @@ jobs:
           ./build/examples/pernix_example_cpp
           ./build/examples/pernix_example_c
 
+  arm64-release:
+    name: arm64 release
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++
+
+      - name: Show runner CPU
+        run: |
+          uname -m
+          lscpu
+          grep -m1 Features /proc/cpuinfo || true
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: /home/runner/.cache/ccache
+          key: ccache-${{ runner.os }}-arm64-gcc-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-arm64-gcc-${{ github.job }}-
+            ccache-${{ runner.os }}-arm64-gcc-
+            ccache-${{ runner.os }}-arm64-
+            ccache-${{ runner.os }}-
+
+      - name: Configure
+        run: |
+          cmake -S . -B build-arm64 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DPERNIX_ENABLE_TESTS=ON \
+            -DPERNIX_ENABLE_EXAMPLES=ON \
+            -DPERNIX_ENABLE_INSTALL=ON \
+            -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON \
+            -DPERNIX_ENABLE_FALLBACK_STDPAR=OFF \
+            -DPERNIX_TEST_BLOCK_SIZES=64
+
+      - name: Build
+        run: cmake --build build-arm64 --config Release -j"$(nproc)"
+
+      - name: Test
+        run: ctest --test-dir build-arm64 --output-on-failure
+
+      - name: Run examples
+        run: |
+          ./build-arm64/examples/pernix_example_cpp
+          ./build-arm64/examples/pernix_example_c
+
   fallback-only:
     name: fallback-only release
     runs-on: ubuntu-latest
@@ -90,7 +144,7 @@ jobs:
           sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++
 
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
           key: ccache-${{ runner.os }}-gcc-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
@@ -142,7 +196,7 @@ jobs:
           sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++
 
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
           key: ccache-${{ runner.os }}-gcc-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
@@ -209,7 +263,7 @@ jobs:
           sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++ gfortran
 
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
           key: ccache-${{ runner.os }}-gfortran-${{ github.job }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}

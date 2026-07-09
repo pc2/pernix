@@ -43,38 +43,6 @@ if (PERNIX_ENABLE_INSTALL_CONSUMER_TESTS AND PERNIX_ENABLE_TESTS AND NOT PERNIX_
     message(FATAL_ERROR "PERNIX_ENABLE_INSTALL_CONSUMER_TESTS requires PERNIX_ENABLE_INSTALL=ON")
 endif ()
 
-#[===[
-set(PERNIX_BUNDLE_SIMDE_FOR_INSTALL OFF)
-if (PERNIX_USE_SIMDE)
-    if (PERNIX_SIMDE_PROVIDER STREQUAL "AUTO" OR PERNIX_SIMDE_PROVIDER STREQUAL "PACKAGE")
-        find_package(simde CONFIG QUIET)
-    endif ()
-
-    if (NOT TARGET simde::simde AND (PERNIX_SIMDE_PROVIDER STREQUAL "AUTO" OR PERNIX_SIMDE_PROVIDER STREQUAL "FETCH"))
-        include(FetchContent)
-        set(SIMDE_TEST_CMAKE_PACKAGING OFF CACHE BOOL "Test SIMDe CMake packaging" FORCE)
-        FetchContent_Declare(
-                simde
-                GIT_REPOSITORY https://github.com/simd-everywhere/simde.git
-                GIT_TAG f3e8262173b7089db9a9d57a9ecef8dd07ad9c97
-                GIT_PROGRESS TRUE
-                EXCLUDE_FROM_ALL
-        )
-        FetchContent_MakeAvailable(simde)
-        set(PERNIX_BUNDLE_SIMDE_FOR_INSTALL ON)
-    endif ()
-
-    if (NOT TARGET simde::simde AND DEFINED simde_SOURCE_DIR AND EXISTS "${simde_SOURCE_DIR}/simde")
-        add_library(simde::simde INTERFACE IMPORTED GLOBAL)
-        target_include_directories(simde::simde INTERFACE "${simde_SOURCE_DIR}")
-    endif ()
-
-    if (NOT TARGET simde::simde)
-        message(FATAL_ERROR "PERNIX_USE_SIMDE is enabled, but simde::simde was not found. Set PERNIX_SIMDE_PROVIDER=FETCH or install SIMDe's CMake package.")
-    endif ()
-endif ()
-]===]
-
 include(CTest)
 include(GitVersion)
 get_git_version(GIT_VERSION)

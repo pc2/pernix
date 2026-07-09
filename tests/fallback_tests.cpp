@@ -835,7 +835,7 @@ TEST(ErrorCodeTest, FallbackSimdReturnsUnsupportedImplementationByDefault) {
     EXPECT_EQ(st, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
 }
 
-TEST(ErrorCodeTest, UnsupportedImplementationReturnsError) {
+TEST(ErrorCodeTest, ExplicitUnavailableBackendReturnsError) {
     constexpr u32 BS = 64;
     constexpr u8 BW = 8;
 
@@ -877,5 +877,7 @@ TEST(ErrorCodeTest, UnsupportedImplementationReturnsError) {
     }
 
     const auto st = pernix_compress_block_f32(backend, BW, BS, src, 1.0f, dst);
-    EXPECT_EQ(st, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
+    // A backend can be absent from the build, or compiled but unsupported by this CPU.
+    EXPECT_TRUE(st == PERNIX_STATUS_UNSUPPORTED_BACKEND ||
+                st == PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
 }

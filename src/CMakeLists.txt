@@ -72,19 +72,24 @@ endif ()
 
 set(PERNIX_BUILD_FALLBACK_STDPAR OFF)
 if (NOT PERNIX_ENABLE_FALLBACK_STDPAR STREQUAL "OFF")
-    if (PERNIX_ENABLE_FALLBACK_STDPAR STREQUAL "ON")
-        find_package(TBB REQUIRED)
-    else ()
-        find_package(TBB QUIET)
-    endif ()
+    set(PERNIX_BUILD_FALLBACK_STDPAR ON)
+    find_package(TBB QUIET)
+
+    target_sources(pernix PRIVATE
+            fallback/stdpar_compression.cpp
+            fallback/stdpar_decompression.cpp
+    )
+    target_compile_definitions(pernix PUBLIC PERNIX_BUILD_FALLBACK_STDPAR=1)
+    target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_STDPAR=1)
 
     if (TARGET TBB::tbb)
-        set(PERNIX_BUILD_FALLBACK_STDPAR ON)
-        target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_STDPAR=1)
+        target_compile_definitions(pernix PUBLIC PERNIX_STDPAR_USE_PARALLEL_POLICY=1)
+        target_compile_definitions(pernix_header_only INTERFACE PERNIX_STDPAR_USE_PARALLEL_POLICY=1)
+        target_link_libraries(pernix PUBLIC TBB::tbb)
         target_link_libraries(pernix_header_only INTERFACE TBB::tbb)
-        message(STATUS "PERNIX header-only fallback stdpar backend enabled (TBB found)")
-    elseif (PERNIX_ENABLE_FALLBACK_STDPAR STREQUAL "AUTO")
-        message(STATUS "PERNIX header-only fallback stdpar backend disabled (TBB not found; set PERNIX_ENABLE_FALLBACK_STDPAR=ON to require it)")
+        message(STATUS "PERNIX fallback stdpar backend enabled with parallel policy (TBB found)")
+    else ()
+        message(STATUS "PERNIX fallback stdpar backend enabled without TBB; stdpar will execute sequentially")
     endif ()
 endif ()
 

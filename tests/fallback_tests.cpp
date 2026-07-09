@@ -51,6 +51,65 @@ void expect_backend_decompressed_block_matches_source(FixtureT& fixture, const p
         expectDecompressedBlockNearSource(fixture, decompressed[b], b);
     }
 }
+
+template <typename FixtureT, typename CompressFn>
+void expect_backend_compress_blocks_matches_scalar(FixtureT& fixture, CompressFn compress_fn, const pernix_backend backend) {
+    using ScaleType = std::remove_cvref_t<decltype(fixture.testSet.getScales()[0])>;
+
+    const u32 blocks              = fixture.testSet.numberOfBlocks;
+    const u32 elements_per_block  = fixture.testSet.elementsPerBlock;
+    const u32 total_elements      = blocks * elements_per_block;
+    const usize compressed_bytes  = static_cast<usize>(blocks) * FixtureT::BlockSize;
+    std::vector<ScaleType> input(total_elements);
+
+    for (u32 block = 0; block < blocks; ++block) {
+        std::copy_n(fixture.testSet.getDecompressedData()[block].data(), elements_per_block,
+                    input.data() + static_cast<usize>(block) * elements_per_block);
+    }
+
+    const ScaleType scale_inv = ScaleType{1} / fixture.testSet.getScales()[0];
+    std::vector<u8> scalar_output(compressed_bytes);
+    std::vector<u8> stdpar_output(compressed_bytes);
+
+    auto status = compress_fn(PERNIX_BACKEND_FALLBACK, FixtureT::BitWidth, FixtureT::BlockSize, input.data(), scale_inv, scalar_output.data(),
+                              blocks);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+
+    status = compress_fn(backend, FixtureT::BitWidth, FixtureT::BlockSize, input.data(), scale_inv, stdpar_output.data(), blocks);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+
+    EXPECT_EQ(stdpar_output, scalar_output);
+}
+
+template <typename FixtureT, typename DecompressFn>
+void expect_backend_decompress_blocks_matches_scalar(FixtureT& fixture, DecompressFn decompress_fn, const pernix_backend backend,
+                                                     const bool sign_values = true) {
+    using ValueType = std::remove_cvref_t<decltype(fixture.testSet.getDecompressedData()[0][0])>;
+
+    const u32 blocks             = fixture.testSet.numberOfBlocks;
+    const u32 elements_per_block = fixture.testSet.elementsPerBlock;
+    const u32 total_elements     = blocks * elements_per_block;
+    std::vector<u8> compressed(static_cast<usize>(blocks) * FixtureT::BlockSize);
+
+    for (u32 block = 0; block < blocks; ++block) {
+        std::copy_n(fixture.testSet.getCompressedData()[block].data(), FixtureT::BlockSize,
+                    compressed.data() + static_cast<usize>(block) * FixtureT::BlockSize);
+    }
+
+    std::vector<ValueType> scalar_output(total_elements);
+    std::vector<ValueType> stdpar_output(total_elements);
+    const auto scale = fixture.testSet.getScales()[0];
+
+    auto status = decompress_fn(PERNIX_BACKEND_FALLBACK, FixtureT::BitWidth, FixtureT::BlockSize, compressed.data(), scale,
+                                scalar_output.data(), blocks, sign_values);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+
+    status = decompress_fn(backend, FixtureT::BitWidth, FixtureT::BlockSize, compressed.data(), scale, stdpar_output.data(), blocks,
+                           sign_values);
+    ASSERT_EQ(status, PERNIX_STATUS_OK);
+
+    EXPECT_EQ(stdpar_output, scalar_output);
+}
 }  // namespace
 
 // ---------------------------------------------------------------------------
@@ -144,6 +203,22 @@ TYPED_TEST(DecompressionTest, FallbackStdparDecompressBlock) {
 
 TYPED_TEST(DecompressionTest64, FallbackStdparDecompressBlock) {
     expect_backend_decompressed_block_matches_source(*this, PERNIX_BACKEND_FALLBACK_STDPAR, &pernix_decompress_block_f64);
+}
+
+TYPED_TEST(CompressionTest, FallbackStdparCompressBlocksMatchesScalar) {
+    expect_backend_compress_blocks_matches_scalar(*this, &pernix_compress_blocks_f32, PERNIX_BACKEND_FALLBACK_STDPAR);
+}
+
+TYPED_TEST(CompressionTest64, FallbackStdparCompressBlocksMatchesScalar) {
+    expect_backend_compress_blocks_matches_scalar(*this, &pernix_compress_blocks_f64, PERNIX_BACKEND_FALLBACK_STDPAR);
+}
+
+TYPED_TEST(DecompressionTest, FallbackStdparDecompressBlocksMatchesScalar) {
+    expect_backend_decompress_blocks_matches_scalar(*this, &pernix_decompress_blocks_f32, PERNIX_BACKEND_FALLBACK_STDPAR);
+}
+
+TYPED_TEST(DecompressionTest64, FallbackStdparDecompressBlocksMatchesScalar) {
+    expect_backend_decompress_blocks_matches_scalar(*this, &pernix_decompress_blocks_f64, PERNIX_BACKEND_FALLBACK_STDPAR);
 }
 #endif
 
@@ -546,9 +621,14 @@ TEST(FallbackStdparEdgeTest, SignExtensionIsWellDefinedForNegativeValues) {
     constexpr u32 BS = 64;
     const std::array<u8, BS> input{0x08};
 
+    std::array<f32, (BS * 8) / 4> scalar_output{};
     std::array<f32, (BS * 8) / 4> output{};
-    const auto st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, 4, BS, input.data(), 1.0f, output.data(), true);
+    auto st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, input.data(), 1.0f, scalar_output.data(), true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, 4, BS, input.data(), 1.0f, output.data(), true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+    EXPECT_EQ(output, scalar_output);
     EXPECT_EQ(output[0], -8.0f);
 }
 
@@ -576,18 +656,117 @@ TEST(FallbackStdparEdgeTest, ClampsNonFiniteAndOutOfRangeBeforeNarrowing) {
     input[1] = -std::numeric_limits<f32>::infinity();
     input[2] = std::numeric_limits<f32>::quiet_NaN();
 
-    std::array<u8, BS> compressed{};
-    std::array<f32, EPB> restored{};
+    std::array<u8, BS> scalar_compressed{};
+    std::array<u8, BS> stdpar_compressed{};
+    std::array<f32, EPB> scalar_restored{};
+    std::array<f32, EPB> stdpar_restored{};
 
-    auto st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 1.0f, compressed.data());
+    auto st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input.data(), 1.0f, scalar_compressed.data());
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0f, restored.data(), true);
+    st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 1.0f, stdpar_compressed.data());
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    EXPECT_EQ(restored[0], 7.0f);
-    EXPECT_EQ(restored[1], -8.0f);
-    EXPECT_EQ(restored[2], 0.0f);
+    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, scalar_compressed.data(), 1.0f, scalar_restored.data(), true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, stdpar_compressed.data(), 1.0f, stdpar_restored.data(), true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    EXPECT_EQ(stdpar_compressed, scalar_compressed);
+    EXPECT_EQ(stdpar_restored, scalar_restored);
+    EXPECT_EQ(stdpar_restored[0], 7.0f);
+    EXPECT_EQ(stdpar_restored[1], -8.0f);
+    EXPECT_EQ(stdpar_restored[2], 0.0f);
+}
+
+TEST(FallbackStdparEdgeTest, SignValuesFalseMatchesScalar) {
+    constexpr u32 BS = 64;
+    const std::array<u8, BS> input{0x0F};
+
+    std::array<f32, (BS * 8) / 4> scalar_output{};
+    std::array<f32, (BS * 8) / 4> stdpar_output{};
+
+    auto st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, input.data(), 1.0f, scalar_output.data(), false);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, 4, BS, input.data(), 1.0f, stdpar_output.data(), false);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    EXPECT_EQ(stdpar_output, scalar_output);
+    EXPECT_EQ(stdpar_output[0], 15.0f);
+}
+
+TEST(FallbackStdparEdgeTest, RoundingAndClampingMatchScalar) {
+    constexpr u32 BS  = 64;
+    constexpr u32 BW  = 4;
+    constexpr u32 EPB = (BS * 8) / BW;
+
+    std::array<f32, EPB> input{};
+    input[0] = 0.49f;
+    input[1] = 0.50f;
+    input[2] = 1.49f;
+    input[3] = 1.50f;
+    input[4] = 7.49f;
+    input[5] = 7.50f;
+    input[6] = -7.49f;
+    input[7] = -7.50f;
+    input[8] = 99.0f;
+    input[9] = -99.0f;
+
+    std::array<u8, BS> scalar_compressed{};
+    std::array<u8, BS> stdpar_compressed{};
+    std::array<f32, EPB> scalar_restored{};
+    std::array<f32, EPB> stdpar_restored{};
+
+    auto st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input.data(), 1.0f, scalar_compressed.data());
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 1.0f, stdpar_compressed.data());
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, scalar_compressed.data(), 1.0f, scalar_restored.data(), true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, stdpar_compressed.data(), 1.0f, stdpar_restored.data(), true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    EXPECT_EQ(stdpar_compressed, scalar_compressed);
+    EXPECT_EQ(stdpar_restored, scalar_restored);
+}
+
+TEST(FallbackStdparEdgeTest, RepeatedExecutionIsDeterministic) {
+    constexpr u32 BS     = 64;
+    constexpr u32 BW     = 12;
+    constexpr u32 blocks = 3;
+    constexpr u32 EPB    = (BS * 8) / BW;
+
+    std::array<f32, blocks * EPB> input{};
+    for (u32 i = 0; i < input.size(); ++i) {
+        input[i] = static_cast<f32>((static_cast<i32>(i % 23U) - 11) * 0.25f);
+    }
+
+    std::array<u8, BS * blocks> first_compressed{};
+    std::array<u8, BS * blocks> second_compressed{};
+    std::array<f32, blocks * EPB> first_restored{};
+    std::array<f32, blocks * EPB> second_restored{};
+
+    auto st = pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 4.0f, first_compressed.data(), blocks);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 4.0f, second_compressed.data(), blocks);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, first_compressed.data(), 0.25f, first_restored.data(), blocks,
+                                      true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    st = pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, second_compressed.data(), 0.25f,
+                                      second_restored.data(), blocks, true);
+    ASSERT_EQ(st, PERNIX_STATUS_OK);
+
+    EXPECT_EQ(second_compressed, first_compressed);
+    EXPECT_EQ(second_restored, first_restored);
 }
 
 TEST(FallbackStdparEdgeTest, TailWidthCompressMatchesScalarF32) {
@@ -764,7 +943,7 @@ TEST(ErrorCodeTest, FallbackAliasMatchesScalar) {
     EXPECT_EQ(PERNIX_BACKEND_FALLBACK, PERNIX_BACKEND_FALLBACK_SCALAR);
 }
 
-TEST(ErrorCodeTest, FallbackStdparReturnsUnsupportedImplementationByDefault) {
+TEST(ErrorCodeTest, FallbackStdparAvailabilityMatchesBuildConfiguration) {
     constexpr u32 BS = 64;
     constexpr u8 BW  = 8;
 

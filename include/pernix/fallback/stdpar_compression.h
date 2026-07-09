@@ -1,112 +1,81 @@
 #ifndef PERNIX_FALLBACK_STDPAR_COMPRESSION_H
 #define PERNIX_FALLBACK_STDPAR_COMPRESSION_H
 
+#include <pernix/fallback/common.h>
+#include <pernix/fallback/scalar_compression.h>
 #include <pernix/fallback/stdpar_common.h>
-#include <pernix/pernix.h>
 
-#include <cstring>
-#include <execution>
+#include <algorithm>
+#include <limits>
 #include <span>
 #include <type_traits>
 
 namespace pernix {
-namespace internal {
-template <u8 BIT_WIDTH, u8 GROUP_SIZE, typename ScaleType>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && GROUP_SIZE >= 1 && GROUP_SIZE <= 8 && std::is_floating_point_v<ScaleType>)
-__always_inline stdpar_buffer<u32, GROUP_SIZE> quantize_epi32_group_fallback_stdpar(const std::span<const ScaleType> input,
-                                                                                    const ScaleType scale) {
-    stdpar_buffer<u32, GROUP_SIZE> output;
-
-#pragma GCC unroll GROUP_SIZE
-    for (usize i = 0; i < GROUP_SIZE; ++i) {
-        output.data[i] = quantize_stdpar_value<BIT_WIDTH>(input[i], scale);
-        ++output.size;
-    }
-
-    return output;
-}
-
-template <u8 BIT_WIDTH, u8 GROUP_SIZE>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && GROUP_SIZE >= 1 && GROUP_SIZE <= 8)
-__always_inline void pack_epi32_group_fallback_stdpar(const stdpar_buffer<u32, GROUP_SIZE>& input, const std::span<u8> destination) {
-    constexpr u32 bitmask = (u32{1} << BIT_WIDTH) - 1U;
-
-    usize idx            = 0;
-    usize bits_in_buffer = 0;
-    u64 buffer           = 0;
-
-#pragma GCC unroll GROUP_SIZE
-    for (usize i = 0; i < GROUP_SIZE; ++i) {
-        buffer |= (static_cast<u64>(input.data[i] & bitmask) << bits_in_buffer);
-        bits_in_buffer += BIT_WIDTH;
-
-        while (bits_in_buffer >= 8) {
-            destination[idx++] = static_cast<u8>(buffer & 0xFFU);
-            buffer >>= 8;
-            bits_in_buffer -= 8;
-        }
-    }
-
-    if (bits_in_buffer > 0) {
-        destination[idx] = static_cast<u8>(buffer & 0xFFU);
-    }
-}
-}  // namespace internal
-
-template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename ScaleType>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<ScaleType>)
-int compress_block_fallback_stdpar(const void* input_ptr, ScaleType scale, void* output_ptr) {
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename FloatT>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<FloatT> && BLOCK_SIZE > 0 && BLOCK_SIZE % 32 == 0)
+int compress_block_fallback_stdpar(const std::span<const FloatT> input, const FloatT scale, std::span<u8> destination) {
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8U) / BIT_WIDTH;
-    constexpr u32 full_groups        = elements_per_block / 8U;
-    constexpr u32 remainder          = elements_per_block % 8U;
+    constexpr u32 full_groups        = elements_per_block / internal::stdpar_group_size_v;
+    constexpr u32 remainder          = elements_per_block % internal::stdpar_group_size_v;
 
-    const auto* input = static_cast<const ScaleType*>(input_ptr);
-    auto* output      = static_cast<u8*>(output_ptr);
+    std::ranges::fill(destination, 0);
 
-    std::memset(output, 0, BLOCK_SIZE);
+    internal::for_each_index_stdpar(full_groups, [&](const u32 group) {
+        constexpr u32 group_size = internal::stdpar_group_size_v;
 
-    auto first = internal::counting_iterator<u32>{0};
-    std::for_each_n(std::execution::par_unseq, first, full_groups, [&](const u32 group) {
-        constexpr u8 group_size            = 8;
-        constexpr usize packed_group_bytes = internal::packed_group_bytes_v<group_size, BIT_WIDTH>;
+        const auto input_group = input.subspan(static_cast<usize>(group) * group_size, group_size);
+        auto destination_group = destination.subspan(static_cast<usize>(group) * BIT_WIDTH, BIT_WIDTH);
 
-        const auto quantized = internal::quantize_epi32_group_fallback_stdpar<BIT_WIDTH, group_size>(
-            std::span<const ScaleType>(input + static_cast<usize>(group) * group_size, group_size), scale);
-        internal::pack_epi32_group_fallback_stdpar<BIT_WIDTH, group_size>(
-            quantized, std::span<u8>(output + static_cast<usize>(group) * BIT_WIDTH, packed_group_bytes));
+        internal::quantize_and_pack_fallback<BIT_WIDTH>(input_group, scale, group_size, destination_group);
     });
 
     if constexpr (remainder != 0) {
-        constexpr u8 tail_group_size       = static_cast<u8>(remainder);
-        constexpr usize tail_input_offset  = full_groups * 8U;
+        constexpr usize tail_input_offset  = full_groups * internal::stdpar_group_size_v;
         constexpr usize tail_output_offset = full_groups * BIT_WIDTH;
-        constexpr usize tail_bytes         = internal::packed_group_bytes_v<tail_group_size, BIT_WIDTH>;
+        constexpr usize tail_bytes         = internal::packed_group_bytes_v<static_cast<u8>(remainder), BIT_WIDTH>;
 
-        const auto quantized = internal::quantize_epi32_group_fallback_stdpar<BIT_WIDTH, tail_group_size>(
-            std::span<const ScaleType>(input + tail_input_offset, tail_group_size), scale);
-        internal::pack_epi32_group_fallback_stdpar<BIT_WIDTH, tail_group_size>(quantized,
-                                                                               std::span<u8>(output + tail_output_offset, tail_bytes));
+        internal::quantize_and_pack_fallback<BIT_WIDTH>(input.subspan(tail_input_offset, remainder), scale, remainder,
+                                                        destination.subspan(tail_output_offset, tail_bytes));
     }
 
-    return PERNIX_STATUS_OK;
+    return 0;
 }
 
-template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename ScaleType>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<ScaleType>)
-int compress_blocks_fallback_stdpar(const void* input_ptr, ScaleType scale, void* output_ptr, u32 blocks) {
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename FloatT>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<FloatT> && BLOCK_SIZE > 0 && BLOCK_SIZE % 32 == 0)
+int compress_block_fallback_stdpar(const void* __restrict__ input_ptr, const FloatT scale, void* __restrict__ output_ptr) {
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8U) / BIT_WIDTH;
 
-    const auto* input = static_cast<const ScaleType*>(input_ptr);
-    auto* output      = static_cast<u8*>(output_ptr);
+    const auto input_span = std::span<const FloatT, elements_per_block>(static_cast<const FloatT*>(input_ptr), elements_per_block);
+    auto output_span      = std::span<u8, BLOCK_SIZE>(static_cast<u8*>(output_ptr), BLOCK_SIZE);
 
-    auto first = internal::counting_iterator<u32>{0};
-    std::for_each_n(std::execution::par_unseq, first, blocks, [&](const u32 block) {
-        const auto* block_input = input + (static_cast<usize>(block) * elements_per_block);
-        auto* block_output      = output + (static_cast<usize>(block) * BLOCK_SIZE);
-        static_cast<void>(compress_block_fallback_stdpar<BIT_WIDTH, BLOCK_SIZE, ScaleType>(block_input, scale, block_output));
+    return compress_block_fallback_stdpar<BIT_WIDTH, BLOCK_SIZE, FloatT>(input_span, scale, output_span);
+}
+
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename FloatT>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<FloatT> && BLOCK_SIZE > 0 && BLOCK_SIZE % 32 == 0)
+int compress_blocks_fallback_stdpar(const std::span<const FloatT> input, const FloatT scale, std::span<u8> destination, const u32 blocks) {
+    constexpr u32 elements_per_block = (BLOCK_SIZE * 8U) / BIT_WIDTH;
+
+    internal::for_each_index_stdpar(blocks, [&](const u32 block) {
+        const auto block_input = input.subspan(static_cast<usize>(block) * elements_per_block, elements_per_block);
+        auto block_output      = destination.subspan(static_cast<usize>(block) * BLOCK_SIZE, BLOCK_SIZE);
+        static_cast<void>(compress_block_fallback_stdpar<BIT_WIDTH, BLOCK_SIZE, FloatT>(block_input, scale, block_output));
     });
 
-    return PERNIX_STATUS_OK;
+    return 0;
+}
+
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename FloatT>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<FloatT> && BLOCK_SIZE > 0 && BLOCK_SIZE % 32 == 0)
+int compress_blocks_fallback_stdpar(const void* __restrict__ input_ptr, const FloatT scale, void* __restrict__ output_ptr,
+                                    const u32 blocks) {
+    constexpr u32 elements_per_block = (BLOCK_SIZE * 8U) / BIT_WIDTH;
+
+    const auto input_span = std::span<const FloatT>(static_cast<const FloatT*>(input_ptr), elements_per_block * blocks);
+    auto output_span      = std::span<u8>(static_cast<u8*>(output_ptr), static_cast<usize>(blocks) * BLOCK_SIZE);
+
+    return compress_blocks_fallback_stdpar<BIT_WIDTH, BLOCK_SIZE, FloatT>(input_span, scale, output_span, blocks);
 }
 }  // namespace pernix
 

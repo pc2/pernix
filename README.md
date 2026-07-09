@@ -123,8 +123,10 @@ Current backend enum values:
 * `PERNIX_BACKEND_FALLBACK_SIMD`
 
 x86 SIMD kernels are compiled with per-source ISA flags when enabled. Generic dispatch and fallback code are built for the
-baseline target. ARM decompression paths exist, but ARM compression is incomplete/stubbed. The stdpar fallback is currently
-a header-only target feature, disabled by default, and the compiled library target does not export stdpar dispatch.
+baseline target. ARM decompression paths exist, but ARM compression is incomplete/stubbed. The stdpar fallback is disabled
+by default. When enabled, both the compiled library and the header-only target export stdpar dispatch. If TBB is available,
+stdpar uses standard parallel execution policies; otherwise it preserves the same 8-value grouping logic while executing
+sequentially.
 
 ## C++ Example
 
@@ -241,7 +243,7 @@ Common options:
 * `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON`: build Fortran bindings and Fortran example/test
 * `-DPERNIX_ENABLE_X86_AVX2=OFF`, `-DPERNIX_ENABLE_X86_BMI2=OFF`,
   `-DPERNIX_ENABLE_X86_AVX512VBMI=OFF`: disable specific x86 backends
-* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF|AUTO|ON`: control the header-only stdpar fallback and TBB dependency
+* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF|AUTO|ON`: control the stdpar fallback backend. TBB is optional and enables parallel standard execution policies when found
 
 Install:
 

@@ -17,15 +17,13 @@ template <uint8_t BIT_WIDTH>
     return (elements * BIT_WIDTH + 7) / 8;
 }
 
-[[nodiscard]] __always_inline svuint8_t sve2_load_packed_bytes(const uint8_t* __restrict__ input,
-                                                               const uint32_t bytes) {
+[[nodiscard]] __always_inline svuint8_t sve2_load_packed_bytes(const uint8_t* __restrict__ input, const uint32_t bytes) {
     const svbool_t pg = svwhilelt_b8(uint64_t{0}, static_cast<uint64_t>(bytes));
     return svld1_u8(pg, input);
 }
 
 template <bool SIGN_VALUES>
-__always_inline void sve2_store_dequantized_i8_f32(svint8_t values, const svfloat32_t scale_v,
-                                                   float_t* __restrict__ output,
+__always_inline void sve2_store_dequantized_i8_f32(svint8_t values, const svfloat32_t scale_v, float_t* __restrict__ output,
                                                    const uint32_t count) {
     alignas(64) std::vector<int8_t> temp(svcntb());
 
@@ -52,8 +50,7 @@ __always_inline void sve2_store_dequantized_i8_f32(svint8_t values, const svfloa
 }
 
 template <bool SIGN_VALUES>
-__always_inline void sve2_store_dequantized_i8_f64(svint8_t values, const double_t scale,
-                                                   double_t* __restrict__ output,
+__always_inline void sve2_store_dequantized_i8_f64(svint8_t values, const double_t scale, double_t* __restrict__ output,
                                                    const uint32_t count) {
     std::vector<int8_t> temp(svcntb());
 
@@ -69,8 +66,7 @@ __always_inline void sve2_store_dequantized_i8_f64(svint8_t values, const double
 }
 
 template <bool SIGN_VALUES>
-__always_inline void sve2_store_dequantized_i16_f32(svint16_t values, const svfloat32_t scale_v,
-                                                    float_t* __restrict__ output,
+__always_inline void sve2_store_dequantized_i16_f32(svint16_t values, const svfloat32_t scale_v, float_t* __restrict__ output,
                                                     const uint32_t count) {
     alignas(64) std::vector<int16_t> temp(svcnth());
 
@@ -85,9 +81,8 @@ __always_inline void sve2_store_dequantized_i16_f32(svint16_t values, const svfl
             const svint32_t widened = svld1sh_s32(pg, temp.data() + offset);
             dequantized             = svmul_f32_x(pg, svcvt_f32_s32_x(pg, widened), scale_v);
         } else {
-            const svuint32_t widened =
-                svld1uh_u32(pg, reinterpret_cast<const uint16_t*>(temp.data() + offset));
-            dequantized = svmul_f32_x(pg, svcvt_f32_u32_x(pg, widened), scale_v);
+            const svuint32_t widened = svld1uh_u32(pg, reinterpret_cast<const uint16_t*>(temp.data() + offset));
+            dequantized              = svmul_f32_x(pg, svcvt_f32_u32_x(pg, widened), scale_v);
         }
 
         svst1_f32(pg, output + offset, dequantized);
@@ -97,8 +92,7 @@ __always_inline void sve2_store_dequantized_i16_f32(svint16_t values, const svfl
 }
 
 template <bool SIGN_VALUES>
-__always_inline void sve2_store_dequantized_i16_f64(svint16_t values, const double_t scale,
-                                                    double_t* __restrict__ output,
+__always_inline void sve2_store_dequantized_i16_f64(svint16_t values, const double_t scale, double_t* __restrict__ output,
                                                     const uint32_t count) {
     std::vector<int16_t> temp(svcnth());
 
@@ -114,8 +108,7 @@ __always_inline void sve2_store_dequantized_i16_f64(svint16_t values, const doub
 }
 
 template <bool SIGN_VALUES>
-__always_inline void sve2_store_dequantized_i32_f32(svint32_t values, const svfloat32_t scale_v,
-                                                    float_t* __restrict__ output,
+__always_inline void sve2_store_dequantized_i32_f32(svint32_t values, const svfloat32_t scale_v, float_t* __restrict__ output,
                                                     const uint32_t count) {
     const svbool_t pg = svwhilelt_b32(uint64_t{0}, static_cast<uint64_t>(count));
 
@@ -130,8 +123,7 @@ __always_inline void sve2_store_dequantized_i32_f32(svint32_t values, const svfl
 }
 
 template <bool SIGN_VALUES>
-__always_inline void sve2_store_dequantized_i32_f64(svint32_t values, const double_t scale,
-                                                    double_t* __restrict__ output,
+__always_inline void sve2_store_dequantized_i32_f64(svint32_t values, const double_t scale, double_t* __restrict__ output,
                                                     const uint32_t count) {
     std::vector<int32_t> temp(svcntw());
 
@@ -148,8 +140,7 @@ __always_inline void sve2_store_dequantized_i32_f64(svint32_t values, const doub
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
-__always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input, const float_t scale,
-                                               float_t* __restrict__ output) {
+__always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const auto lanes            = static_cast<uint32_t>(svcntb());
@@ -175,14 +166,12 @@ __always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8_t* chunk_input = input + input_bit_offset / 8;
 
         const svuint8_t source  = sve2_load_packed_bytes(chunk_input, bytes);
-        const svint8_t unpacked = sve2_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES
-            >
-            (source, permute, shift, spill_permute, spill_shift);
+        const svint8_t unpacked = sve2_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(source, permute, shift, spill_permute, spill_shift);
 
         sve2_store_dequantized_i8_f32<SIGN_VALUES>(unpacked, scale_v, output + processed_elements, count);
 
         processed_elements += count;
-        input_bit_offset   += count * BIT_WIDTH;
+        input_bit_offset += count * BIT_WIDTH;
     }
 
     return 0;
@@ -190,8 +179,7 @@ __always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
-__always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ input, const float_t scale,
-                                                float_t* __restrict__ output) {
+__always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const auto lanes            = static_cast<uint32_t>(svcnth());
@@ -216,16 +204,14 @@ __always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ inpu
         const uint32_t bytes       = packed_bytes<BIT_WIDTH>(count);
         const uint8_t* chunk_input = input + input_bit_offset / 8;
 
-        const svuint8_t source   = sve2_load_packed_bytes(chunk_input, bytes);
+        const svuint8_t source = sve2_load_packed_bytes(chunk_input, bytes);
         const svint16_t unpacked =
-            sve2_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES
-            >
-            (svreinterpret_u16_u8(source), permute, shift, spill_permute, spill_shift);
+            sve2_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(svreinterpret_u16_u8(source), permute, shift, spill_permute, spill_shift);
 
         sve2_store_dequantized_i16_f32<SIGN_VALUES>(unpacked, scale_v, output + processed_elements, count);
 
         processed_elements += count;
-        input_bit_offset   += count * BIT_WIDTH;
+        input_bit_offset += count * BIT_WIDTH;
     }
 
     return 0;
@@ -233,8 +219,7 @@ __always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ inpu
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-__always_inline int sve2_decompress_block_17to24(const uint8_t* __restrict__ input, const float_t scale,
-                                                 float_t* __restrict__ output) {
+__always_inline int sve2_decompress_block_17to24(const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const auto lanes            = static_cast<uint32_t>(svcntw());
@@ -261,7 +246,7 @@ __always_inline int sve2_decompress_block_17to24(const uint8_t* __restrict__ inp
         sve2_store_dequantized_i32_f32<SIGN_VALUES>(unpacked, scale_v, output + processed_elements, count);
 
         processed_elements += count;
-        input_bit_offset   += count * BIT_WIDTH;
+        input_bit_offset += count * BIT_WIDTH;
     }
 
     return 0;
@@ -269,8 +254,7 @@ __always_inline int sve2_decompress_block_17to24(const uint8_t* __restrict__ inp
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
-__always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input, const double_t scale,
-                                               double_t* __restrict__ output) {
+__always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const auto lanes            = static_cast<uint32_t>(svcntb());
@@ -294,14 +278,12 @@ __always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8_t* chunk_input = input + input_bit_offset / 8;
 
         const svuint8_t source  = sve2_load_packed_bytes(chunk_input, bytes);
-        const svint8_t unpacked = sve2_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES
-            >
-            (source, permute, shift, spill_permute, spill_shift);
+        const svint8_t unpacked = sve2_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(source, permute, shift, spill_permute, spill_shift);
 
         sve2_store_dequantized_i8_f64<SIGN_VALUES>(unpacked, scale, output + processed_elements, count);
 
         processed_elements += count;
-        input_bit_offset   += count * BIT_WIDTH;
+        input_bit_offset += count * BIT_WIDTH;
     }
 
     return 0;
@@ -309,8 +291,7 @@ __always_inline int sve2_decompress_block_1to8(const uint8_t* __restrict__ input
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16) && (BLOCK_SIZE % 32 == 0)
-__always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ input, const double_t scale,
-                                                double_t* __restrict__ output) {
+__always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const auto lanes            = static_cast<uint32_t>(svcnth());
@@ -333,16 +314,14 @@ __always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ inpu
         const uint32_t bytes       = packed_bytes<BIT_WIDTH>(count);
         const uint8_t* chunk_input = input + input_bit_offset / 8;
 
-        const svuint8_t source   = sve2_load_packed_bytes(chunk_input, bytes);
+        const svuint8_t source = sve2_load_packed_bytes(chunk_input, bytes);
         const svint16_t unpacked =
-            sve2_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES
-            >
-            (svreinterpret_u16_u8(source), permute, shift, spill_permute, spill_shift);
+            sve2_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(svreinterpret_u16_u8(source), permute, shift, spill_permute, spill_shift);
 
         sve2_store_dequantized_i16_f64<SIGN_VALUES>(unpacked, scale, output + processed_elements, count);
 
         processed_elements += count;
-        input_bit_offset   += count * BIT_WIDTH;
+        input_bit_offset += count * BIT_WIDTH;
     }
 
     return 0;
@@ -350,8 +329,7 @@ __always_inline int sve2_decompress_block_9to16(const uint8_t* __restrict__ inpu
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-__always_inline int sve2_decompress_block_17to24(const uint8_t* __restrict__ input, const double_t scale,
-                                                 double_t* __restrict__ output) {
+__always_inline int sve2_decompress_block_17to24(const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
     constexpr uint32_t elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const auto lanes            = static_cast<uint32_t>(svcntw());
@@ -376,12 +354,12 @@ __always_inline int sve2_decompress_block_17to24(const uint8_t* __restrict__ inp
         sve2_store_dequantized_i32_f64<SIGN_VALUES>(unpacked, scale, output + processed_elements, count);
 
         processed_elements += count;
-        input_bit_offset   += count * BIT_WIDTH;
+        input_bit_offset += count * BIT_WIDTH;
     }
 
     return 0;
 }
-} // namespace internal
+}  // namespace internal
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
@@ -399,8 +377,7 @@ int sve2_decompress_block(const void* __restrict__ input, const float_t scale, v
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int sve2_decompress_block(const void* __restrict__ input, const double_t scale,
-                          void* __restrict__ output) {
+int sve2_decompress_block(const void* __restrict__ input, const double_t scale, void* __restrict__ output) {
     const auto* typed_input = static_cast<const uint8_t*>(input);
     auto* typed_output      = static_cast<double_t*>(output);
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
@@ -414,8 +391,7 @@ int sve2_decompress_block(const void* __restrict__ input, const double_t scale,
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int sve2_decompress_blocks(const void* __restrict__ input, const float_t scale, void* __restrict__ output,
-                           const uint32_t blocks) {
+int sve2_decompress_blocks(const void* __restrict__ input, const float_t scale, void* __restrict__ output, const uint32_t blocks) {
     const auto* typed_input    = static_cast<const uint8_t*>(input);
     auto* typed_output         = static_cast<float_t*>(output);
     const uint8_t* block_input = typed_input;
@@ -423,7 +399,7 @@ int sve2_decompress_blocks(const void* __restrict__ input, const float_t scale, 
 
     for (uint32_t block = 0; block < blocks; ++block) {
         sve2_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input  += BLOCK_SIZE;
+        block_input += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
@@ -432,8 +408,7 @@ int sve2_decompress_blocks(const void* __restrict__ input, const float_t scale, 
 
 template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true, uint32_t BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int sve2_decompress_blocks(const void* __restrict__ input, const double_t scale, void* __restrict__ output,
-                           const uint32_t blocks) {
+int sve2_decompress_blocks(const void* __restrict__ input, const double_t scale, void* __restrict__ output, const uint32_t blocks) {
     const auto* typed_input    = static_cast<const uint8_t*>(input);
     auto* typed_output         = static_cast<double_t*>(output);
     const uint8_t* block_input = typed_input;
@@ -441,12 +416,12 @@ int sve2_decompress_blocks(const void* __restrict__ input, const double_t scale,
 
     for (uint32_t block = 0; block < blocks; ++block) {
         sve2_decompress_block<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input  += BLOCK_SIZE;
+        block_input += BLOCK_SIZE;
         block_output += (BLOCK_SIZE * 8) / BIT_WIDTH;
     }
 
     return 0;
 }
-} // namespace pernix::arm64::sve2
+}  // namespace pernix::arm64::sve2
 
 #endif  // PERNIX_ARM64_SVE2_DECOMPRESSION_H

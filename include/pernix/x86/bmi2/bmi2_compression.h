@@ -1,23 +1,22 @@
 #ifndef PERNIX_BMI2_COMPRESSION_H
 #define PERNIX_BMI2_COMPRESSION_H
 
-#include <pernix/x86/avx2/avx2_compression.h>
 #include <pernix/fallback/scalar_compression.h>
 #include <pernix/simd_compat.h>
+#include <pernix/x86/avx2/avx2_compression.h>
 
 #include <cmath>
 #include <limits>
 #include <tuple>
 
-
 namespace pernix {
 namespace internal {
 /**
-* @brief Build the masks and shift constants used by the BMI2 packers.
-*
-* @tparam BIT_WIDTH bit width per packed value.
-* @return std::tuple<u16, u64, u16, u16> mask tuple used by the BMI2 helpers.
-*/
+ * @brief Build the masks and shift constants used by the BMI2 packers.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @return std::tuple<u16, u64, u16, u16> mask tuple used by the BMI2 helpers.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 32)
 static constexpr std::tuple<u16, u64, u16, u16> pack_avx2_bmi2_constants() {
@@ -43,12 +42,12 @@ static constexpr std::tuple<u16, u64, u16, u16> pack_avx2_bmi2_constants() {
 }
 
 /**
-* @brief Pack four 32-bit values with BMI2 extract instructions.
-*
-* @tparam BIT_WIDTH bit width per packed value.
-* @param input SIMD register containing four quantized values.
-* @return __m128i packed bitstream in the low bytes of the result.
-*/
+ * @brief Pack four 32-bit values with BMI2 extract instructions.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @param input SIMD register containing four quantized values.
+ * @return __m128i packed bitstream in the low bytes of the result.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 32)
 static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
@@ -66,7 +65,7 @@ static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
 
         const u64 temp_combined = _pext_u64(_mm_extract_epi64(input, 1), pext_mask);
         values[1]               = temp_combined >> shift2;
-        values[0]               |= (temp_combined << shift1);
+        values[0] |= (temp_combined << shift1);
 
         const __m128i result = _mm_set_epi64x(static_cast<i64>(values[1]), static_cast<i64>(values[0]));
         return result;
@@ -74,12 +73,12 @@ static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
 }
 
 /**
-* @brief Pack eight 32-bit values with BMI2 extract instructions.
-*
-* @tparam BIT_WIDTH bit width per packed value.
-* @param input SIMD register containing eight quantized values.
-* @return __m256i packed bitstream in the low bytes of the result.
-*/
+ * @brief Pack eight 32-bit values with BMI2 extract instructions.
+ *
+ * @tparam BIT_WIDTH bit width per packed value.
+ * @param input SIMD register containing eight quantized values.
+ * @return __m256i packed bitstream in the low bytes of the result.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
@@ -107,7 +106,7 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
         const __m256i result = _mm256_setr_epi64x(values[0], values[1], 0, 0);
         return result;
     } else {
-        constexpr u32 chunk_bits = BIT_WIDTH * 2; // bits extracted per 64-bit lane
+        constexpr u32 chunk_bits = BIT_WIDTH * 2;  // bits extracted per 64-bit lane
         static_assert(chunk_bits < 64);
 
         constexpr u64 chunk_mask = (chunk_bits == 64) ? ~u64{0} : ((u64{1} << chunk_bits) - 1);
@@ -122,8 +121,8 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
         u64 out2 = 0;
 
         auto append_bits = [&](u64 value, u32 bit_offset) {
-            const u32 word = bit_offset >> 6; // / 64
-            const u32 off  = bit_offset & 63; // % 64
+            const u32 word = bit_offset >> 6;  // / 64
+            const u32 off  = bit_offset & 63;  // % 64
 
             if (word == 0) {
                 out0 |= value << off;
@@ -145,28 +144,26 @@ static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
         append_bits(x2, 2 * chunk_bits);
         append_bits(x3, 3 * chunk_bits);
 
-        return _mm256_setr_epi64x(static_cast<i64>(out0), static_cast<i64>(out1),
-                                  static_cast<i64>(out2), 0);
+        return _mm256_setr_epi64x(static_cast<i64>(out0), static_cast<i64>(out1), static_cast<i64>(out2), 0);
     }
 }
-} // namespace internal
+}  // namespace internal
 
 /**
-* @brief Compress a single 512-bit block using AVX2 and BMI2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-*
-* @param input pointer to the start of the input float values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 and BMI2 support.
-*/
+ * @brief Compress a single 512-bit block using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ *
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <u8 BIT_WIDTH, u16 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scale,
-                              void* __restrict__ output_ptr) {
+int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr) {
     const auto* input = static_cast<const float*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -184,7 +181,7 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scal
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
         const __m256i packed       = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(packed_input);
         std::memcpy(output, &packed, BIT_WIDTH);
-        input  += 8;
+        input += 8;
         output += BIT_WIDTH;
     }
 
@@ -192,9 +189,7 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scal
         std::vector<u32> block_values(remaining);
 #pragma GCC unroll 8
         for (u32 i = 0; i < remaining; i++) {
-            block_values[i] =
-                static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(
-                    internal::quantize_ps_epi32(input[i], scale)));
+            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i], scale)));
         }
 
         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
@@ -204,20 +199,19 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scal
 }
 
 /**
-* @brief Compress a single block of double values using AVX2 and BMI2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-* @param input pointer to the start of the input double values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 and BMI2 support.
-*/
+ * @brief Compress a single block of double values using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <u8 BIT_WIDTH, u16 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scale,
-                              void* __restrict__ output_ptr) {
+int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scale, void* __restrict__ output_ptr) {
     const auto* input = static_cast<const double*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -236,10 +230,9 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
         const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
         __m256i combined         = _mm256_castsi128_si256(quantized1);
         combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
-        const __m256i packed     = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(
-            internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined));
+        const __m256i packed     = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined));
         std::memcpy(output, &packed, BIT_WIDTH);
-        input  += 8;
+        input += 8;
         output += BIT_WIDTH;
     }
 
@@ -247,9 +240,7 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
         std::vector<u32> block_values(remaining);
 #pragma GCC unroll 8
         for (u32 i = 0; i < remaining; i++) {
-            block_values[i] =
-                static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(
-                    internal::quantize_pd_epi64(input[i], scale)));
+            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i], scale)));
         }
 
         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
@@ -258,22 +249,21 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
 }
 
 /**
-* @brief Compress multiple 512-bit blocks using AVX2 and BMI2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-*
-* @param input pointer to the start of the input float values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @param blocks number of 512-bit blocks to compress.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 and BMI2 support.
-*/
+ * @brief Compress multiple 512-bit blocks using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ *
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of 512-bit blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <u8 BIT_WIDTH, u16 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_blocks_bmi2(const void* __restrict__ input_ptr, const f32 scale,
-                               void* __restrict__ output_ptr, const u32 blocks) {
+int mm256_compress_blocks_bmi2(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr, const u32 blocks) {
     const auto* input = static_cast<const float*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -282,7 +272,7 @@ int mm256_compress_blocks_bmi2(const void* __restrict__ input_ptr, const f32 sca
 
     for (u32 block = 0; block < blocks; block++) {
         mm256_compress_block_bmi2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
@@ -290,21 +280,20 @@ int mm256_compress_blocks_bmi2(const void* __restrict__ input_ptr, const f32 sca
 }
 
 /**
-* @brief Compress multiple blocks of double values using AVX2 and BMI2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-* @param input pointer to the start of the input double values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @param blocks number of blocks to compress.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 and BMI2 support.
-*/
+ * @brief Compress multiple blocks of double values using AVX2 and BMI2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 and BMI2 support.
+ */
 template <u8 BIT_WIDTH, u16 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_blocks_bmi2(const void* __restrict__ input_ptr, const f64 scale,
-                               void* __restrict__ output_ptr, const u32 blocks) {
+int mm256_compress_blocks_bmi2(const void* __restrict__ input_ptr, const f64 scale, void* __restrict__ output_ptr, const u32 blocks) {
     const auto* input = static_cast<const double*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -313,12 +302,12 @@ int mm256_compress_blocks_bmi2(const void* __restrict__ input_ptr, const f64 sca
 
     for (u32 block = 0; block < blocks; block++) {
         mm256_compress_block_bmi2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
     return 0;
 }
-} // namespace pernix
+}  // namespace pernix
 
 #endif  // PERNIX_BMI2_COMPRESSION_H

@@ -10,12 +10,11 @@ int main(void) {
         input[i] = (float)((i % 17) - 8) * 0.125f;
     }
 
-    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, 8.0f,
-                                  compressed) != PERNIX_STATUS_OK) {
+    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, 8.0f, compressed) != PERNIX_STATUS_OK) {
         return 1;
     }
-    if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, 0.125f,
-                                    restored, true) != PERNIX_STATUS_OK) {
+    if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, 0.125f, restored, true) !=
+        PERNIX_STATUS_OK) {
         return 2;
     }
 

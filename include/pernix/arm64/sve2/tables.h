@@ -98,9 +98,8 @@ struct table_unpacking<BIT_WIDTH, START_BIT_OFFSET> {
         if constexpr (BIT_WIDTH % 8u != 0) {
             constexpr u8 extra_bits  = BIT_WIDTH % 8u;
             const svuint8_t high     = svmul_n_u8_x(pg, svlsr_n_u8_x(pg, elem, 3), extra_bits);
-            const svuint8_t low_bits =
-                svadd_n_u8_x(pg, svmul_n_u8_x(pg, svand_n_u8_x(pg, elem, 7), extra_bits), START_BIT_OFFSET);
-            first = svadd_u8_x(pg, first, svadd_u8_x(pg, high, svlsr_n_u8_x(pg, low_bits, 3)));
+            const svuint8_t low_bits = svadd_n_u8_x(pg, svmul_n_u8_x(pg, svand_n_u8_x(pg, elem, 7), extra_bits), START_BIT_OFFSET);
+            first                    = svadd_u8_x(pg, first, svadd_u8_x(pg, high, svlsr_n_u8_x(pg, low_bits, 3)));
         }
 
         return svadd_u8_x(pg, first, byte);
@@ -108,10 +107,9 @@ struct table_unpacking<BIT_WIDTH, START_BIT_OFFSET> {
 
     static svuint32_t shift() {
         const svbool_t pg = svptrue_b32();
-        return svand_n_u32_x(pg, svadd_n_u32_x(pg, svmul_n_u32_x(pg, svindex_u32(0, 1), BIT_WIDTH),
-                                               START_BIT_OFFSET), 7);
+        return svand_n_u32_x(pg, svadd_n_u32_x(pg, svmul_n_u32_x(pg, svindex_u32(0, 1), BIT_WIDTH), START_BIT_OFFSET), 7);
     }
 };
-} // namespace pernix::arm64::sve2::internal
+}  // namespace pernix::arm64::sve2::internal
 
 #endif  // PERNIX_ARM64_SVE2_TABLES_H

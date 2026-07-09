@@ -2,6 +2,7 @@
 #define PERNIX_KERNEL_H
 
 #include <pernix/compat.h>
+
 #include <string_view>
 
 namespace pernix::internal {
@@ -15,13 +16,10 @@ struct Kernel {
     std::string_view name;
     FuncType func;
 
-    explicit operator bool() const noexcept {
-        return func != nullptr;
-    }
+    explicit operator bool() const noexcept { return func != nullptr; }
 
-    Kernel(const std::string_view kernel_name, FuncType kernel_func) : name(kernel_name), func(kernel_func) {
-    }
+    Kernel(const std::string_view kernel_name, FuncType kernel_func) : name(kernel_name), func(kernel_func) {}
 };
-}
+}  // namespace pernix::internal
 
-#endif //PERNIX_KERNEL_H
+#endif  // PERNIX_KERNEL_H

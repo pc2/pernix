@@ -760,9 +760,7 @@ struct unpack_tables_avx2 {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
-    __always_inline static __m256i get_permute() {
-        return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute.data()));
-    }
+    __always_inline static __m256i get_permute() { return _mm256_load_si256(reinterpret_cast<const __m256i*>(permute.data())); }
 
     __always_inline static T get_shuffle() {
         if constexpr (std::is_same_v<T, __m128i>) {
@@ -781,6 +779,6 @@ struct unpack_tables_avx2 {
     }
 #pragma GCC diagnostic pop
 };
-} // namespace pernix::internal
+}  // namespace pernix::internal
 
 #endif  // PERNIX_AVX2_TABLES_H

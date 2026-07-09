@@ -48,9 +48,7 @@ inline CpuFeatures detect_cpu_features() {
 
 #if defined(_MSC_VER)
     __cpuidex(regs, 1, 0);
-    const auto xgetbv = [](const unsigned int index) -> u64 {
-        return _xgetbv(index);
-    };
+    const auto xgetbv = [](const unsigned int index) -> u64 { return _xgetbv(index); };
 #else
     __cpuid_count(1, 0, regs[0], regs[1], regs[2], regs[3]);
     const auto xgetbv = [](const unsigned int index) -> u64 {
@@ -62,12 +60,12 @@ inline CpuFeatures detect_cpu_features() {
 #endif
 
     const bool osxsave = (regs[2] & (1 << 27)) != 0;
-    const bool avx = (regs[2] & (1 << 28)) != 0;
+    const bool avx     = (regs[2] & (1 << 28)) != 0;
     if (!osxsave || !avx) {
         return features;
     }
 
-    const u64 xcr0 = xgetbv(0);
+    const u64 xcr0         = xgetbv(0);
     const bool xmm_enabled = (xcr0 & 0x2) != 0;
     const bool ymm_enabled = (xcr0 & 0x4) != 0;
     const bool zmm_enabled = (xcr0 & 0x20) != 0 && (xcr0 & 0x40) != 0 && (xcr0 & 0x80) != 0;
@@ -84,10 +82,10 @@ inline CpuFeatures detect_cpu_features() {
     features.avx2 = (regs[1] & (1 << 5)) != 0;
     features.bmi2 = (regs[1] & (1 << 8)) != 0;
     if (zmm_enabled) {
-        features.avx512f = (regs[1] & (1 << 16)) != 0;
-        features.avx512dq = (regs[1] & (1 << 29)) != 0;
-        features.avx512bw = (regs[1] & (1 << 30)) != 0;
-        features.avx512vl = (regs[1] & (1 << 31)) != 0;
+        features.avx512f    = (regs[1] & (1 << 16)) != 0;
+        features.avx512dq   = (regs[1] & (1 << 29)) != 0;
+        features.avx512bw   = (regs[1] & (1 << 30)) != 0;
+        features.avx512vl   = (regs[1] & (1 << 31)) != 0;
         features.avx512vbmi = (regs[2] & (1 << 1)) != 0;
     }
 #endif
@@ -99,10 +97,10 @@ inline CpuFeatures detect_cpu_features() {
 #endif
 
 #if defined(__linux__) && (defined(__aarch64__) || defined(_M_ARM64))
-    const unsigned long hwcap = getauxval(AT_HWCAP);
+    const unsigned long hwcap  = getauxval(AT_HWCAP);
     const unsigned long hwcap2 = getauxval(AT_HWCAP2);
-    features.sve = (hwcap & HWCAP_SVE) != 0;
-    features.sve2 = (hwcap2 & HWCAP2_SVE2) != 0;
+    features.sve               = (hwcap & HWCAP_SVE) != 0;
+    features.sve2              = (hwcap2 & HWCAP2_SVE2) != 0;
 #endif
 
     return features;
@@ -113,6 +111,6 @@ inline CpuFeatures get_cached_cpu_features() {
     return features;
 }
 #endif
-}
+}  // namespace pernix::internal
 
-#endif //PERNIX_CPU_FEATURES_H
+#endif  // PERNIX_CPU_FEATURES_H

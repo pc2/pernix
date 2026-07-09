@@ -72,16 +72,11 @@ public:
     using pointer           = void;
     using reference         = T;
 
-    constexpr explicit counting_iterator(T value) noexcept : value_(value) {
-    }
+    constexpr explicit counting_iterator(T value) noexcept : value_(value) {}
 
-    constexpr T operator*() const noexcept {
-        return value_;
-    }
+    constexpr T operator*() const noexcept { return value_; }
 
-    constexpr T operator[](difference_type n) const noexcept {
-        return value_ + n;
-    }
+    constexpr T operator[](difference_type n) const noexcept { return value_ + n; }
 
     constexpr counting_iterator& operator++() noexcept {
         ++value_;
@@ -134,33 +129,21 @@ public:
         return static_cast<difference_type>(lhs.value_) - static_cast<difference_type>(rhs.value_);
     }
 
-    friend constexpr bool operator==(counting_iterator lhs, counting_iterator rhs) noexcept {
-        return lhs.value_ == rhs.value_;
-    }
+    friend constexpr bool operator==(counting_iterator lhs, counting_iterator rhs) noexcept { return lhs.value_ == rhs.value_; }
 
-    friend constexpr bool operator!=(counting_iterator lhs, counting_iterator rhs) noexcept {
-        return !(lhs == rhs);
-    }
+    friend constexpr bool operator!=(counting_iterator lhs, counting_iterator rhs) noexcept { return !(lhs == rhs); }
 
-    friend constexpr bool operator<(counting_iterator lhs, counting_iterator rhs) noexcept {
-        return lhs.value_ < rhs.value_;
-    }
+    friend constexpr bool operator<(counting_iterator lhs, counting_iterator rhs) noexcept { return lhs.value_ < rhs.value_; }
 
-    friend constexpr bool operator<=(counting_iterator lhs, counting_iterator rhs) noexcept {
-        return lhs.value_ <= rhs.value_;
-    }
+    friend constexpr bool operator<=(counting_iterator lhs, counting_iterator rhs) noexcept { return lhs.value_ <= rhs.value_; }
 
-    friend constexpr bool operator>(counting_iterator lhs, counting_iterator rhs) noexcept {
-        return lhs.value_ > rhs.value_;
-    }
+    friend constexpr bool operator>(counting_iterator lhs, counting_iterator rhs) noexcept { return lhs.value_ > rhs.value_; }
 
-    friend constexpr bool operator>=(counting_iterator lhs, counting_iterator rhs) noexcept {
-        return lhs.value_ >= rhs.value_;
-    }
+    friend constexpr bool operator>=(counting_iterator lhs, counting_iterator rhs) noexcept { return lhs.value_ >= rhs.value_; }
 
 private:
     T value_;
 };
-}
+}  // namespace pernix::internal
 
-#endif // PERNIX_FALLBACK_STDPAR_COMMON_H
+#endif  // PERNIX_FALLBACK_STDPAR_COMMON_H

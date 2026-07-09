@@ -607,26 +607,17 @@ private:
         return values;
     }
 
-    alignas(64) static constexpr auto permute1 = make_table<i32>([](const word_plan& p) {
-        return p.left_index1;
-    });
+    alignas(64) static constexpr auto permute1 = make_table<i32>([](const word_plan& p) { return p.left_index1; });
 
-    alignas(64) static constexpr auto permute2 = make_table<i32>([](const word_plan& p) {
-        return p.left_index2;
-    });
+    alignas(64) static constexpr auto permute2 = make_table<i32>([](const word_plan& p) { return p.left_index2; });
 
-    alignas(64) static constexpr auto permute3 = make_table<i32>([](const word_plan& p) {
-        return p.right_index;
-    });
+    alignas(64) static constexpr auto permute3 = make_table<i32>([](const word_plan& p) { return p.right_index; });
 
-    alignas(64) static constexpr auto shift1 = make_table<u32>(
-        [](const word_plan& p) { return p.left_shift1; });
+    alignas(64) static constexpr auto shift1 = make_table<u32>([](const word_plan& p) { return p.left_shift1; });
 
-    alignas(64) static constexpr auto shift2 = make_table<u32>(
-        [](const word_plan& p) { return p.left_shift2; });
+    alignas(64) static constexpr auto shift2 = make_table<u32>([](const word_plan& p) { return p.left_shift2; });
 
-    alignas(64) static constexpr auto shift3 = make_table<u32>(
-        [](const word_plan& p) { return p.right_shift; });
+    alignas(64) static constexpr auto shift3 = make_table<u32>([](const word_plan& p) { return p.right_shift; });
 
 public:
     static __always_inline Vec get_permute1() { return load_table<Vec>(permute1); }
@@ -824,6 +815,6 @@ public:
     static __always_inline Vec get_permute() { return load_table<Vec>(permute); }
     static __always_inline Vec get_shift() { return load_table<Vec>(shift); }
 };
-} // namespace pernix::internal
+}  // namespace pernix::internal
 
 #endif  // PERNIX_AVX512VBMI_TABLES_H

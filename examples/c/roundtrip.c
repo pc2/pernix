@@ -13,29 +13,28 @@ int main(void) {
     }
 
     for (int i = 0; i < elements; ++i) {
-        input[i] = ((float)i - 16.0f) * 0.125f;
+        input[i]              = ((float)i - 16.0f) * 0.125f;
         const float magnitude = input[i] < 0.0f ? -input[i] : input[i];
-        bmax = bmax < magnitude ? magnitude : bmax;
+        bmax                  = bmax < magnitude ? magnitude : bmax;
     }
 
-    float scale = 0.0f;
+    float scale         = 0.0f;
     float inverse_scale = 0.0f;
     if (pernix_decompression_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK ||
         pernix_inverse_scale_f32(scale, &inverse_scale) != PERNIX_STATUS_OK) {
         return 2;
     }
 
-    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, inverse_scale,
-                                  compressed) != PERNIX_STATUS_OK) {
+    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, inverse_scale, compressed) != PERNIX_STATUS_OK) {
         return 3;
     }
-    if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, scale, restored,
-                                    true) != PERNIX_STATUS_OK) {
+    if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, scale, restored, true) !=
+        PERNIX_STATUS_OK) {
         return 4;
     }
 
     for (int i = 0; i < elements; ++i) {
-        const float diff = restored[i] - input[i];
+        const float diff  = restored[i] - input[i];
         const float error = diff < 0.0f ? -diff : diff;
         if (error > scale) {
             return 5;

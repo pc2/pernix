@@ -1,6 +1,5 @@
-#include <pernix/dispatch/cpu_features.h>
-
 #include <pernix/compat.h>
+#include <pernix/dispatch/cpu_features.h>
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
 #if defined(_MSC_VER)
@@ -9,7 +8,6 @@
 #include <cpuid.h>
 #include <x86intrin.h>
 #endif
-
 
 namespace pernix::internal {
 namespace {
@@ -41,7 +39,7 @@ u64 xgetbv(unsigned int index) {
 bool bit_set(int value, int bit) {
     return (value & (1 << bit)) != 0;
 }
-} // namespace
+}  // namespace
 
 CpuFeatures detect_cpu_features() {
     CpuFeatures features{};
@@ -61,10 +59,7 @@ CpuFeatures detect_cpu_features() {
 
     const bool xmm_enabled = (xcr0 & 0x2) != 0;
     const bool ymm_enabled = (xcr0 & 0x4) != 0;
-    const bool zmm_enabled =
-        (xcr0 & 0x20) != 0 &&
-        (xcr0 & 0x40) != 0 &&
-        (xcr0 & 0x80) != 0;
+    const bool zmm_enabled = (xcr0 & 0x20) != 0 && (xcr0 & 0x40) != 0 && (xcr0 & 0x80) != 0;
 
     if (!xmm_enabled || !ymm_enabled) {
         return features;
@@ -90,7 +85,7 @@ CpuFeatures get_cached_cpu_features() {
     static const CpuFeatures features = detect_cpu_features();
     return features;
 }
-} // namespace pernix::internal
+}  // namespace pernix::internal
 #else
 
 namespace pernix::internal {
@@ -102,6 +97,6 @@ CpuFeatures get_cached_cpu_features() {
     static const CpuFeatures features = detect_cpu_features();
     return features;
 }
-} // namespace pernix::internal
+}  // namespace pernix::internal
 
 #endif

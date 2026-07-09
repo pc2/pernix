@@ -1,15 +1,14 @@
 #ifndef PERNIX_AVX512VBMI_PACKING_H
 #define PERNIX_AVX512VBMI_PACKING_H
 
-#include <pernix/x86/avx512vbmi/tables.h>
 #include <pernix/simd_compat.h>
-
+#include <pernix/x86/avx512vbmi/tables.h>
 
 namespace pernix::internal {
 namespace m128 {
 /**
-* @brief Pack 8 16-bit values for bit widths 9 through 16 using VBMI.
-*/
+ * @brief Pack 8 16-bit values for bit widths 9 through 16 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 __always_inline __m128i mm_pack_epi16_avx512vbmi_9to16(const __m128i& input) {
@@ -31,12 +30,9 @@ __always_inline __m128i mm_pack_epi16_avx512vbmi_9to16(const __m128i& input) {
         } else {
             const auto [mask1, mask2, mask3] = tables::get_permute_masks();
 
-            const __m128i permuted1 = _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(mask1),
-                                                                  tables::get_permute1(), masked);
-            const __m128i permuted2 = _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(mask2),
-                                                                  tables::get_permute2(), masked);
-            const __m128i permuted3 = _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(mask3),
-                                                                  tables::get_permute3(), masked);
+            const __m128i permuted1 = _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(mask1), tables::get_permute1(), masked);
+            const __m128i permuted2 = _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(mask2), tables::get_permute2(), masked);
+            const __m128i permuted3 = _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(mask3), tables::get_permute3(), masked);
 
             const __m128i shifted1 = _mm_sllv_epi16(permuted1, tables::get_shift1());
             const __m128i shifted2 = _mm_sllv_epi16(permuted2, tables::get_shift2());
@@ -48,8 +44,8 @@ __always_inline __m128i mm_pack_epi16_avx512vbmi_9to16(const __m128i& input) {
 }
 
 /**
-* @brief Pack 16 8-bit values for bit widths 1 through 8 using VBMI.
-*/
+ * @brief Pack 16 8-bit values for bit widths 1 through 8 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
 __always_inline __m128i mm_pack_epi8_avx512vbmi_1to8(const __m128i& input) {
@@ -93,8 +89,8 @@ __always_inline __m128i mm_pack_epi8_avx512vbmi_1to8(const __m128i& input) {
 }
 
 /**
-* @brief Pack 4 32-bit values for bit widths 17 through 24 using VBMI.
-*/
+ * @brief Pack 4 32-bit values for bit widths 17 through 24 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
 __always_inline __m128i mm_pack_epi32_avx512vbmi_17to24(const __m128i& input) {
@@ -113,12 +109,12 @@ __always_inline __m128i mm_pack_epi32_avx512vbmi_17to24(const __m128i& input) {
 
     return _mm_or_si128(_mm_or_si128(shifted1, shifted2), shifted3);
 }
-} // namespace m128
+}  // namespace m128
 
 namespace m256 {
 /**
-* @brief Pack 16 16-bit values for bit widths 9 through 16 using VBMI.
-*/
+ * @brief Pack 16 16-bit values for bit widths 9 through 16 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 __always_inline __m256i mm256_pack_epi16_avx512vbmi_9to16(const __m256i& input) {
@@ -140,12 +136,9 @@ __always_inline __m256i mm256_pack_epi16_avx512vbmi_9to16(const __m256i& input) 
         } else {
             const auto [mask1, mask2, mask3] = tables::get_permute_masks();
 
-            const __m256i permuted1 = _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(mask1),
-                                                                     tables::get_permute1(), masked);
-            const __m256i permuted2 = _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(mask2),
-                                                                     tables::get_permute2(), masked);
-            const __m256i permuted3 = _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(mask3),
-                                                                     tables::get_permute3(), masked);
+            const __m256i permuted1 = _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(mask1), tables::get_permute1(), masked);
+            const __m256i permuted2 = _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(mask2), tables::get_permute2(), masked);
+            const __m256i permuted3 = _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(mask3), tables::get_permute3(), masked);
 
             const __m256i shifted1 = _mm256_sllv_epi16(permuted1, tables::get_shift1());
             const __m256i shifted2 = _mm256_sllv_epi16(permuted2, tables::get_shift2());
@@ -157,8 +150,8 @@ __always_inline __m256i mm256_pack_epi16_avx512vbmi_9to16(const __m256i& input) 
 }
 
 /**
-* @brief Pack 32 8-bit values for bit widths 1 through 8 using VBMI.
-*/
+ * @brief Pack 32 8-bit values for bit widths 1 through 8 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
 __always_inline __m256i mm256_pack_epi8_avx512vbmi_1to8(const __m256i& input) {
@@ -169,8 +162,7 @@ __always_inline __m256i mm256_pack_epi8_avx512vbmi_1to8(const __m256i& input) {
         const __m256i masked = _mm256_and_si256(input, maskv);
 
         if constexpr (BIT_WIDTH == 1) {
-            return _mm256_set1_epi32(
-                static_cast<i32>(_mm256_cmpgt_epi8_mask(masked, _mm256_setzero_si256())));
+            return _mm256_set1_epi32(static_cast<i32>(_mm256_cmpgt_epi8_mask(masked, _mm256_setzero_si256())));
         } else if constexpr (BIT_WIDTH == 2) {
             const __m256i shifted  = _mm256_srli_epi16(masked, 6);
             const __m256i combined = _mm256_or_si256(masked, shifted);
@@ -186,8 +178,7 @@ __always_inline __m256i mm256_pack_epi8_avx512vbmi_1to8(const __m256i& input) {
             const __m256i pair6    = _mm256_or_si256(even, _mm256_srli_epi16(odd, 5));
             const __m256i packed12 = _mm256_or_si256(pair6, _mm256_srli_epi32(pair6, 10));
 
-            return m256::mm256_pack_epi16_avx512vbmi_9to16<12>(
-                _mm256_castsi128_si256(_mm256_cvtepi32_epi16(packed12)));
+            return m256::mm256_pack_epi16_avx512vbmi_9to16<12>(_mm256_castsi128_si256(_mm256_cvtepi32_epi16(packed12)));
         } else if constexpr (BIT_WIDTH == 4) {
             const __m256i shifted  = _mm256_srli_epi16(masked, 4);
             const __m256i combined = _mm256_or_si256(masked, shifted);
@@ -204,8 +195,8 @@ __always_inline __m256i mm256_pack_epi8_avx512vbmi_1to8(const __m256i& input) {
 }
 
 /**
-* @brief Pack 8 32-bit values for bit widths 17 through 24 using VBMI.
-*/
+ * @brief Pack 8 32-bit values for bit widths 17 through 24 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_pack_epi32_avx512vbmi_17to24(const __m256i& input) {
@@ -224,12 +215,12 @@ __always_inline __m256i mm256_pack_epi32_avx512vbmi_17to24(const __m256i& input)
 
     return _mm256_or_si256(_mm256_or_si256(shifted1, shifted2), shifted3);
 }
-} // namespace m256
+}  // namespace m256
 
 namespace m512 {
 /**
-* @brief Pack 32 16-bit values for bit widths 9 through 16 using VBMI.
-*/
+ * @brief Pack 32 16-bit values for bit widths 9 through 16 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 __always_inline __m512i mm512_pack_epi16_avx512vbmi_9to16(const __m512i& input) {
@@ -251,12 +242,9 @@ __always_inline __m512i mm512_pack_epi16_avx512vbmi_9to16(const __m512i& input) 
         } else {
             const auto [mask1, mask2, mask3] = tables::get_permute_masks();
 
-            const __m512i permuted1 = _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(mask1),
-                                                                     tables::get_permute1(), masked);
-            const __m512i permuted2 = _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(mask2),
-                                                                     tables::get_permute2(), masked);
-            const __m512i permuted3 = _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(mask3),
-                                                                     tables::get_permute3(), masked);
+            const __m512i permuted1 = _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(mask1), tables::get_permute1(), masked);
+            const __m512i permuted2 = _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(mask2), tables::get_permute2(), masked);
+            const __m512i permuted3 = _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(mask3), tables::get_permute3(), masked);
 
             const __m512i shifted1 = _mm512_sllv_epi16(permuted1, tables::get_shift1());
             const __m512i shifted2 = _mm512_sllv_epi16(permuted2, tables::get_shift2());
@@ -268,8 +256,8 @@ __always_inline __m512i mm512_pack_epi16_avx512vbmi_9to16(const __m512i& input) 
 }
 
 /**
-* @brief Pack 64 8-bit values for bit widths 1 through 8 using VBMI.
-*/
+ * @brief Pack 64 8-bit values for bit widths 1 through 8 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
 __always_inline __m512i mm512_pack_epi8_avx512vbmi_1to8(const __m512i& input) {
@@ -280,8 +268,7 @@ __always_inline __m512i mm512_pack_epi8_avx512vbmi_1to8(const __m512i& input) {
         const __m512i masked = _mm512_and_si512(input, maskv);
 
         if constexpr (BIT_WIDTH == 1) {
-            return _mm512_set1_epi64(
-                static_cast<i64>(_mm512_cmpgt_epi8_mask(masked, _mm512_setzero_si512())));
+            return _mm512_set1_epi64(static_cast<i64>(_mm512_cmpgt_epi8_mask(masked, _mm512_setzero_si512())));
         } else if constexpr (BIT_WIDTH == 2) {
             const __m512i shifted  = _mm512_srli_epi16(masked, 6);
             const __m512i combined = _mm512_or_si512(masked, shifted);
@@ -297,8 +284,7 @@ __always_inline __m512i mm512_pack_epi8_avx512vbmi_1to8(const __m512i& input) {
             const __m512i pair6    = _mm512_or_si512(even, _mm512_srli_epi16(odd, 5));
             const __m512i packed12 = _mm512_or_si512(pair6, _mm512_srli_epi32(pair6, 10));
 
-            return _mm512_castsi256_si512(
-                m256::mm256_pack_epi16_avx512vbmi_9to16<12>(_mm512_cvtepi32_epi16(packed12)));
+            return _mm512_castsi256_si512(m256::mm256_pack_epi16_avx512vbmi_9to16<12>(_mm512_cvtepi32_epi16(packed12)));
         } else if constexpr (BIT_WIDTH == 4) {
             const __m512i shifted  = _mm512_srli_epi16(masked, 4);
             const __m512i combined = _mm512_or_si512(masked, shifted);
@@ -315,8 +301,8 @@ __always_inline __m512i mm512_pack_epi8_avx512vbmi_1to8(const __m512i& input) {
 }
 
 /**
-* @brief Pack 16 32-bit values for bit widths 17 through 24 using VBMI.
-*/
+ * @brief Pack 16 32-bit values for bit widths 17 through 24 using VBMI.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
 __always_inline __m512i mm512_pack_epi32_avx512vbmi_17to24(const __m512i& input) {
@@ -335,7 +321,7 @@ __always_inline __m512i mm512_pack_epi32_avx512vbmi_17to24(const __m512i& input)
 
     return _mm512_or_si512(_mm512_or_si512(shifted1, shifted2), shifted3);
 }
-} // namespace m512
-} // namespace pernix::internal
+}  // namespace m512
+}  // namespace pernix::internal
 
 #endif  // PERNIX_AVX512VBMI_PACKING_H

@@ -2,6 +2,7 @@
 #define PERNIX_SIMD_COMPAT_H
 
 #include <pernix/compat.h>
+
 #include <cstdint>
 #include <type_traits>
 

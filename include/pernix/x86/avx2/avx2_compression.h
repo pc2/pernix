@@ -1,9 +1,9 @@
 #ifndef PERNIX_AVX2_COMPRESSION_H
 #define PERNIX_AVX2_COMPRESSION_H
 
-#include <pernix/x86/avx2/avx2_tables.h>
 #include <pernix/fallback/scalar_compression.h>
 #include <pernix/simd_compat.h>
+#include <pernix/x86/avx2/avx2_tables.h>
 
 #include <array>
 #include <cmath>
@@ -18,18 +18,16 @@ template <u8 BIT_WIDTH>
 __always_inline __m256i mm256_clamp_signed_epi32(__m256i input) {
     constexpr i32 min_value = BIT_WIDTH == 1 ? 0 : -(1 << (BIT_WIDTH - 1));
     constexpr i32 max_value = BIT_WIDTH == 1 ? 1 : ((1 << (BIT_WIDTH - 1)) - 1);
-    return _mm256_min_epi32(_mm256_max_epi32(input, _mm256_set1_epi32(min_value)),
-                            _mm256_set1_epi32(max_value));
+    return _mm256_min_epi32(_mm256_max_epi32(input, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
 }
 
-
 /**
-* @brief Quantize four float values into signed 32-bit integers.
-*
-* @param input source float lane values.
-* @param scale per-lane scale factor.
-* @return __m128i quantized values.
-*/
+ * @brief Quantize four float values into signed 32-bit integers.
+ *
+ * @param input source float lane values.
+ * @param scale per-lane scale factor.
+ * @return __m128i quantized values.
+ */
 __always_inline __m128i mm_quantize_ps_epi32(const __m128& input, const __m128& scale) {
     const __m128 scaled = _mm_mul_ps(input, scale);
     // const __m128 rounded = _mm_round_ps(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
@@ -37,24 +35,24 @@ __always_inline __m128i mm_quantize_ps_epi32(const __m128& input, const __m128& 
 }
 
 /**
-* @brief Quantize two double values into a partially filled 128-bit integer register.
-*
-* @param input source double lane values.
-* @param scale per-lane scale factor.
-* @return __m128i quantized values in the low lanes.
-*/
+ * @brief Quantize two double values into a partially filled 128-bit integer register.
+ *
+ * @param input source double lane values.
+ * @param scale per-lane scale factor.
+ * @return __m128i quantized values in the low lanes.
+ */
 __always_inline __m128i mm_quantize_pd_epi32(const __m128d& input, const __m128d& scale) {
     const __m128d scaled = _mm_mul_pd(input, scale);
     return _mm_cvtpd_epi32(scaled);
 }
 
 /**
-* @brief Quantize eight float values into signed 32-bit integers.
-*
-* @param input source float lane values.
-* @param scale per-lane scale factor.
-* @return __m256i quantized values.
-*/
+ * @brief Quantize eight float values into signed 32-bit integers.
+ *
+ * @param input source float lane values.
+ * @param scale per-lane scale factor.
+ * @return __m256i quantized values.
+ */
 __always_inline __m256i mm256_quantize_ps_epi32(const __m256& input, const __m256& scale) {
     const __m256 scaled = _mm256_mul_ps(input, scale);
     // const __m256 rounded = _mm256_round_ps(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
@@ -62,12 +60,12 @@ __always_inline __m256i mm256_quantize_ps_epi32(const __m256& input, const __m25
 }
 
 /**
-* @brief Quantize four double values into signed 32-bit integers.
-*
-* @param input source double lane values.
-* @param scale per-lane scale factor.
-* @return __m128i quantized values in the low lanes.
-*/
+ * @brief Quantize four double values into signed 32-bit integers.
+ *
+ * @param input source double lane values.
+ * @param scale per-lane scale factor.
+ * @return __m128i quantized values in the low lanes.
+ */
 __always_inline __m128i mm256_quantize_pd_epi32(const __m256d& input, const __m256d& scale) {
     const __m256d scaled = _mm256_mul_pd(input, scale);
     return _mm256_cvtpd_epi32(scaled);
@@ -75,12 +73,12 @@ __always_inline __m128i mm256_quantize_pd_epi32(const __m256d& input, const __m2
 
 #ifndef PERNIX_USE_SIMDE
 /**
-* @brief Emulate per-16-bit left shifts on AVX2.
-*
-* @param a source values.
-* @param count per-lane shift amounts.
-* @return __m128i shifted values.
-*/
+ * @brief Emulate per-16-bit left shifts on AVX2.
+ *
+ * @param a source values.
+ * @param count per-lane shift amounts.
+ * @return __m128i shifted values.
+ */
 __always_inline static __m128i _mm_sllv_epi16(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi32(0xffff0000);
     const __m128i low_half  = _mm_sllv_epi32(a, _mm_andnot_si128(mask, count));
@@ -89,8 +87,8 @@ __always_inline static __m128i _mm_sllv_epi16(const __m128i a, const __m128i cou
 }
 
 /**
-* @brief Emulate per-16-bit right shifts on AVX2.
-*/
+ * @brief Emulate per-16-bit right shifts on AVX2.
+ */
 __always_inline static __m128i _mm_srlv_epi16(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi32(0x0000ffff);
     const __m128i low_half  = _mm_srlv_epi32(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
@@ -99,8 +97,8 @@ __always_inline static __m128i _mm_srlv_epi16(const __m128i a, const __m128i cou
 }
 
 /**
-* @brief Emulate per-16-bit left shifts on 256-bit AVX2 vectors.
-*/
+ * @brief Emulate per-16-bit left shifts on 256-bit AVX2 vectors.
+ */
 __always_inline static __m256i _mm256_sllv_epi16(const __m256i a, const __m256i count) {
     const __m256i mask      = _mm256_set1_epi32(0xffff0000);
     const __m256i low_half  = _mm256_sllv_epi32(a, _mm256_andnot_si256(mask, count));
@@ -109,8 +107,8 @@ __always_inline static __m256i _mm256_sllv_epi16(const __m256i a, const __m256i 
 }
 
 /**
-* @brief Emulate per-16-bit right shifts on 256-bit AVX2 vectors.
-*/
+ * @brief Emulate per-16-bit right shifts on 256-bit AVX2 vectors.
+ */
 __always_inline static __m256i _mm256_srlv_epi16(const __m256i a, const __m256i count) {
     const __m256i mask      = _mm256_set1_epi32(0x0000ffff);
     const __m256i low_half  = _mm256_srlv_epi32(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
@@ -119,22 +117,22 @@ __always_inline static __m256i _mm256_srlv_epi16(const __m256i a, const __m256i 
 }
 
 /**
-* @brief Blend 8-bit lanes by expanding a scalar mask value.
-*/
+ * @brief Blend 8-bit lanes by expanding a scalar mask value.
+ */
 __always_inline static __m128i mm_blend_epi8(const __m128i X, const __m128i Y, const i8 M) {
     return _mm_blendv_epi8(X, Y, _mm_set1_epi8(M));
 }
 
 /**
-* @brief Blend 8-bit lanes in 256-bit vectors by expanding a scalar mask value.
-*/
+ * @brief Blend 8-bit lanes in 256-bit vectors by expanding a scalar mask value.
+ */
 __always_inline static __m256i mm256_blend_epi8(const __m256i X, const __m256i Y, const i8 M) {
     return _mm256_blendv_epi8(X, Y, _mm256_set1_epi8(M));
 }
 
 /**
-* @brief Emulate per-byte left shifts on 128-bit vectors.
-*/
+ * @brief Emulate per-byte left shifts on 128-bit vectors.
+ */
 __always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i low_half  = _mm_sllv_epi16(a, _mm_andnot_si128(mask, count));
@@ -143,8 +141,8 @@ __always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i coun
 }
 
 /**
-* @brief Emulate per-byte right shifts on 128-bit vectors.
-*/
+ * @brief Emulate per-byte right shifts on 128-bit vectors.
+ */
 __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi16(0x00ff);
     const __m128i low_half  = _mm_srlv_epi16(_mm_and_si128(mask, a), _mm_and_si128(mask, count));
@@ -153,8 +151,8 @@ __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i coun
 }
 
 /**
-* @brief Emulate per-byte left shifts on 256-bit vectors.
-*/
+ * @brief Emulate per-byte left shifts on 256-bit vectors.
+ */
 __always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
     const __m256i mask      = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m256i low_half  = _mm256_sllv_epi16(a, _mm256_andnot_si256(mask, count));
@@ -163,8 +161,8 @@ __always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i c
 }
 
 /**
-* @brief Emulate per-byte right shifts on 256-bit vectors.
-*/
+ * @brief Emulate per-byte right shifts on 256-bit vectors.
+ */
 __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i count) {
     const __m256i mask      = _mm256_set1_epi16(0x00ff);
     const __m256i low_half  = _mm256_srlv_epi16(_mm256_and_si256(mask, a), _mm256_and_si256(mask, count));
@@ -174,8 +172,8 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
 #endif
 
 /**
-* @brief Pack four 32-bit values for bit widths 1 through 3.
-*/
+ * @brief Pack four 32-bit values for bit widths 1 through 3.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 3)
 __always_inline auto mm_pack_epi32_avx2_1to3(__m128i& input) -> __m128i {
@@ -185,16 +183,15 @@ __always_inline auto mm_pack_epi32_avx2_1to3(__m128i& input) -> __m128i {
     alignas(16) u32 lanes[4];
     _mm_storeu_si128(reinterpret_cast<__m128i*>(lanes), masked);
 
-    const u32 packed = (lanes[0] & bitmask) | ((lanes[1] & bitmask) << BIT_WIDTH) | (
-                           (lanes[2] & bitmask) << (2 * BIT_WIDTH)) |
+    const u32 packed = (lanes[0] & bitmask) | ((lanes[1] & bitmask) << BIT_WIDTH) | ((lanes[2] & bitmask) << (2 * BIT_WIDTH)) |
                        ((lanes[3] & bitmask) << (3 * BIT_WIDTH));
 
     return _mm_cvtsi32_si128(static_cast<i32>(packed));
 }
 
 /**
-* @brief Pack eight 32-bit values for bit widths 1 through 3.
-*/
+ * @brief Pack eight 32-bit values for bit widths 1 through 3.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 3)
 __always_inline __m256i mm256_pack_epi32_avx2_1to3(const __m256i& input) {
@@ -202,8 +199,7 @@ __always_inline __m256i mm256_pack_epi32_avx2_1to3(const __m256i& input) {
 
     const __m256i masked = _mm256_and_si256(input, _mm256_set1_epi32(static_cast<i32>(bitmask)));
 
-    const __m256i shifts = _mm256_setr_epi32(0 * BIT_WIDTH, 1 * BIT_WIDTH, 2 * BIT_WIDTH, 3 * BIT_WIDTH,
-                                             4 * BIT_WIDTH, 5 * BIT_WIDTH,
+    const __m256i shifts = _mm256_setr_epi32(0 * BIT_WIDTH, 1 * BIT_WIDTH, 2 * BIT_WIDTH, 3 * BIT_WIDTH, 4 * BIT_WIDTH, 5 * BIT_WIDTH,
                                              6 * BIT_WIDTH, 7 * BIT_WIDTH);
 
     const __m256i shifted = _mm256_sllv_epi32(masked, shifts);
@@ -225,17 +221,15 @@ __always_inline __m256i mm256_pack_epi32_avx2_4(const __m256i& input) {
 
     const __m256i combined = _mm256_or_si256(packed8, _mm256_srli_epi16(packed8, 4));
 
-    const __m256i shuffled = _mm256_shuffle_epi8(combined, _mm256_setr_epi8(
-                                                     0, 2, 4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1,
-                                                     0, 2,
-                                                     4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1));
+    const __m256i shuffled = _mm256_shuffle_epi8(combined, _mm256_setr_epi8(0, 2, 4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1, 0, 2,
+                                                                            4, 6, 8, 10, 12, 14, -1, -1, -1, -1, -1, -1, -1, -1));
 
     return shuffled;
 }
 
 /**
-* @brief Pack four 32-bit values for bit widths 9 through 16.
-*/
+ * @brief Pack four 32-bit values for bit widths 9 through 16.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 __always_inline auto mm_pack_epi32_avx2_9to16(__m128i& input) -> __m128i {
@@ -267,8 +261,8 @@ __always_inline auto mm_pack_epi32_avx2_9to16(__m128i& input) -> __m128i {
 }
 
 /**
-* @brief Pack eight 32-bit values for bit widths 9 through 16.
-*/
+ * @brief Pack eight 32-bit values for bit widths 9 through 16.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
 __always_inline auto mm256_pack_epi32_avx2_9to16(const __m256i& input) -> __m256i {
@@ -319,8 +313,8 @@ __always_inline auto mm256_pack_epi32_avx2_5to7(const __m256i& input) -> __m256i
 }
 
 /**
-* @brief Pack eight 32-bit values for bit widths 17 through 24.
-*/
+ * @brief Pack eight 32-bit values for bit widths 17 through 24.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
 __always_inline auto mm256_pack_epi32_avx2_17to24(const __m256i& input) -> __m256i {
@@ -353,8 +347,8 @@ __always_inline auto mm256_pack_epi32_avx2_17to24(const __m256i& input) -> __m25
 }
 
 /**
-* @brief Pack aligned 8-bit or 16-bit values from four 32-bit lanes.
-*/
+ * @brief Pack aligned 8-bit or 16-bit values from four 32-bit lanes.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 auto mm_pack_aligned_epi32_avx2(__m128i& input) -> __m128i {
@@ -366,8 +360,8 @@ auto mm_pack_aligned_epi32_avx2(__m128i& input) -> __m128i {
 }
 
 /**
-* @brief Dispatch to the appropriate 128-bit AVX2 packer for the selected bit width.
-*/
+ * @brief Dispatch to the appropriate 128-bit AVX2 packer for the selected bit width.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
 auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
@@ -384,25 +378,23 @@ auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
 }
 
 /**
-* @brief Pack aligned 8-bit or 16-bit values from eight 32-bit lanes.
-*/
+ * @brief Pack aligned 8-bit or 16-bit values from eight 32-bit lanes.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
 __m256i mm256_pack_aligned_epi32_avx2(const __m256i& input) {
     if constexpr (BIT_WIDTH == 8) {
-        const __m128i packed16 = _mm_packs_epi32(_mm256_castsi256_si128(input),
-                                                 _mm256_extracti128_si256(input, 1));
-        const __m128i packed8 = _mm_packs_epi16(packed16, _mm_setzero_si128());
+        const __m128i packed16 = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
+        const __m128i packed8  = _mm_packs_epi16(packed16, _mm_setzero_si128());
         return _mm256_castsi128_si256(packed8);
     } else {
-        return _mm256_castsi128_si256(
-            _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1)));
+        return _mm256_castsi128_si256(_mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1)));
     }
 }
 
 /**
-* @brief Dispatch to the appropriate 256-bit AVX2 packer for the selected bit width.
-*/
+ * @brief Dispatch to the appropriate 256-bit AVX2 packer for the selected bit width.
+ */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __m256i mm256_pack_epi32_avx2(const __m256i& input) {
@@ -436,25 +428,24 @@ void store_packed_epi32_fallback_8(const __m256i& input, u8* __restrict__ output
     }
     pack_epi32_fallback<BIT_WIDTH>(block_values, output);
 }
-} // namespace internal
+}  // namespace internal
 
 /**
-* @brief Compress a single block of float using AVX2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-* @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
-*
-* @param input pointer to the start of the input float values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 support.
-*/
+ * @brief Compress a single block of float using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
+ *
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scale,
-                              void* __restrict__ output_ptr) {
+int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr) {
     const auto* input = static_cast<const float*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -472,7 +463,7 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scal
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
         internal::store_packed_epi32_fallback_8<BIT_WIDTH>(packed_input, output);
 
-        input  += 8;
+        input += 8;
         output += BIT_WIDTH;
     }
 
@@ -480,9 +471,7 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scal
         std::vector<u32> block_values(remaining);
 #pragma GCC unroll 8
         for (u32 i = 0; i < remaining; i++) {
-            block_values[i] =
-                static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(
-                    internal::quantize_ps_epi32(input[i], scale)));
+            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i], scale)));
         }
 
         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
@@ -492,22 +481,21 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scal
 }
 
 /**
-* @brief Compress a single block of double using AVX2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-* @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
-*
-* @param input pointer to the start of the input double values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 support.
-*/
+ * @brief Compress a single block of double using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
+ *
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scale,
-                              void* __restrict__ output_ptr) {
+int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scale, void* __restrict__ output_ptr) {
     const auto* input = static_cast<const double*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -520,15 +508,15 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
     const __m256d scale_v = _mm256_set1_pd(scale);
 #pragma GCC unroll 8
     for (u32 iter = 0; iter < iterations_8; iter++) {
-        const __m256d source1    = _mm256_loadu_pd(input);
-        const __m256d source2    = _mm256_loadu_pd(input + 4);
-        const __m128i quantized1 = internal::mm256_quantize_pd_epi32(source1, scale_v);
-        const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
-        __m256i combined         = _mm256_castsi128_si256(quantized1);
-        combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
+        const __m256d source1      = _mm256_loadu_pd(input);
+        const __m256d source2      = _mm256_loadu_pd(input + 4);
+        const __m128i quantized1   = internal::mm256_quantize_pd_epi32(source1, scale_v);
+        const __m128i quantized2   = internal::mm256_quantize_pd_epi32(source2, scale_v);
+        __m256i combined           = _mm256_castsi128_si256(quantized1);
+        combined                   = _mm256_inserti128_si256(combined, quantized2, 1);
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined);
         internal::store_packed_epi32_fallback_8<BIT_WIDTH>(packed_input, output);
-        input  += 8;
+        input += 8;
         output += BIT_WIDTH;
     }
 
@@ -536,9 +524,7 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
         std::vector<u32> block_values(remaining);
 #pragma GCC unroll 8
         for (u32 i = 0; i < remaining; i++) {
-            block_values[i] =
-                static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(
-                    internal::quantize_pd_epi64(input[i], scale)));
+            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i], scale)));
         }
 
         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
@@ -548,24 +534,22 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
 }
 
 /**
-* @brief Compress multiple blocks using AVX2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-* @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
-*
-* @param input pointer to the start of the input float values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @param blocks number of blocks to compress.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 support.
-*/
+ * @brief Compress multiple blocks using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
+ *
+ * @param input pointer to the start of the input float values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_blocks_avx2(const void* __restrict__ input_ptr, const f32 scale,
-                               void* __restrict__ output_ptr,
-                               const u32 blocks) {
+int mm256_compress_blocks_avx2(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr, const u32 blocks) {
     const auto* input = static_cast<const float*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -574,7 +558,7 @@ int mm256_compress_blocks_avx2(const void* __restrict__ input_ptr, const f32 sca
 
     for (u32 block = 0; block < blocks; block++) {
         mm256_compress_block_avx2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
@@ -582,24 +566,22 @@ int mm256_compress_blocks_avx2(const void* __restrict__ input_ptr, const f32 sca
 }
 
 /**
-* @brief Compress multiple blocks using AVX2 instructions.
-*
-* @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
-* @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
-*
-* @param input pointer to the start of the input double values.
-* @param scale scaling factor used during quantization.
-* @param output pointer to the output buffer where compressed bytes will be stored.
-* @param blocks number of blocks to compress.
-* @return int status code (0 for success).
-*
-* @note This function requires AVX2 support.
-*/
+ * @brief Compress multiple blocks using AVX2 instructions.
+ *
+ * @tparam BIT_WIDTH bit width per value in the packed representation (1 to 24).
+ * @tparam BLOCK_SIZE size of the block in bytes (must be a multiple of 32).
+ *
+ * @param input pointer to the start of the input double values.
+ * @param scale scaling factor used during quantization.
+ * @param output pointer to the output buffer where compressed bytes will be stored.
+ * @param blocks number of blocks to compress.
+ * @return int status code (0 for success).
+ *
+ * @note This function requires AVX2 support.
+ */
 template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
-int mm256_compress_blocks_avx2(const void* __restrict__ input_ptr, const f64 scale,
-                               void* __restrict__ output_ptr,
-                               const u32 blocks) {
+int mm256_compress_blocks_avx2(const void* __restrict__ input_ptr, const f64 scale, void* __restrict__ output_ptr, const u32 blocks) {
     const auto* input = static_cast<const double*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
@@ -608,12 +590,12 @@ int mm256_compress_blocks_avx2(const void* __restrict__ input_ptr, const f64 sca
 
     for (u32 block = 0; block < blocks; block++) {
         mm256_compress_block_avx2<BIT_WIDTH, BLOCK_SIZE>(block_input, scale, block_output);
-        block_input  += (BLOCK_SIZE * 8) / BIT_WIDTH;
+        block_input += (BLOCK_SIZE * 8) / BIT_WIDTH;
         block_output += BLOCK_SIZE;
     }
 
     return 0;
 }
-} // namespace pernix
+}  // namespace pernix
 
 #endif  // PERNIX_AVX2_COMPRESSION_H

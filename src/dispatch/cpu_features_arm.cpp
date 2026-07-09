@@ -25,8 +25,8 @@ CpuFeatures detect_cpu_features() {
 #if defined(__linux__) && (defined(__aarch64__) || defined(_M_ARM64))
     unsigned long hwcap  = getauxval(AT_HWCAP);
     unsigned long hwcap2 = getauxval(AT_HWCAP2);
-    features.sve  = (hwcap  & HWCAP_SVE)  != 0;
-    features.sve2 = (hwcap2 & HWCAP2_SVE2) != 0;
+    features.sve         = (hwcap & HWCAP_SVE) != 0;
+    features.sve2        = (hwcap2 & HWCAP2_SVE2) != 0;
 #endif
 
     return features;
@@ -36,4 +36,4 @@ CpuFeatures get_cached_cpu_features() {
     static const CpuFeatures features = detect_cpu_features();
     return features;
 }
-}
+}  // namespace pernix::internal

@@ -16,9 +16,9 @@
 namespace pernix {
 template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename ScaleType>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<ScaleType>)
-int compress_block_fallback_simd(const void *input_ptr, ScaleType scale, void *output_ptr) {
+int compress_block_fallback_simd(const void* input_ptr, ScaleType scale, void* output_ptr) {
 #if defined(__cpp_lib_simd)
-    using simd_placeholder = std::simd<i32>;
+    using simd_placeholder                            = std::simd<i32>;
     [[maybe_unused]] constexpr std::size_t simd_lanes = simd_placeholder::size();
 #endif
     [[maybe_unused]] constexpr u32 elements_per_block = (BLOCK_SIZE * 8U) / BIT_WIDTH;
@@ -31,9 +31,9 @@ int compress_block_fallback_simd(const void *input_ptr, ScaleType scale, void *o
 
 template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename ScaleType>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24 && std::is_floating_point_v<ScaleType>)
-int compress_blocks_fallback_simd(const void *input_ptr, ScaleType scale, void *output_ptr, u32 blocks) {
+int compress_blocks_fallback_simd(const void* input_ptr, ScaleType scale, void* output_ptr, u32 blocks) {
 #if defined(__cpp_lib_simd)
-    using simd_placeholder = std::simd<i32>;
+    using simd_placeholder                            = std::simd<i32>;
     [[maybe_unused]] constexpr std::size_t simd_lanes = simd_placeholder::size();
 #endif
     static_cast<void>(input_ptr);
@@ -42,6 +42,6 @@ int compress_blocks_fallback_simd(const void *input_ptr, ScaleType scale, void *
     static_cast<void>(blocks);
     return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
 }
-}
+}  // namespace pernix
 
-#endif // PERNIX_FALLBACK_SIMD_COMPRESSION_H
+#endif  // PERNIX_FALLBACK_SIMD_COMPRESSION_H

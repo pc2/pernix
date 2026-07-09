@@ -3,7 +3,6 @@
 
 #include <pernix/simd_compat.h>
 
-namespace pernix::arm64::neon::internal {
-} // namespace pernix::arm64::neon::internal
+namespace pernix::arm64::neon::internal {}  // namespace pernix::arm64::neon::internal
 
 #endif  // PERNIX_ARM64_NEON_PACKING_H

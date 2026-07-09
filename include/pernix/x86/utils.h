@@ -9,6 +9,6 @@ static constexpr u32 tail_bytes(const u8 bit_width, const u32 remaining_elements
     const u32 tail_bytes = (tail_bits + 7u) / 8u;
     return tail_bytes;
 }
-} // namespace pernix::x86::internal
+}  // namespace pernix::x86::internal
 
 #endif  // PERNIX_X86_UTILS_H

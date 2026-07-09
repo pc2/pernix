@@ -1,12 +1,11 @@
-#include <pernix/pernix.hpp>
-
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <pernix/pernix.hpp>
 
 int main() {
-    constexpr u8 bit_width = 8;
-    constexpr u32 block_size = 64;
+    constexpr u8 bit_width         = 8;
+    constexpr u32 block_size       = 64;
     constexpr std::size_t elements = (block_size * 8U) / bit_width;
 
     std::array<float, elements> input{};
@@ -17,12 +16,10 @@ int main() {
     std::array<u8, block_size> compressed{};
     std::array<float, elements> restored{};
 
-    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, 8.0f, compressed) !=
-        PERNIX_STATUS_OK) {
+    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, 8.0f, compressed) != PERNIX_STATUS_OK) {
         return 1;
     }
-    if (pernix::decompress_block(pernix::Backend::Fallback, bit_width, block_size, compressed, 0.125f, restored) !=
-        PERNIX_STATUS_OK) {
+    if (pernix::decompress_block(pernix::Backend::Fallback, bit_width, block_size, compressed, 0.125f, restored) != PERNIX_STATUS_OK) {
         return 2;
     }
 

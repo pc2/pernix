@@ -1,10 +1,9 @@
 #ifndef PERNIX_HPP
 #define PERNIX_HPP
 
+#include <limits>
 #include <pernix/backend.hpp>
 #include <pernix/detail/api.hpp>
-
-#include <limits>
 #include <span>
 
 namespace pernix {
@@ -35,35 +34,33 @@ constexpr u32 elements_per_block(const u8 bit_width) {
 }
 
 template <typename FloatT>
-__always_inline Status scale_from_bmax(const FloatT bmax, const u8 bit_width, FloatT &scale) {
+__always_inline Status scale_from_bmax(const FloatT bmax, const u8 bit_width, FloatT& scale) {
     return detail::scale_from_bmax(bmax, bit_width, &scale);
 }
 
 template <typename FloatT>
-__always_inline Status decompression_scale_from_bmax(const FloatT bmax, const u8 bit_width, FloatT &scale) {
+__always_inline Status decompression_scale_from_bmax(const FloatT bmax, const u8 bit_width, FloatT& scale) {
     return scale_from_bmax(bmax, bit_width, scale);
 }
 
 template <typename FloatT>
-__always_inline Status inverse_scale(const FloatT scale, FloatT &inverse_scale_value) {
+__always_inline Status inverse_scale(const FloatT scale, FloatT& inverse_scale_value) {
     return detail::inverse_scale(scale, &inverse_scale_value);
 }
 
 template <typename FloatT>
-__always_inline Status compression_scale_from_bmax(const FloatT bmax, const u8 bit_width,
-                                                   FloatT &inverse_scale_value) {
+__always_inline Status compression_scale_from_bmax(const FloatT bmax, const u8 bit_width, FloatT& inverse_scale_value) {
     return detail::compression_scale_from_bmax(bmax, bit_width, &inverse_scale_value);
 }
 
-__always_inline const char *status_string(const Status status) {
+__always_inline const char* status_string(const Status status) {
     return detail::status_string(status);
 }
 
 namespace detail {
 template <typename FloatT>
-__always_inline Status validate_compress_spans(const u8 bit_width, const u32 block_size,
-                                               const std::span<const FloatT> input, const std::span<u8> output,
-                                               const u32 blocks) {
+__always_inline Status validate_compress_spans(const u8 bit_width, const u32 block_size, const std::span<const FloatT> input,
+                                               const std::span<u8> output, const u32 blocks) {
     if (!is_valid_bit_width(bit_width)) {
         return PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH;
     }
@@ -74,16 +71,14 @@ __always_inline Status validate_compress_spans(const u8 bit_width, const u32 blo
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
 
-    const usize required_input = static_cast<usize>(elements_per_block(bit_width, block_size)) * blocks;
+    const usize required_input  = static_cast<usize>(elements_per_block(bit_width, block_size)) * blocks;
     const usize required_output = static_cast<usize>(block_size) * blocks;
-    return input.size() >= required_input && output.size() >= required_output ? PERNIX_STATUS_OK
-                                                                              : PERNIX_STATUS_INVALID_ARGUMENT;
+    return input.size() >= required_input && output.size() >= required_output ? PERNIX_STATUS_OK : PERNIX_STATUS_INVALID_ARGUMENT;
 }
 
 template <typename FloatT>
-__always_inline Status validate_decompress_spans(const u8 bit_width, const u32 block_size,
-                                                 const std::span<const u8> input, const std::span<FloatT> output,
-                                                 const u32 blocks) {
+__always_inline Status validate_decompress_spans(const u8 bit_width, const u32 block_size, const std::span<const u8> input,
+                                                 const std::span<FloatT> output, const u32 blocks) {
     if (!is_valid_bit_width(bit_width)) {
         return PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH;
     }
@@ -94,93 +89,74 @@ __always_inline Status validate_decompress_spans(const u8 bit_width, const u32 b
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
 
-    const usize required_input = static_cast<usize>(block_size) * blocks;
+    const usize required_input  = static_cast<usize>(block_size) * blocks;
     const usize required_output = static_cast<usize>(elements_per_block(bit_width, block_size)) * blocks;
-    return input.size() >= required_input && output.size() >= required_output ? PERNIX_STATUS_OK
-                                                                             : PERNIX_STATUS_INVALID_ARGUMENT;
+    return input.size() >= required_input && output.size() >= required_output ? PERNIX_STATUS_OK : PERNIX_STATUS_INVALID_ARGUMENT;
 }
-} // namespace detail
+}  // namespace detail
 
-__always_inline Status compress_block(Backend backend, const u8 bit_width, const u32 block_size,
-                                      const std::span<const float> input, const float inverse_scale,
-                                      std::span<u8> output) {
-    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, 1);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status compress_block(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const float> input,
+                                      const float inverse_scale, std::span<u8> output) {
+    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, 1); status != PERNIX_STATUS_OK) {
         return status;
     }
     return detail::compress_block(backend, bit_width, block_size, input.data(), inverse_scale, output.data());
 }
 
-__always_inline Status compress_block(Backend backend, const u8 bit_width, const u32 block_size,
-                                      const std::span<const double> input, const double inverse_scale,
-                                      std::span<u8> output) {
-    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, 1);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status compress_block(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const double> input,
+                                      const double inverse_scale, std::span<u8> output) {
+    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, 1); status != PERNIX_STATUS_OK) {
         return status;
     }
     return detail::compress_block(backend, bit_width, block_size, input.data(), inverse_scale, output.data());
 }
 
-__always_inline Status decompress_block(Backend backend, const u8 bit_width, const u32 block_size,
-                                        const std::span<const u8> input, const float scale, std::span<float> output,
-                                        const bool sign_values = true) {
-    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, 1);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status decompress_block(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const u8> input,
+                                        const float scale, std::span<float> output, const bool sign_values = true) {
+    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, 1); status != PERNIX_STATUS_OK) {
         return status;
     }
     return detail::decompress_block(backend, bit_width, block_size, input.data(), scale, output.data(), sign_values);
 }
 
-__always_inline Status decompress_block(Backend backend, const u8 bit_width, const u32 block_size,
-                                        const std::span<const u8> input, const double scale, std::span<double> output,
-                                        const bool sign_values = true) {
-    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, 1);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status decompress_block(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const u8> input,
+                                        const double scale, std::span<double> output, const bool sign_values = true) {
+    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, 1); status != PERNIX_STATUS_OK) {
         return status;
     }
     return detail::decompress_block(backend, bit_width, block_size, input.data(), scale, output.data(), sign_values);
 }
 
-__always_inline Status compress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
-                                       const std::span<const float> input, const float inverse_scale,
-                                       std::span<u8> output, const u32 blocks) {
-    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, blocks);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status compress_blocks(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const float> input,
+                                       const float inverse_scale, std::span<u8> output, const u32 blocks) {
+    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, blocks); status != PERNIX_STATUS_OK) {
         return status;
     }
     return detail::compress_blocks(backend, bit_width, block_size, input.data(), inverse_scale, output.data(), blocks);
 }
 
-__always_inline Status compress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
-                                       const std::span<const double> input, const double inverse_scale,
-                                       std::span<u8> output, const u32 blocks) {
-    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, blocks);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status compress_blocks(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const double> input,
+                                       const double inverse_scale, std::span<u8> output, const u32 blocks) {
+    if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, blocks); status != PERNIX_STATUS_OK) {
         return status;
     }
     return detail::compress_blocks(backend, bit_width, block_size, input.data(), inverse_scale, output.data(), blocks);
 }
 
-__always_inline Status decompress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
-                                         const std::span<const u8> input, const float scale, std::span<float> output,
-                                         const u32 blocks, const bool sign_values = true) {
-    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, blocks);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status decompress_blocks(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const u8> input,
+                                         const float scale, std::span<float> output, const u32 blocks, const bool sign_values = true) {
+    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, blocks); status != PERNIX_STATUS_OK) {
         return status;
     }
-    return detail::decompress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks,
-                                     sign_values);
+    return detail::decompress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks, sign_values);
 }
 
-__always_inline Status decompress_blocks(Backend backend, const u8 bit_width, const u32 block_size,
-                                         const std::span<const u8> input, const double scale, std::span<double> output,
-                                         const u32 blocks, const bool sign_values = true) {
-    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, blocks);
-        status != PERNIX_STATUS_OK) {
+__always_inline Status decompress_blocks(Backend backend, const u8 bit_width, const u32 block_size, const std::span<const u8> input,
+                                         const double scale, std::span<double> output, const u32 blocks, const bool sign_values = true) {
+    if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, blocks); status != PERNIX_STATUS_OK) {
         return status;
     }
-    return detail::decompress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks,
-                                     sign_values);
+    return detail::decompress_blocks(backend, bit_width, block_size, input.data(), scale, output.data(), blocks, sign_values);
 }
 
 // convenience overloads without backend (defaults to Auto)
@@ -194,15 +170,13 @@ __always_inline Status compress_block(const u8 bit_width, const u32 block_size, 
     return compress_block(Backend::Auto, bit_width, block_size, input, inverse_scale, output);
 }
 
-__always_inline Status decompress_block(const u8 bit_width, const u32 block_size, const std::span<const u8> input,
-                                        const float scale, const std::span<float> output,
-                                        const bool sign_values = true) {
+__always_inline Status decompress_block(const u8 bit_width, const u32 block_size, const std::span<const u8> input, const float scale,
+                                        const std::span<float> output, const bool sign_values = true) {
     return decompress_block(Backend::Auto, bit_width, block_size, input, scale, output, sign_values);
 }
 
-__always_inline Status decompress_block(const u8 bit_width, const u32 block_size, const std::span<const u8> input,
-                                        const double scale, const std::span<double> output,
-                                        const bool sign_values = true) {
+__always_inline Status decompress_block(const u8 bit_width, const u32 block_size, const std::span<const u8> input, const double scale,
+                                        const std::span<double> output, const bool sign_values = true) {
     return decompress_block(Backend::Auto, bit_width, block_size, input, scale, output, sign_values);
 }
 
@@ -216,26 +190,24 @@ __always_inline Status compress_blocks(const u8 bit_width, const u32 block_size,
     return compress_blocks(Backend::Auto, bit_width, block_size, input, inverse_scale, output, blocks);
 }
 
-__always_inline Status decompress_blocks(const u8 bit_width, const u32 block_size, const std::span<const u8> input,
-                                         const float scale, const std::span<float> output, const u32 blocks,
-                                         const bool sign_values = true) {
+__always_inline Status decompress_blocks(const u8 bit_width, const u32 block_size, const std::span<const u8> input, const float scale,
+                                         const std::span<float> output, const u32 blocks, const bool sign_values = true) {
     return decompress_blocks(Backend::Auto, bit_width, block_size, input, scale, output, blocks, sign_values);
 }
 
-__always_inline Status decompress_blocks(const u8 bit_width, const u32 block_size, const std::span<const u8> input,
-                                         const double scale, const std::span<double> output, const u32 blocks,
-                                         const bool sign_values = true) {
+__always_inline Status decompress_blocks(const u8 bit_width, const u32 block_size, const std::span<const u8> input, const double scale,
+                                         const std::span<double> output, const u32 blocks, const bool sign_values = true) {
     return decompress_blocks(Backend::Auto, bit_width, block_size, input, scale, output, blocks, sign_values);
 }
 
 // convenience overloads without backend and without block_size (defaults to 64)
-__always_inline Status compress_block(const u8 bit_width, const std::span<const float> input,
-                                      const float inverse_scale, const std::span<u8> output) {
+__always_inline Status compress_block(const u8 bit_width, const std::span<const float> input, const float inverse_scale,
+                                      const std::span<u8> output) {
     return compress_block(Backend::Auto, bit_width, 64, input, inverse_scale, output);
 }
 
-__always_inline Status compress_block(const u8 bit_width, const std::span<const double> input,
-                                      const double inverse_scale, const std::span<u8> output) {
+__always_inline Status compress_block(const u8 bit_width, const std::span<const double> input, const double inverse_scale,
+                                      const std::span<u8> output) {
     return compress_block(Backend::Auto, bit_width, 64, input, inverse_scale, output);
 }
 
@@ -249,27 +221,25 @@ __always_inline Status decompress_block(const u8 bit_width, const std::span<cons
     return decompress_block(Backend::Auto, bit_width, 64, input, scale, output, sign_values);
 }
 
-__always_inline Status compress_blocks(const u8 bit_width, const std::span<const float> input,
-                                       const float inverse_scale, const std::span<u8> output, const u32 blocks) {
+__always_inline Status compress_blocks(const u8 bit_width, const std::span<const float> input, const float inverse_scale,
+                                       const std::span<u8> output, const u32 blocks) {
     return compress_blocks(Backend::Auto, bit_width, 64, input, inverse_scale, output, blocks);
 }
 
-__always_inline Status compress_blocks(const u8 bit_width, const std::span<const double> input,
-                                       const double inverse_scale, const std::span<u8> output, const u32 blocks) {
+__always_inline Status compress_blocks(const u8 bit_width, const std::span<const double> input, const double inverse_scale,
+                                       const std::span<u8> output, const u32 blocks) {
     return compress_blocks(Backend::Auto, bit_width, 64, input, inverse_scale, output, blocks);
 }
 
 __always_inline Status decompress_blocks(const u8 bit_width, const std::span<const u8> input, const float scale,
-                                         const std::span<float> output, const u32 blocks,
-                                         const bool sign_values = true) {
+                                         const std::span<float> output, const u32 blocks, const bool sign_values = true) {
     return decompress_blocks(Backend::Auto, bit_width, 64, input, scale, output, blocks, sign_values);
 }
 
 __always_inline Status decompress_blocks(const u8 bit_width, const std::span<const u8> input, const double scale,
-                                         const std::span<double> output, const u32 blocks,
-                                         const bool sign_values = true) {
+                                         const std::span<double> output, const u32 blocks, const bool sign_values = true) {
     return decompress_blocks(Backend::Auto, bit_width, 64, input, scale, output, blocks, sign_values);
 }
-} // namespace pernix
+}  // namespace pernix
 
-#endif //PERNIX_HPP
+#endif  // PERNIX_HPP

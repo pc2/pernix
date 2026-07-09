@@ -46,4 +46,4 @@ typedef double f64;
 
 typedef size_t usize;
 
-#endif //PERNIX_COMPAT_H
+#endif  // PERNIX_COMPAT_H

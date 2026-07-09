@@ -20,43 +20,35 @@ __always_inline int32x4x4_t neon_convert_int8x16_int32x4x4(const int8x16_t& inpu
     const int16x8_t s16_lo = vmovl_s8(vget_low_s8(input));
     const int16x8_t s16_hi = vmovl_s8(vget_high_s8(input));
 
-    return {
-        {
-            vmovl_s16(vget_low_s16(s16_lo)),
-            vmovl_s16(vget_high_s16(s16_lo)),
-            vmovl_s16(vget_low_s16(s16_hi)),
-            vmovl_s16(vget_high_s16(s16_hi)),
-        }
-    };
+    return {{
+        vmovl_s16(vget_low_s16(s16_lo)),
+        vmovl_s16(vget_high_s16(s16_lo)),
+        vmovl_s16(vget_low_s16(s16_hi)),
+        vmovl_s16(vget_high_s16(s16_hi)),
+    }};
 }
 
 __always_inline int32x4x2_t neon_convert_int16x8_int32x4x2(const int16x8_t& input) {
-    return {
-        {
-            vmovl_s16(vget_low_s16(input)),
-            vmovl_s16(vget_high_s16(input)),
-        }
-    };
+    return {{
+        vmovl_s16(vget_low_s16(input)),
+        vmovl_s16(vget_high_s16(input)),
+    }};
 }
 
 __always_inline float32x4x4_t neon_dequantize_epi32(const int32x4x4_t& input, const float32x4_t& scale) {
-    return {
-        {
-            vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
-            vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
-            vmulq_f32(vcvtq_f32_s32(input.val[2]), scale),
-            vmulq_f32(vcvtq_f32_s32(input.val[3]), scale),
-        }
-    };
+    return {{
+        vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
+        vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
+        vmulq_f32(vcvtq_f32_s32(input.val[2]), scale),
+        vmulq_f32(vcvtq_f32_s32(input.val[3]), scale),
+    }};
 }
 
 __always_inline float32x4x2_t neon_dequantize_epi32(const int32x4x2_t& input, const float32x4_t& scale) {
-    return {
-        {
-            vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
-            vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
-        }
-    };
+    return {{
+        vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
+        vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
+    }};
 }
 
 __always_inline float32x4_t neon_dequantize_epi32(const int32x4_t& input, const float32x4_t& scale) {
@@ -68,26 +60,22 @@ __always_inline float64x2_t neon_dequantize_epi32_f64(const int32x2_t& input, co
 }
 
 __always_inline float64x2x2_t neon_dequantize_epi32_f64(const int32x4_t& input, const float64x2_t& scale) {
-    return {
-        {
-            neon_dequantize_epi32_f64(vget_low_s32(input), scale),
-            neon_dequantize_epi32_f64(vget_high_s32(input), scale),
-        }
-    };
+    return {{
+        neon_dequantize_epi32_f64(vget_low_s32(input), scale),
+        neon_dequantize_epi32_f64(vget_high_s32(input), scale),
+    }};
 }
 
 __always_inline float64x2x4_t neon_dequantize_epi32_f64(const int32x4x2_t& input, const float64x2_t& scale) {
     const float64x2x2_t dequantized_low  = neon_dequantize_epi32_f64(input.val[0], scale);
     const float64x2x2_t dequantized_high = neon_dequantize_epi32_f64(input.val[1], scale);
 
-    return {
-        {
-            dequantized_low.val[0],
-            dequantized_low.val[1],
-            dequantized_high.val[0],
-            dequantized_high.val[1],
-        }
-    };
+    return {{
+        dequantized_low.val[0],
+        dequantized_low.val[1],
+        dequantized_high.val[0],
+        dequantized_high.val[1],
+    }};
 }
 
 __always_inline float64x2x8_t neon_dequantize_epi32_f64(const int32x4x4_t& input, const float64x2_t& scale) {
@@ -96,18 +84,16 @@ __always_inline float64x2x8_t neon_dequantize_epi32_f64(const int32x4x4_t& input
     const float64x2x2_t dequantized2 = neon_dequantize_epi32_f64(input.val[2], scale);
     const float64x2x2_t dequantized3 = neon_dequantize_epi32_f64(input.val[3], scale);
 
-    return {
-        {
-            dequantized0.val[0],
-            dequantized0.val[1],
-            dequantized1.val[0],
-            dequantized1.val[1],
-            dequantized2.val[0],
-            dequantized2.val[1],
-            dequantized3.val[0],
-            dequantized3.val[1],
-        }
-    };
+    return {{
+        dequantized0.val[0],
+        dequantized0.val[1],
+        dequantized1.val[0],
+        dequantized1.val[1],
+        dequantized2.val[0],
+        dequantized2.val[1],
+        dequantized3.val[0],
+        dequantized3.val[1],
+    }};
 }
 
 __always_inline uint8x16_t neon_load_tail_elements_int8(const u8* input, const u32 tail_bytes_count) {
@@ -140,8 +126,7 @@ __always_inline float64x2_t neon_load_tail_elements_f64(const u8* input, const u
     return vld1q_f64(buffer);
 }
 
-__always_inline void neon_store_tail_elements_int8(u8* output, const uint8x16x4_t& data,
-                                                   const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_int8(u8* output, const uint8x16x4_t& data, const u32 tail_elements) {
     u8 buffer[16 * 4];
     for (u32 i = 0; i < 4; ++i) {
         vst1q_u8(buffer + i * 16, data.val[i]);
@@ -149,8 +134,7 @@ __always_inline void neon_store_tail_elements_int8(u8* output, const uint8x16x4_
     std::memcpy(output, buffer, tail_elements * sizeof(u8));
 }
 
-__always_inline void neon_store_tail_elements_int16(u16* output, const uint16x8x4_t& data,
-                                                    const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_int16(u16* output, const uint16x8x4_t& data, const u32 tail_elements) {
     u16 buffer[8 * 4];
     for (u32 i = 0; i < 4; ++i) {
         vst1q_u16(buffer + i * 8, data.val[i]);
@@ -158,8 +142,7 @@ __always_inline void neon_store_tail_elements_int16(u16* output, const uint16x8x
     std::memcpy(output, buffer, tail_elements * sizeof(u16));
 }
 
-__always_inline void neon_store_tail_elements_int32(u32* output, const uint32x4x4_t& data,
-                                                    const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_int32(u32* output, const uint32x4x4_t& data, const u32 tail_elements) {
     u32 buffer[4 * 4];
     for (u32 i = 0; i < 4; ++i) {
         vst1q_u32(buffer + i * 4, data.val[i]);
@@ -167,8 +150,7 @@ __always_inline void neon_store_tail_elements_int32(u32* output, const uint32x4x
     std::memcpy(output, buffer, tail_elements * sizeof(u32));
 }
 
-__always_inline void neon_store_tail_elements_f32(float32_t* output, const float32x4x4_t& data,
-                                                  const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_f32(float32_t* output, const float32x4x4_t& data, const u32 tail_elements) {
     float32_t buffer[16 * 4];
     for (u32 i = 0; i < 4; ++i) {
         vst1q_f32(buffer + i * 4, data.val[i]);
@@ -176,8 +158,7 @@ __always_inline void neon_store_tail_elements_f32(float32_t* output, const float
     std::memcpy(output, buffer, tail_elements * sizeof(float32_t));
 }
 
-__always_inline void neon_store_tail_elements_f32(float32_t* output, const float32x4x2_t& data,
-                                                  const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_f32(float32_t* output, const float32x4x2_t& data, const u32 tail_elements) {
     float32_t buffer[8 * 2];
     for (u32 i = 0; i < 2; ++i) {
         vst1q_f32(buffer + i * 4, data.val[i]);
@@ -185,15 +166,13 @@ __always_inline void neon_store_tail_elements_f32(float32_t* output, const float
     std::memcpy(output, buffer, tail_elements * sizeof(float32_t));
 }
 
-__always_inline void neon_store_tail_elements_f32(float32_t* output, const float32x4_t& data,
-                                                  const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_f32(float32_t* output, const float32x4_t& data, const u32 tail_elements) {
     float32_t buffer[4];
     vst1q_f32(buffer, data);
     std::memcpy(output, buffer, tail_elements * sizeof(float32_t));
 }
 
-__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x4_t& data,
-                                                  const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x4_t& data, const u32 tail_elements) {
     float64_t buffer[2 * 4];
     for (u32 i = 0; i < 4; ++i) {
         vst1q_f64(buffer + i * 2, data.val[i]);
@@ -201,8 +180,7 @@ __always_inline void neon_store_tail_elements_f64(float64_t* output, const float
     std::memcpy(output, buffer, tail_elements * sizeof(float64_t));
 }
 
-__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x2_t& data,
-                                                  const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x2_t& data, const u32 tail_elements) {
     float64_t buffer[2 * 2];
     for (u32 i = 0; i < 2; ++i) {
         vst1q_f64(buffer + i * 2, data.val[i]);
@@ -210,14 +188,13 @@ __always_inline void neon_store_tail_elements_f64(float64_t* output, const float
     std::memcpy(output, buffer, tail_elements * sizeof(float64_t));
 }
 
-__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x8_t& data,
-                                                  const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_f64(float64_t* output, const float64x2x8_t& data, const u32 tail_elements) {
     float64_t buffer[2 * 8];
     for (u32 i = 0; i < 8; ++i) {
         vst1q_f64(buffer + i * 2, data.val[i]);
     }
     std::memcpy(output, buffer, tail_elements * sizeof(float64_t));
 }
-} // namespace pernix::arm64::neon::internal
+}  // namespace pernix::arm64::neon::internal
 
 #endif  // PERNIX_ARM64_NEON_COMMON_H

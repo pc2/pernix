@@ -13,9 +13,7 @@ inline constexpr u8 inactive_lane              = 0xff;
 
 template <std::size_t Elements>
 constexpr bool table_indices_are_valid(const std::array<u8, Elements>& table) {
-    return std::ranges::all_of(table, [](const u8 index) {
-        return index == inactive_lane || index < Elements;
-    });
+    return std::ranges::all_of(table, [](const u8 index) { return index == inactive_lane || index < Elements; });
 }
 
 template <u8 BIT_WIDTH, std::size_t LANE_BITS, std::size_t ELEMENTS>
@@ -131,7 +129,7 @@ constexpr std::array<i32, ELEMENTS> make_shift_right_32() {
 
     return table;
 }
-} // namespace detail
+}  // namespace detail
 
 template <u8 BIT_WIDTH, u8 VECTOR_WIDTH, u8 START_BIT_OFFSET = 0>
 struct table_unpacking;
@@ -146,12 +144,9 @@ private:
 public:
     static constexpr u8 bit_width = BIT_WIDTH;
 
-    alignas(64) static constexpr std::array<u8, PERMUTE_ELEMENTS> permute1 =
-        detail::make_primary_permute<BIT_WIDTH, 8, PERMUTE_ELEMENTS>();
-    alignas(64) static constexpr std::array<u8, PERMUTE_ELEMENTS> permute2 =
-        detail::make_spill_permute<BIT_WIDTH, 8, PERMUTE_ELEMENTS>();
-    alignas(64) static constexpr std::array<i8, SHIFT_ELEMENTS> shift1 = detail::make_shift_right<i8,
-        BIT_WIDTH, SHIFT_ELEMENTS>();
+    alignas(64) static constexpr std::array<u8, PERMUTE_ELEMENTS> permute1 = detail::make_primary_permute<BIT_WIDTH, 8, PERMUTE_ELEMENTS>();
+    alignas(64) static constexpr std::array<u8, PERMUTE_ELEMENTS> permute2 = detail::make_spill_permute<BIT_WIDTH, 8, PERMUTE_ELEMENTS>();
+    alignas(64) static constexpr std::array<i8, SHIFT_ELEMENTS> shift1     = detail::make_shift_right<i8, BIT_WIDTH, SHIFT_ELEMENTS>();
     alignas(64) static constexpr std::array<i8, SHIFT_ELEMENTS> shift2 =
         detail::make_shift_left_for_spill<i8, BIT_WIDTH, 8, SHIFT_ELEMENTS>();
 
@@ -173,10 +168,8 @@ public:
 
     alignas(64) static constexpr std::array<u8, PERMUTE_ELEMENTS> permute1 =
         detail::make_primary_permute<BIT_WIDTH, 16, PERMUTE_ELEMENTS>();
-    alignas(64) static constexpr std::array<u8, PERMUTE_ELEMENTS> permute2 =
-        detail::make_spill_permute<BIT_WIDTH, 16, PERMUTE_ELEMENTS>();
-    alignas(64) static constexpr std::array<i16, SHIFT_ELEMENTS> shift1 =
-        detail::make_shift_right<i16, BIT_WIDTH, SHIFT_ELEMENTS>();
+    alignas(64) static constexpr std::array<u8, PERMUTE_ELEMENTS> permute2 = detail::make_spill_permute<BIT_WIDTH, 16, PERMUTE_ELEMENTS>();
+    alignas(64) static constexpr std::array<i16, SHIFT_ELEMENTS> shift1    = detail::make_shift_right<i16, BIT_WIDTH, SHIFT_ELEMENTS>();
     alignas(64) static constexpr std::array<i16, SHIFT_ELEMENTS> shift2 =
         detail::make_shift_left_for_spill<i16, BIT_WIDTH, 16, SHIFT_ELEMENTS>();
 
@@ -187,8 +180,7 @@ public:
 };
 
 template <u8 BIT_WIDTH, u8 VECTOR_WIDTH, u8 START_BIT_OFFSET>
-    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24 && VECTOR_WIDTH == detail::neon_vector_width && START_BIT_OFFSET <
-             8)
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24 && VECTOR_WIDTH == detail::neon_vector_width && START_BIT_OFFSET < 8)
 struct table_unpacking<BIT_WIDTH, VECTOR_WIDTH, START_BIT_OFFSET> {
 private:
     static constexpr std::size_t PERMUTE_ELEMENTS = VECTOR_WIDTH / 8;
@@ -209,6 +201,6 @@ public:
 
 template <u8 BIT_WIDTH, u8 VECTOR_WIDTH, u8 START_BIT_OFFSET = 0>
 struct table_packing;
-} // namespace pernix::arm64::internal
+}  // namespace pernix::arm64::neon::internal
 
 #endif  // PERNIX_ARM64_NEON_TABLES_H

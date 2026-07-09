@@ -43,8 +43,7 @@ __always_inline svint8_t sve2_unpack_epi8_1to8(const svuint8_t input, const svui
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline svint16_t sve2_unpack_epi16_9to16(const svuint16_t input, const svuint8_t permute,
-                                                  const svuint16_t shift,
+__always_inline svint16_t sve2_unpack_epi16_9to16(const svuint16_t input, const svuint8_t permute, const svuint16_t shift,
                                                   const svuint8_t spill_permute, const svuint16_t spill_shift) {
     if constexpr (BIT_WIDTH == 16) {
         return svreinterpret_s16(input);
@@ -56,9 +55,8 @@ __always_inline svint16_t sve2_unpack_epi16_9to16(const svuint16_t input, const 
 
         if constexpr (BIT_WIDTH == 11 || BIT_WIDTH == 13 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
             const svuint8_t spill_permuted_values = svtbl_u8(svreinterpret_u8_u16(input), spill_permute);
-            const svuint16_t spill_shifted        = svlsl_u16_x(pg, svreinterpret_u16_u8(spill_permuted_values),
-                                                         spill_shift);
-            shifted = svorr_u16_x(pg, shifted, spill_shifted);
+            const svuint16_t spill_shifted        = svlsl_u16_x(pg, svreinterpret_u16_u8(spill_permuted_values), spill_shift);
+            shifted                               = svorr_u16_x(pg, shifted, spill_shifted);
         }
 
         constexpr int sign_shift = 16 - BIT_WIDTH;
@@ -89,6 +87,6 @@ __always_inline svint32_t sve2_unpack_epi32_17to24(const svuint8_t input) {
         return svreinterpret_s32_u32(svand_n_u32_x(pg, unpacked, mask));
     }
 }
-} // namespace pernix::arm64::sve2::internal
+}  // namespace pernix::arm64::sve2::internal
 
 #endif  // PERNIX_ARM64_SVE2_UNPACKING_H

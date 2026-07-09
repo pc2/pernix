@@ -2,10 +2,10 @@
 #define PERNIX_AVX512_COMPAT_H
 
 #include <pernix/simd_compat.h>
+
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-
 
 namespace pernix::internal {
 static __always_inline __mmask8 element_mask8(const u32 e) {
@@ -383,6 +383,6 @@ static __always_inline void mm_storeu_elements_pd(void* mem_addr, const u32 e, c
     _mm_mask_storeu_pd(mem_addr, element_mask8(e), a);
 #endif
 }
-}
+}  // namespace pernix::internal
 
-#endif //PERNIX_AVX512_COMPAT_H
+#endif  // PERNIX_AVX512_COMPAT_H

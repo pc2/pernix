@@ -60,8 +60,7 @@ __always_inline int16x8_t neon_unpack_epi16_9to16(const uint16x8_t& input) {
         if constexpr (BIT_WIDTH == 11 || BIT_WIDTH == 13 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
             const uint8x16_t permuted2_u8 = vqtbl1q_u8(input_u8, vld1q_u8(tables::permute2.data()));
 
-            const uint16x8_t shifted2 = vshlq_u16(vreinterpretq_u16_u8(permuted2_u8),
-                                                  vld1q_s16(tables::shift2.data()));
+            const uint16x8_t shifted2 = vshlq_u16(vreinterpretq_u16_u8(permuted2_u8), vld1q_s16(tables::shift2.data()));
 
             shifted = vorrq_u16(shifted, shifted2);
         }
@@ -96,6 +95,6 @@ __always_inline int32x4_t neon_unpack_epi32_17to24(const uint32x4_t& input) {
         return vreinterpretq_s32_u32(vandq_u32(value, vdupq_n_u32(mask)));
     }
 }
-} // namespace pernix::arm64::neon::internal::b128
+}  // namespace pernix::arm64::neon::internal::b128
 
 #endif  // PERNIX_ARM64_NEON_UNPACKING_H

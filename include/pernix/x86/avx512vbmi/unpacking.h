@@ -1,13 +1,12 @@
 #ifndef PERNIX_AVX512VBMI_UNPACKING_H
 #define PERNIX_AVX512VBMI_UNPACKING_H
 
-#include <pernix/x86/avx512vbmi/tables.h>
 #include <pernix/simd_compat.h>
+#include <pernix/x86/avx512vbmi/tables.h>
 
 namespace pernix::internal {
 namespace m128 {
 constexpr __mmask16 kAlternateByteMask16 = 0xAAAAULL;
-
 
 __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i count) {
     const __m128i mask      = _mm_set1_epi16(0x00ff);
@@ -174,7 +173,7 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(const __m128i& input) 
 
     return shifted;
 }
-} // namespace m128
+}  // namespace m128
 
 namespace m256 {
 constexpr __mmask32 kAlternateByteMask32 = 0xAAAAAAAAULL;
@@ -344,7 +343,7 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(const __m256i& inpu
 
     return shifted;
 }
-} // namespace m256
+}  // namespace m256
 
 namespace m512 {
 constexpr __mmask64 kAlternateByteMask64 = 0xAAAAAAAAAAAAAAAAULL;
@@ -513,7 +512,7 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(const __m512i& inpu
 
     return shifted;
 }
-} // namespace m512
-} // namespace pernix::internal
+}  // namespace m512
+}  // namespace pernix::internal
 
 #endif  // PERNIX_AVX512VBMI_UNPACKING_H

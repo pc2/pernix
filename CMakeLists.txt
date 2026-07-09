@@ -5,6 +5,8 @@ option(BUILD_SHARED_LIBS "Build pernix as a shared library by default" ON)
 option(PERNIX_ENABLE_TESTS "Build pernix unit and integration tests" ON)
 option(PERNIX_ENABLE_CODE_COVERAGE "Enable code coverage for pernix tests (requires lcov/genhtml)" OFF)
 option(PERNIX_ENABLE_LTO "Enable interprocedural optimization/link-time optimization" OFF)
+option(PERNIX_ENABLE_SANITIZER_ADDRESS "Build pernix targets with AddressSanitizer instrumentation" OFF)
+option(PERNIX_ENABLE_SANITIZER_UNDEFINED "Build pernix targets with UndefinedBehaviorSanitizer instrumentation" OFF)
 option(PERNIX_ENABLE_INSTALL "Install pernix library, headers, and package metadata" ON)
 option(PERNIX_ENABLE_DOXYGEN "Build API documentation with Doxygen" OFF)
 option(PERNIX_INSTALL_DOCS "Install generated Doxygen documentation; requires PERNIX_ENABLE_DOXYGEN=ON" OFF)
@@ -100,6 +102,7 @@ set(PERNIX_PRIVATE_COMPILE_OPTIONS)
 foreach (PERNIX_CXX_FLAG
         -Wall
         -Wextra
+        -Wpedantic
         -Wshadow
         -Wfloat-equal
         -Wold-style-cast
@@ -115,6 +118,26 @@ foreach (PERNIX_CXX_FLAG
         message(STATUS "Compiler flag not supported: ${PERNIX_CXX_FLAG}")
     endif ()
 endforeach ()
+
+set(PERNIX_SANITIZER_OPTIONS)
+if (PERNIX_ENABLE_SANITIZER_ADDRESS OR PERNIX_ENABLE_SANITIZER_UNDEFINED)
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|IntelLLVM")
+        message(FATAL_ERROR "PERNIX sanitizer options are supported only with GCC/Clang-like compilers")
+    endif ()
+endif ()
+
+if (PERNIX_ENABLE_SANITIZER_ADDRESS)
+    list(APPEND PERNIX_SANITIZER_OPTIONS "-fsanitize=address")
+endif ()
+
+if (PERNIX_ENABLE_SANITIZER_UNDEFINED)
+    list(APPEND PERNIX_SANITIZER_OPTIONS "-fsanitize=undefined")
+endif ()
+
+if (PERNIX_SANITIZER_OPTIONS)
+    add_compile_options(${PERNIX_SANITIZER_OPTIONS})
+    add_link_options(${PERNIX_SANITIZER_OPTIONS})
+endif ()
 
 if (PERNIX_ENABLE_LTO)
     include(CheckIPOSupported)

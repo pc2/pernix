@@ -93,7 +93,13 @@ if (NOT PERNIX_ENABLE_FALLBACK_STDPAR STREQUAL "OFF")
     endif ()
 endif ()
 
-if (PERNIX_ENABLE_FALLBACK_SIMD)
+if (PERNIX_BUILD_FALLBACK_SIMD)
+    target_sources(pernix PRIVATE
+            fallback/simd_compression.cpp
+            fallback/simd_decompression.cpp
+    )
+    target_compile_features(pernix PUBLIC cxx_std_26)
+    target_compile_features(pernix_header_only INTERFACE cxx_std_26)
     target_compile_definitions(pernix PUBLIC PERNIX_BUILD_FALLBACK_SIMD=1)
     target_compile_definitions(pernix_header_only INTERFACE PERNIX_BUILD_FALLBACK_SIMD=1)
 endif ()

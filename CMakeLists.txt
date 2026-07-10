@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 project(pernix VERSION 0.1.0 LANGUAGES CXX C)
 
 option(BUILD_SHARED_LIBS "Build pernix as a shared library by default" ON)
@@ -20,7 +20,8 @@ option(PERNIX_ENABLE_ARM64_NEON "Build arm64 NEON backend when targeting arm64" 
 option(PERNIX_ENABLE_ARM64_SVE2 "Build arm64 SVE2 backend when targeting arm64" ON)
 set(PERNIX_ENABLE_FALLBACK_STDPAR "OFF" CACHE STRING "Enable the stdpar fallback backend: OFF, AUTO, or ON. TBB is optional and enables parallel standard execution policies when found.")
 set_property(CACHE PERNIX_ENABLE_FALLBACK_STDPAR PROPERTY STRINGS AUTO ON OFF)
-option(PERNIX_ENABLE_FALLBACK_SIMD "Build experimental fallback SIMD skeleton backend" OFF)
+set(PERNIX_ENABLE_FALLBACK_SIMD "AUTO" CACHE STRING "Enable the C++26 std::simd fallback backend: OFF, AUTO, or ON.")
+set_property(CACHE PERNIX_ENABLE_FALLBACK_SIMD PROPERTY STRINGS AUTO ON OFF)
 
 option(PERNIX_USE_SIMDE "Use SIMDe library for portable SIMD support" OFF)
 
@@ -33,6 +34,59 @@ string(TOUPPER "${PERNIX_ENABLE_FALLBACK_STDPAR}" PERNIX_ENABLE_FALLBACK_STDPAR)
 set(PERNIX_ENABLE_FALLBACK_STDPAR "${PERNIX_ENABLE_FALLBACK_STDPAR}" CACHE STRING "Enable the stdpar fallback backend: OFF, AUTO, or ON. TBB is optional and enables parallel standard execution policies when found." FORCE)
 if (NOT PERNIX_ENABLE_FALLBACK_STDPAR MATCHES "^(AUTO|ON|OFF)$")
     message(FATAL_ERROR "PERNIX_ENABLE_FALLBACK_STDPAR must be AUTO, ON, or OFF")
+endif ()
+
+string(TOUPPER "${PERNIX_ENABLE_FALLBACK_SIMD}" PERNIX_ENABLE_FALLBACK_SIMD)
+set(PERNIX_ENABLE_FALLBACK_SIMD "${PERNIX_ENABLE_FALLBACK_SIMD}" CACHE STRING "Enable the C++26 std::simd fallback backend: OFF, AUTO, or ON." FORCE)
+if (NOT PERNIX_ENABLE_FALLBACK_SIMD MATCHES "^(AUTO|ON|OFF)$")
+    message(FATAL_ERROR "PERNIX_ENABLE_FALLBACK_SIMD must be AUTO, ON, or OFF")
+endif ()
+
+set(PERNIX_BUILD_FALLBACK_SIMD OFF)
+if (NOT PERNIX_ENABLE_FALLBACK_SIMD STREQUAL "OFF")
+    include(CheckCXXSourceCompiles)
+    if (DEFINED CMAKE_CXX_STANDARD)
+        set(PERNIX_SAVED_CMAKE_CXX_STANDARD "${CMAKE_CXX_STANDARD}")
+        set(PERNIX_CXX_STANDARD_WAS_DEFINED ON)
+    endif ()
+    if (DEFINED CMAKE_CXX_STANDARD_REQUIRED)
+        set(PERNIX_SAVED_CMAKE_CXX_STANDARD_REQUIRED "${CMAKE_CXX_STANDARD_REQUIRED}")
+        set(PERNIX_CXX_STANDARD_REQUIRED_WAS_DEFINED ON)
+    endif ()
+    set(CMAKE_CXX_STANDARD 26)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    check_cxx_source_compiles([=[
+        #include <simd>
+        #include <version>
+
+        #if !defined(__cpp_lib_simd)
+        #error "The standard library does not provide C++26 std::simd"
+        #endif
+
+        int main() {
+            std::simd<int> values{};
+            return static_cast<int>(values.size() == 0);
+        }
+    ]=] PERNIX_HAS_CXX26_STDSIMD)
+    if (PERNIX_CXX_STANDARD_WAS_DEFINED)
+        set(CMAKE_CXX_STANDARD "${PERNIX_SAVED_CMAKE_CXX_STANDARD}")
+    else ()
+        unset(CMAKE_CXX_STANDARD)
+    endif ()
+    if (PERNIX_CXX_STANDARD_REQUIRED_WAS_DEFINED)
+        set(CMAKE_CXX_STANDARD_REQUIRED "${PERNIX_SAVED_CMAKE_CXX_STANDARD_REQUIRED}")
+    else ()
+        unset(CMAKE_CXX_STANDARD_REQUIRED)
+    endif ()
+
+    if (PERNIX_HAS_CXX26_STDSIMD)
+        set(PERNIX_BUILD_FALLBACK_SIMD ON)
+        message(STATUS "PERNIX fallback SIMD backend enabled (C++26 std::simd available)")
+    elseif (PERNIX_ENABLE_FALLBACK_SIMD STREQUAL "ON")
+        message(FATAL_ERROR "PERNIX_ENABLE_FALLBACK_SIMD=ON requires compiler and standard-library support for C++26 std::simd")
+    else ()
+        message(STATUS "PERNIX fallback SIMD backend disabled (C++26 std::simd unavailable)")
+    endif ()
 endif ()
 
 if (PERNIX_INSTALL_DOCS AND NOT PERNIX_ENABLE_DOXYGEN)

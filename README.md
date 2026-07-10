@@ -244,6 +244,9 @@ Common options:
 * `-DPERNIX_ENABLE_X86_AVX2=OFF`, `-DPERNIX_ENABLE_X86_BMI2=OFF`,
   `-DPERNIX_ENABLE_X86_AVX512VBMI=OFF`: disable specific x86 backends
 * `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF|AUTO|ON`: control the stdpar fallback backend. TBB is optional and enables parallel standard execution policies when found
+* `-DPERNIX_ENABLE_FALLBACK_SIMD=OFF|AUTO|ON`: control the experimental C++26
+  `std::simd` fallback backend. `AUTO` enables it when both the compiler and standard
+  library support `std::simd`; `ON` makes missing support a configuration error
 
 Install:
 

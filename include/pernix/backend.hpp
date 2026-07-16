@@ -4,7 +4,7 @@
 #include <pernix/pernix.h>
 
 namespace pernix {
-enum class Backend {
+enum class Backend : u8 {
     Auto           = PERNIX_BACKEND_AUTO,
     Fallback       = PERNIX_BACKEND_FALLBACK,
     FallbackScalar = PERNIX_BACKEND_FALLBACK_SCALAR,

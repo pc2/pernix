@@ -3,15 +3,15 @@
 
 #include <pernix/compat.h>
 
-#if !defined(__cplusplus)
+#ifndef __cplusplus
 #include <stdbool.h>
 #endif
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum pernix_status {
+typedef enum pernix_status {  // NOLINT(cppcoreguidelines-use-enum-class, modernize-use-using)
     PERNIX_STATUS_OK                         = 0,
     PERNIX_STATUS_INVALID_ARGUMENT           = -1,
     PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH      = -2,
@@ -20,7 +20,7 @@ typedef enum pernix_status {
     PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION = -5,
 } pernix_status;
 
-typedef enum pernix_backend {
+typedef enum pernix_backend {  // NOLINT(cppcoreguidelines-use-enum-class, modernize-use-using)
     PERNIX_BACKEND_AUTO            = 0,
     PERNIX_BACKEND_FALLBACK        = 1,
     PERNIX_BACKEND_FALLBACK_SCALAR = PERNIX_BACKEND_FALLBACK,
@@ -30,7 +30,7 @@ typedef enum pernix_backend {
     PERNIX_BACKEND_ARM64_NEON      = 5,
     PERNIX_BACKEND_ARM64_SVE       = 6,
     PERNIX_BACKEND_FALLBACK_STDPAR = 7,
-    PERNIX_BACKEND_FALLBACK_SIMD   = 8
+    PERNIX_BACKEND_FALLBACK_SIMD   = 8,
 } pernix_backend;
 
 PERNIX_API u8 pernix_min_bit_width(void);
@@ -95,7 +95,7 @@ PERNIX_API pernix_status pernix_decompress_block_f64(pernix_backend backend, u8 
 PERNIX_API pernix_status pernix_decompress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
                                                       void* output, u32 blocks, bool sign_values);
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 }
 #endif
 

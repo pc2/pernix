@@ -1,10 +1,12 @@
 #ifndef PERNIX_COMPAT_H
 #define PERNIX_COMPAT_H
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #else
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #endif
@@ -30,20 +32,20 @@
 #endif
 
 // Convenient type declarations
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef uintptr_t uptr;
+using u8   = std::uint8_t;
+using u16  = std::uint16_t;
+using u32  = std::uint32_t;
+using u64  = std::uint64_t;
+using uptr = std::uintptr_t;
 
-typedef int8_t i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
+using i8  = std::int8_t;
+using i16 = std::int16_t;
+using i32 = std::int32_t;
+using i64 = std::int64_t;
 
-typedef float f32;
-typedef double f64;
+using f32 = std::float_t;
+using f64 = std::double_t;
 
-typedef std::size_t usize;
+using usize = std::size_t;
 
 #endif  // PERNIX_COMPAT_H

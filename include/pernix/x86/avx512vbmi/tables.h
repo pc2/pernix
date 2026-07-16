@@ -9,7 +9,7 @@
 #include <tuple>
 
 namespace pernix::internal {
-template <typename Vec, typename U, std::size_t N>
+template <typename Vec, typename U, usize N>
 static __always_inline Vec load_table(const std::array<U, N>& table) {
     static_assert(sizeof(table) >= sizeof(Vec), "table is smaller than requested SIMD vector");
     if constexpr (std::is_same_v<Vec, __m512i>) {

@@ -30,11 +30,13 @@ The implementation also accepts explicit block sizes `128`, `256`, `512`, and `1
 documented interchange format is the 64-byte block.
 
 Packed values are written as a byte stream, least-significant bits first within each value and byte. Compression
-zero-fills the output block before packing, so unused tail bits in a block are zero. When `sign_values=true`, decompression
+zero-fills the output block before packing, so unused tail bits in a block are zero. When `sign_values=true`,
+decompression
 sign-extends each `N`-bit value before multiplying by scale. When `sign_values=false`, decompression treats the packed
 value as unsigned. For `bit_width == 1`, signed fallback compression clamps to binary `0/1`.
 
-The scalar fallback packs and unpacks byte-by-byte, so the serialized 64-byte block is not a native integer dump. Backends
+The scalar fallback packs and unpacks byte-by-byte, so the serialized 64-byte block is not a native integer dump.
+Backends
 are expected to produce compatible blocks for the same inputs, bit width, scale, and sign mode.
 
 ## Quantization And Scale
@@ -101,8 +103,10 @@ the lower-level kernels.
 The `_f32` APIs operate on `float` data and take `float` scale values. The `_f64` APIs operate on `double` data and take
 `double` scale values. Both use the same packed integer block format for a given bit width.
 
-Given the same backend, inputs, bit width, scale, and sign mode, behavior is deterministic. Different backends are tested
-for compatible results, but exact floating-point details should not be treated as a cross-backend ABI guarantee beyond the
+Given the same backend, inputs, bit width, scale, and sign mode, behavior is deterministic. Different backends are
+tested
+for compatible results, but exact floating-point details should not be treated as a cross-backend ABI guarantee beyond
+the
 documented quantization model.
 
 ## Backends
@@ -122,9 +126,12 @@ Current backend enum values:
 * `PERNIX_BACKEND_FALLBACK_STDPAR`
 * `PERNIX_BACKEND_FALLBACK_SIMD`
 
-x86 SIMD kernels are compiled with per-source ISA flags when enabled. Generic dispatch and fallback code are built for the
-baseline target. ARM decompression paths exist, but ARM compression is incomplete/stubbed. The stdpar fallback is disabled
-by default. When enabled, both the compiled library and the header-only target export stdpar dispatch. If TBB is available,
+x86 SIMD kernels are compiled with per-source ISA flags when enabled. Generic dispatch and fallback code are built for
+the
+baseline target. ARM decompression paths exist, but ARM compression is incomplete/stubbed. The stdpar fallback is
+disabled
+by default. When enabled, both the compiled library and the header-only target export stdpar dispatch. If TBB is
+available,
 stdpar uses standard parallel execution policies; otherwise it preserves the same 8-value grouping logic while executing
 sequentially.
 
@@ -141,10 +148,10 @@ sequentially.
 int main() {
     constexpr u8 bit_width = 16;
     constexpr u32 block_size = pernix::compressed_block_size();
-    constexpr std::size_t elements = pernix::elements_per_block(bit_width);
+    constexpr usize elements = pernix::elements_per_block(bit_width);
 
     std::array<float, elements> input{};
-    for (std::size_t i = 0; i < input.size(); ++i) {
+    for (usize i = 0; i < input.size(); ++i) {
         input[i] = std::sin(static_cast<float>(i) * 0.25f);
     }
 
@@ -221,7 +228,8 @@ cmake -S . -B build -DPERNIX_ENABLE_FORTRAN_BINDINGS=ON
 ```
 
 The modules in `bindings/fortran/src` bind directly to the C ABI names and currently expose f32 and f64 compression and
-decompression entry points. The bindings do not yet install Fortran module files as a packaged Fortran SDK; they are meant
+decompression entry points. The bindings do not yet install Fortran module files as a packaged Fortran SDK; they are
+meant
 for in-tree builds and examples.
 
 ## Building
@@ -243,7 +251,8 @@ Common options:
 * `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON`: build Fortran bindings and Fortran example/test
 * `-DPERNIX_ENABLE_X86_AVX2=OFF`, `-DPERNIX_ENABLE_X86_BMI2=OFF`,
   `-DPERNIX_ENABLE_X86_AVX512VBMI=OFF`: disable specific x86 backends
-* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF|AUTO|ON`: control the stdpar fallback backend. TBB is optional and enables parallel standard execution policies when found
+* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF|AUTO|ON`: control the stdpar fallback backend. TBB is optional and enables
+  parallel standard execution policies when found
 * `-DPERNIX_ENABLE_FALLBACK_SIMD=OFF|AUTO|ON`: control the experimental C++26
   `std::simd` fallback backend. `AUTO` enables it when both the compiler and standard
   library support `std::simd`; `ON` makes missing support a configuration error
@@ -284,9 +293,12 @@ If Fortran bindings are enabled:
 
 ## Limitations
 
-* Public documentation is centered on fixed 64-byte blocks; larger accepted block sizes are compatibility/internal paths.
-* Input values should be finite and within the intended quantization range for portable cross-backend behavior. The scalar
-  fallback clamps NaN, infinity, and out-of-range scaled values, but that is not yet specified as a cross-backend policy.
+* Public documentation is centered on fixed 64-byte blocks; larger accepted block sizes are compatibility/internal
+  paths.
+* Input values should be finite and within the intended quantization range for portable cross-backend behavior. The
+  scalar
+  fallback clamps NaN, infinity, and out-of-range scaled values, but that is not yet specified as a cross-backend
+  policy.
 * Scale must be positive and finite.
 * ARM64 compression backends are incomplete/stubbed.
 * `PERNIX_BACKEND_FALLBACK_STDPAR` is not exported by the compiled library target.
@@ -296,7 +308,8 @@ If Fortran bindings are enabled:
 ## Performance Notes
 
 Decompression is the performance-sensitive path. Prefer `PERNIX_BACKEND_AUTO` for normal use so PERNIX can select an
-available optimized backend. Use `PERNIX_BACKEND_FALLBACK` when deterministic portable fallback behavior is more important
+available optimized backend. Use `PERNIX_BACKEND_FALLBACK` when deterministic portable fallback behavior is more
+important
 than backend selection.
 
 A separate benchmark framework exists at <https://github.com/pc2/pernix-benchmark>.

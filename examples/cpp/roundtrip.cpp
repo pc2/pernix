@@ -5,12 +5,12 @@
 #include <pernix/pernix.hpp>
 
 int main() {
-    constexpr u8 bit_width         = 16;
-    constexpr u32 block_size       = pernix::compressed_block_size();
-    constexpr std::size_t elements = pernix::elements_per_block(bit_width);
+    constexpr u8 bit_width   = 16;
+    constexpr u32 block_size = pernix::compressed_block_size();
+    constexpr usize elements = pernix::elements_per_block(bit_width);
 
     std::array<float, elements> input{};
-    for (std::size_t i = 0; i < input.size(); ++i) {
+    for (usize i = 0; i < input.size(); ++i) {
         input[i] = std::sin(static_cast<float>(i) * 0.25f);
     }
 
@@ -35,7 +35,7 @@ int main() {
         return 2;
     }
 
-    for (std::size_t i = 0; i < input.size(); ++i) {
+    for (usize i = 0; i < input.size(); ++i) {
         if (std::abs(restored[i] - input[i]) > scale) {
             return 3;
         }

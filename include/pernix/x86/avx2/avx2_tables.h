@@ -721,22 +721,22 @@ struct unpack_tables_avx2 {
     alignas(32) inline static constexpr std::array<i8, 32> shuffle = [] {
         std::array<i8, 32> shuffles{};
         shuffles.fill(-1);
-        constexpr std::size_t rebase_second_half = 4 * ((BIT_WIDTH - 1) / 8);
+        constexpr usize rebase_second_half = 4 * ((BIT_WIDTH - 1) / 8);
 
-        for (std::size_t lane = 0; lane < 2; ++lane) {
-            for (std::size_t i = 0; i < 4; ++i) {
-                const std::size_t value_index = lane * 4 + i;
+        for (usize lane = 0; lane < 2; ++lane) {
+            for (usize i = 0; i < 4; ++i) {
+                const usize value_index = lane * 4 + i;
 
-                const std::size_t bit_start  = value_index * BIT_WIDTH;
-                const std::size_t byte_start = bit_start / 8;
-                const std::size_t bit_offset = bit_start % 8;
-                const std::size_t byte_count = (bit_offset + BIT_WIDTH + 7) / 8;
+                const usize bit_start  = value_index * BIT_WIDTH;
+                const usize byte_start = bit_start / 8;
+                const usize bit_offset = bit_start % 8;
+                const usize byte_count = (bit_offset + BIT_WIDTH + 7) / 8;
 
-                const std::size_t rebase         = (lane == 0) ? 0 : rebase_second_half;
-                const std::size_t rel_byte_start = byte_start - rebase;
+                const usize rebase         = (lane == 0) ? 0 : rebase_second_half;
+                const usize rel_byte_start = byte_start - rebase;
 
-                const std::size_t dst = (lane * 4 + i) * 4;
-                for (std::size_t k = 0; k < byte_count; ++k) {
+                const usize dst = (lane * 4 + i) * 4;
+                for (usize k = 0; k < byte_count; ++k) {
                     shuffles[dst + k] = static_cast<i8>(rel_byte_start + k);
                 }
             }
@@ -748,7 +748,7 @@ struct unpack_tables_avx2 {
     alignas(64) inline static constexpr std::array<i32, 8> shift = [] {
         std::array<i32, 8> shifts{};
 
-        for (std::size_t lane = 0; lane < 8; ++lane) {
+        for (usize lane = 0; lane < 8; ++lane) {
             const int bit_offset  = static_cast<int>(lane * BIT_WIDTH);
             const int bit_in_byte = bit_offset % 8;
             const int left_shift  = 32 - BIT_WIDTH - bit_in_byte;

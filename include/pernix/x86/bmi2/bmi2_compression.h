@@ -187,7 +187,11 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scal
 
     if constexpr (remaining) {
         constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
-        internal::quantize_and_pack_fallback<BIT_WIDTH, f32>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
+        const __m256 source        = _mm256_maskload_ps(input, internal::mm256_tail_mask_epi32<remaining>());
+        const __m256i quantized    = internal::mm256_quantize_ps_epi32(source, scale_v);
+        const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
+        const __m256i packed       = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(packed_input);
+        std::memcpy(output, &packed, tail_bytes);
     }
 
     return 0;
@@ -233,7 +237,23 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
 
     if constexpr (remaining) {
         constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
-        internal::quantize_and_pack_fallback<BIT_WIDTH, f64>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
+        constexpr u8 first_lanes  = remaining < 4 ? remaining : 4;
+        constexpr u8 second_lanes = remaining > 4 ? remaining - 4 : 0;
+
+        const __m256d source1 = _mm256_maskload_pd(input, internal::mm256_tail_mask_epi64<first_lanes>());
+        const __m256d source2 = [&] {
+            if constexpr (second_lanes > 0) {
+                return _mm256_maskload_pd(input + 4, internal::mm256_tail_mask_epi64<second_lanes>());
+            } else {
+                return _mm256_setzero_pd();
+            }
+        }();
+        const __m128i quantized1 = internal::mm256_quantize_pd_epi32(source1, scale_v);
+        const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
+        __m256i combined         = _mm256_castsi128_si256(quantized1);
+        combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
+        const __m256i packed = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined));
+        std::memcpy(output, &packed, tail_bytes);
     }
     return 0;
 }

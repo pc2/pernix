@@ -13,6 +13,19 @@
 
 namespace pernix {
 namespace internal {
+template <u8 LANES>
+    requires(LANES <= 8)
+__always_inline __m256i mm256_tail_mask_epi32() {
+    return _mm256_setr_epi32(LANES > 0 ? -1 : 0, LANES > 1 ? -1 : 0, LANES > 2 ? -1 : 0, LANES > 3 ? -1 : 0, LANES > 4 ? -1 : 0,
+                             LANES > 5 ? -1 : 0, LANES > 6 ? -1 : 0, LANES > 7 ? -1 : 0);
+}
+
+template <u8 LANES>
+    requires(LANES <= 4)
+__always_inline __m256i mm256_tail_mask_epi64() {
+    return _mm256_setr_epi64x(LANES > 0 ? -1 : 0, LANES > 1 ? -1 : 0, LANES > 2 ? -1 : 0, LANES > 3 ? -1 : 0);
+}
+
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_clamp_signed_epi32(__m256i input) {
@@ -458,17 +471,12 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scal
     }
 
     if constexpr (remaining) {
-        //         std::vector<u32> block_values(remaining);
-        // #pragma GCC unroll 8
-        //         for (u32 i = 0; i < remaining; i++) {
-        //             block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i],
-        //             scale)));
-        //         }
-        //
-        //         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
-
         constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
-        internal::quantize_and_pack_fallback<BIT_WIDTH, f32>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
+        const __m256 source        = _mm256_maskload_ps(input, internal::mm256_tail_mask_epi32<remaining>());
+        const __m256i quantized    = internal::mm256_quantize_ps_epi32(source, scale_v);
+        const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
+        const __m256i packed       = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(packed_input);
+        std::memcpy(output, &packed, tail_bytes);
     }
 
     return 0;
@@ -516,17 +524,25 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
     }
 
     if constexpr (remaining) {
-        //         std::vector<u32> block_values(remaining);
-        // #pragma GCC unroll 8
-        //         for (u32 i = 0; i < remaining; i++) {
-        //             block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i],
-        //             scale)));
-        //         }
-        //
-        //         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
-
         constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
-        internal::quantize_and_pack_fallback<BIT_WIDTH, f64>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
+        constexpr u8 first_lanes  = remaining < 4 ? remaining : 4;
+        constexpr u8 second_lanes = remaining > 4 ? remaining - 4 : 0;
+
+        const __m256d source1 = _mm256_maskload_pd(input, internal::mm256_tail_mask_epi64<first_lanes>());
+        const __m256d source2 = [&] {
+            if constexpr (second_lanes > 0) {
+                return _mm256_maskload_pd(input + 4, internal::mm256_tail_mask_epi64<second_lanes>());
+            } else {
+                return _mm256_setzero_pd();
+            }
+        }();
+        const __m128i quantized1 = internal::mm256_quantize_pd_epi32(source1, scale_v);
+        const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
+        __m256i combined         = _mm256_castsi128_si256(quantized1);
+        combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
+        const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined);
+        const __m256i packed       = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(packed_input);
+        std::memcpy(output, &packed, tail_bytes);
     }
 
     return 0;

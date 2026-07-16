@@ -62,8 +62,8 @@ __m256i mm256_sign_extend32(__m256i source) {
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH > 0 && BIT_WIDTH <= 24)
 __m128i mm_unpack_epi32_bmi2(const u8* __restrict__ input) {
-    constexpr u32 mask                 = BIT_WIDTH == 32 ? std::numeric_limits<u32>::max() : (1ULL << BIT_WIDTH) - 1U;
-    constexpr std::size_t packed_bytes = (4 * BIT_WIDTH + 7) / 8;
+    constexpr u32 mask           = BIT_WIDTH == 32 ? std::numeric_limits<u32>::max() : (1ULL << BIT_WIDTH) - 1U;
+    constexpr usize packed_bytes = (4 * BIT_WIDTH + 7) / 8;
 
     __m128i result;
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
@@ -120,9 +120,13 @@ __m128i mm_unpack_epi32_bmi2(const u8* __restrict__ input) {
  */
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-__m256i mm256_unpack_epi32_bmi2(const u8* __restrict__ input) {
-    constexpr u32 mask                 = BIT_WIDTH == 32 ? std::numeric_limits<u32>::max() : (1ULL << BIT_WIDTH) - 1U;
-    constexpr std::size_t packed_bytes = BIT_WIDTH;
+__m256i mm256_unpack_epi32_bmi2(const __m256i packed_source) {
+    constexpr u32 mask           = BIT_WIDTH == 32 ? std::numeric_limits<u32>::max() : (1ULL << BIT_WIDTH) - 1U;
+    constexpr usize packed_bytes = BIT_WIDTH;
+
+    alignas(32) u64 packed_words[4];
+    _mm256_store_si256(reinterpret_cast<__m256i*>(packed_words), packed_source);
+    const auto* input = reinterpret_cast<const u8*>(packed_words);
 
     __m256i result;
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 8) {
@@ -189,6 +193,14 @@ __m256i mm256_unpack_epi32_bmi2(const u8* __restrict__ input) {
     }
     return result;
 }
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
+__m256i mm256_unpack_epi32_bmi2(const u8* __restrict__ input) {
+    __m256i source = _mm256_setzero_si256();
+    std::memcpy(&source, input, BIT_WIDTH);
+    return mm256_unpack_epi32_bmi2<BIT_WIDTH, SIGN_VALUES>(source);
+}
 }  // namespace internal
 
 /**
@@ -227,8 +239,12 @@ int mm256_decompress_block_bmi2(const void* __restrict__ input_ptr, const f32 sc
 
     if constexpr (remaining > 0) {
         constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
-        internal::unpack_and_dequantize_fallback<BIT_WIDTH, SIGN_VALUES, f32>(std::span(input, tail_bytes), remaining, scale,
-                                                                              std::span(output, remaining));
+        __m256i source           = _mm256_setzero_si256();
+        std::memcpy(&source, input, tail_bytes);
+
+        const __m256i unpacked   = internal::mm256_unpack_epi32_bmi2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v);
+        std::memcpy(output, &dequantized, remaining * sizeof(f32));
     }
 
     return 0;
@@ -276,8 +292,21 @@ int mm256_decompress_block_bmi2(const void* __restrict__ input_ptr, const f64 sc
 
     if constexpr (remaining > 0) {
         constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
-        internal::unpack_and_dequantize_fallback<BIT_WIDTH, SIGN_VALUES, f64>(std::span(input, tail_bytes), remaining, scale,
-                                                                              std::span(output, remaining));
+        __m256i source           = _mm256_setzero_si256();
+        std::memcpy(&source, input, tail_bytes);
+
+        const __m256i unpacked = internal::mm256_unpack_epi32_bmi2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256i extend1  = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
+        const __m256i extend2  = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
+
+        const __m256d dequantized1 = internal::mm256_dequantize_epi64_pd(extend1, scale_v);
+        const __m256d dequantized2 = internal::mm256_dequantize_epi64_pd(extend2, scale_v);
+
+        constexpr u32 first_elements = remaining < 4 ? remaining : 4;
+        std::memcpy(output, &dequantized1, first_elements * sizeof(f64));
+        if constexpr (remaining > 4) {
+            std::memcpy(output + 4, &dequantized2, (remaining - 4) * sizeof(f64));
+        }
     }
 
     return 0;

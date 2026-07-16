@@ -114,9 +114,9 @@ inline pernix_status compress_block(const Backend backend, const u8 bit_width, c
 
     const auto kernel = [&] {
         if constexpr (std::is_same_v<ScaleType, f32>) {
-            return internal::select_compress_block_f32(backend, bit_width, block_size);
+            return pernix::internal::select_compress_block_f32(backend, bit_width, block_size);
         } else {
-            return internal::select_compress_block_f64(backend, bit_width, block_size);
+            return pernix::internal::select_compress_block_f64(backend, bit_width, block_size);
         }
     }();
     if (!kernel) {
@@ -144,9 +144,9 @@ inline pernix_status compress_blocks(const Backend backend, const u8 bit_width, 
 
     const auto kernel = [&] {
         if constexpr (std::is_same_v<ScaleType, f32>) {
-            return internal::select_compress_blocks_f32(backend, bit_width, block_size);
+            return pernix::internal::select_compress_blocks_f32(backend, bit_width, block_size);
         } else {
-            return internal::select_compress_blocks_f64(backend, bit_width, block_size);
+            return pernix::internal::select_compress_blocks_f64(backend, bit_width, block_size);
         }
     }();
     if (!kernel) {
@@ -171,9 +171,9 @@ inline pernix_status decompress_block(const Backend backend, const u8 bit_width,
 
     const auto kernel = [&] {
         if constexpr (std::is_same_v<ScaleType, f32>) {
-            return internal::select_decompress_block_f32(backend, bit_width, block_size, sign_values);
+            return pernix::internal::select_decompress_block_f32(backend, bit_width, block_size, sign_values);
         } else {
-            return internal::select_decompress_block_f64(backend, bit_width, block_size, sign_values);
+            return pernix::internal::select_decompress_block_f64(backend, bit_width, block_size, sign_values);
         }
     }();
     if (!kernel) {
@@ -201,9 +201,9 @@ inline pernix_status decompress_blocks(const Backend backend, const u8 bit_width
 
     const auto kernel = [&] {
         if constexpr (std::is_same_v<ScaleType, f32>) {
-            return internal::select_decompress_blocks_f32(backend, bit_width, block_size, sign_values);
+            return pernix::internal::select_decompress_blocks_f32(backend, bit_width, block_size, sign_values);
         } else {
-            return internal::select_decompress_blocks_f64(backend, bit_width, block_size, sign_values);
+            return pernix::internal::select_decompress_blocks_f64(backend, bit_width, block_size, sign_values);
         }
     }();
     if (!kernel) {

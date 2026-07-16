@@ -213,9 +213,10 @@ __always_inline __m256i mm256_pack_epi32_avx2_1to3(const __m256i& input) {
 }
 
 __always_inline __m256i mm256_pack_epi32_avx2_4(const __m256i& input) {
-    const __m256i zero = _mm256_setzero_si256();
+    const __m256i zero   = _mm256_setzero_si256();
+    const __m256i masked = _mm256_and_si256(input, _mm256_set1_epi32(0x0f));
 
-    const __m256i packed16 = _mm256_packus_epi32(input, zero);
+    const __m256i packed16 = _mm256_packus_epi32(masked, zero);
     const __m256i permuted = _mm256_permute4x64_epi64(packed16, _MM_SHUFFLE(3, 1, 2, 0));
     const __m256i packed8  = _mm256_packus_epi16(permuted, zero);
 
@@ -297,9 +298,10 @@ __always_inline auto mm256_pack_epi32_avx2_9to16(const __m256i& input) -> __m256
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 5 && BIT_WIDTH <= 7)
 __always_inline auto mm256_pack_epi32_avx2_5to7(const __m256i& input) -> __m256i {
-    const __m256i zero = _mm256_setzero_si256();
+    const __m256i zero   = _mm256_setzero_si256();
+    const __m256i masked = _mm256_and_si256(input, _mm256_set1_epi32((1 << BIT_WIDTH) - 1));
 
-    const __m256i packed16 = _mm256_packus_epi32(input, zero);
+    const __m256i packed16 = _mm256_packus_epi32(masked, zero);
     const __m256i permuted = _mm256_permute4x64_epi64(packed16, _MM_SHUFFLE(3, 1, 2, 0));
     const __m256i packed8  = _mm256_packus_epi16(permuted, zero);
 
@@ -415,19 +417,6 @@ __m256i mm256_pack_epi32_avx2(const __m256i& input) {
     }
     return _mm256_setzero_si256();
 }
-
-template <u8 BIT_WIDTH>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-void store_packed_epi32_fallback_8(const __m256i& input, u8* __restrict__ output) {
-    alignas(32) std::array<i32, 8> lanes{};
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(lanes.data()), input);
-
-    std::vector<u32> block_values(lanes.size());
-    for (usize i = 0; i < lanes.size(); ++i) {
-        block_values[i] = static_cast<u32>(lanes[i]);
-    }
-    pack_epi32_fallback<BIT_WIDTH>(block_values, output);
-}
 }  // namespace internal
 
 /**
@@ -461,20 +450,25 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scal
         const __m256 source        = _mm256_loadu_ps(input);
         const __m256i quantized    = internal::mm256_quantize_ps_epi32(source, scale_v);
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
-        internal::store_packed_epi32_fallback_8<BIT_WIDTH>(packed_input, output);
+        const __m256i packed       = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(packed_input);
+        std::memcpy(output, &packed, BIT_WIDTH);
 
         input += 8;
         output += BIT_WIDTH;
     }
 
     if constexpr (remaining) {
-        std::vector<u32> block_values(remaining);
-#pragma GCC unroll 8
-        for (u32 i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i], scale)));
-        }
+        //         std::vector<u32> block_values(remaining);
+        // #pragma GCC unroll 8
+        //         for (u32 i = 0; i < remaining; i++) {
+        //             block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i],
+        //             scale)));
+        //         }
+        //
+        //         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
 
-        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        internal::quantize_and_pack_fallback<BIT_WIDTH, f32>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
     }
 
     return 0;
@@ -515,19 +509,24 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
         __m256i combined           = _mm256_castsi128_si256(quantized1);
         combined                   = _mm256_inserti128_si256(combined, quantized2, 1);
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined);
-        internal::store_packed_epi32_fallback_8<BIT_WIDTH>(packed_input, output);
+        const __m256i packed       = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(packed_input);
+        std::memcpy(output, &packed, BIT_WIDTH);
         input += 8;
         output += BIT_WIDTH;
     }
 
     if constexpr (remaining) {
-        std::vector<u32> block_values(remaining);
-#pragma GCC unroll 8
-        for (u32 i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i], scale)));
-        }
+        //         std::vector<u32> block_values(remaining);
+        // #pragma GCC unroll 8
+        //         for (u32 i = 0; i < remaining; i++) {
+        //             block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i],
+        //             scale)));
+        //         }
+        //
+        //         internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
 
-        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        internal::quantize_and_pack_fallback<BIT_WIDTH, f64>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
     }
 
     return 0;

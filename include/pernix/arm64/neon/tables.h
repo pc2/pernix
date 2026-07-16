@@ -1,10 +1,11 @@
 #ifndef PERNIX_ARM64_NEON_TABLES_H
 #define PERNIX_ARM64_NEON_TABLES_H
 
+#include <pernix/compat.h>
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
 
 namespace pernix::arm64::neon::internal {
 namespace detail {

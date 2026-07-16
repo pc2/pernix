@@ -280,6 +280,7 @@ TEST(DeterministicCorrectnessTest, SignValuesFalseUsesUnsignedPackedValuesForAll
         const u32 elements = pernix_elements_per_block(bit_width);
         std::vector<float> signed_values(elements);
         std::vector<float> unsigned_values(elements);
+        std::vector<float> avx512_unsigned_values(elements);
 
         ASSERT_EQ(
             pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f, signed_values.data(), true),
@@ -289,11 +290,53 @@ TEST(DeterministicCorrectnessTest, SignValuesFalseUsesUnsignedPackedValuesForAll
             PERNIX_STATUS_OK);
 
         const float expected_unsigned = static_cast<float>((1U << bit_width) - 1U);
-        EXPECT_EQ(unsigned_values[0], expected_unsigned);
+        EXPECT_TRUE(std::ranges::all_of(unsigned_values, [expected_unsigned](const float value) { return value == expected_unsigned; }));
+
+        const pernix_status avx512_status = pernix_decompress_block_f32(PERNIX_BACKEND_X86_AVX512_VBMI, bit_width, kBlockSize,
+                                                                        packed.data(), 1.0f, avx512_unsigned_values.data(), false);
+        if (avx512_status == PERNIX_STATUS_OK) {
+            EXPECT_EQ(avx512_unsigned_values, unsigned_values);
+        } else {
+            EXPECT_TRUE(avx512_status == PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION || avx512_status == PERNIX_STATUS_UNSUPPORTED_BACKEND ||
+                        avx512_status == PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH);
+        }
+
         if (bit_width == 1) {
             EXPECT_EQ(signed_values[0], 1.0f);
         } else {
             EXPECT_EQ(signed_values[0], -1.0f);
+        }
+    }
+}
+
+TEST(DeterministicCorrectnessTest, Avx512TableDrivenSmallWidthsMatchFallbackForMixedBits) {
+    constexpr std::array<u8, 3> bit_widths{1, 2, 4};
+    std::vector<u8> packed(kBlockSize);
+    for (usize i = 0; i < packed.size(); ++i) {
+        packed[i] = static_cast<u8>(i * 37U + 0x5aU);
+    }
+
+    for (const u8 bit_width : bit_widths) {
+        SCOPED_TRACE(::testing::Message() << "bit_width=" << static_cast<unsigned>(bit_width));
+        const u32 elements = pernix_elements_per_block(bit_width);
+
+        for (const bool sign_values : {false, true}) {
+            std::vector<float> fallback_output(elements);
+            std::vector<float> avx512_output(elements);
+
+            ASSERT_EQ(pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f,
+                                                  fallback_output.data(), sign_values),
+                      PERNIX_STATUS_OK);
+
+            const pernix_status status = pernix_decompress_block_f32(PERNIX_BACKEND_X86_AVX512_VBMI, bit_width, kBlockSize, packed.data(),
+                                                                     1.0f, avx512_output.data(), sign_values);
+            if (status != PERNIX_STATUS_OK) {
+                EXPECT_TRUE(status == PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION || status == PERNIX_STATUS_UNSUPPORTED_BACKEND ||
+                            status == PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH);
+                GTEST_SKIP();
+            }
+
+            EXPECT_EQ(avx512_output, fallback_output);
         }
     }
 }

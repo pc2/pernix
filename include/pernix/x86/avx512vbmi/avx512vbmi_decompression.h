@@ -26,6 +26,51 @@ __always_inline __m512d mm512_dequantize_epi64(const __m512i& input, const __m51
     return _mm512_mul_pd(converted, scale);
 }
 
+template <bool SIGN_VALUES>
+__always_inline __m512i mm512_extend_epi8_epi32(const __m128i input) {
+    if constexpr (SIGN_VALUES) {
+        return _mm512_cvtepi8_epi32(input);
+    } else {
+        return _mm512_cvtepu8_epi32(input);
+    }
+}
+
+template <bool SIGN_VALUES>
+__always_inline __m512i mm512_extend_epi8_epi64(const __m128i input) {
+    if constexpr (SIGN_VALUES) {
+        return _mm512_cvtepi8_epi64(input);
+    } else {
+        return _mm512_cvtepu8_epi64(input);
+    }
+}
+
+template <bool SIGN_VALUES>
+__always_inline __m512i mm512_extend_epi16_epi32(const __m256i input) {
+    if constexpr (SIGN_VALUES) {
+        return _mm512_cvtepi16_epi32(input);
+    } else {
+        return _mm512_cvtepu16_epi32(input);
+    }
+}
+
+template <bool SIGN_VALUES>
+__always_inline __m512i mm512_extend_epi16_epi64(const __m128i input) {
+    if constexpr (SIGN_VALUES) {
+        return _mm512_cvtepi16_epi64(input);
+    } else {
+        return _mm512_cvtepu16_epi64(input);
+    }
+}
+
+template <bool SIGN_VALUES>
+__always_inline __m256i mm256_extend_epi16_epi32(const __m128i input) {
+    if constexpr (SIGN_VALUES) {
+        return _mm256_cvtepi16_epi32(input);
+    } else {
+        return _mm256_cvtepu16_epi32(input);
+    }
+}
+
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8) && (BLOCK_SIZE % 32 == 0)
 __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict__ input, const f32 scale, f32* __restrict__ output) {
@@ -44,10 +89,10 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
             const __m512i source   = mm512_loadu_elements_epi64(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-            const __m512i converted1 = _mm512_cvtepi8_epi32(_mm512_castsi512_si128(unpacked));
-            const __m512i converted2 = _mm512_cvtepi8_epi32(_mm512_extracti64x2_epi64(unpacked, 1));
-            const __m512i converted3 = _mm512_cvtepi8_epi32(_mm512_extracti64x2_epi64(unpacked, 2));
-            const __m512i converted4 = _mm512_cvtepi8_epi32(_mm512_extracti64x2_epi64(unpacked, 3));
+            const __m512i converted1 = mm512_extend_epi8_epi32<SIGN_VALUES>(_mm512_castsi512_si128(unpacked));
+            const __m512i converted2 = mm512_extend_epi8_epi32<SIGN_VALUES>(_mm512_extracti64x2_epi64(unpacked, 1));
+            const __m512i converted3 = mm512_extend_epi8_epi32<SIGN_VALUES>(_mm512_extracti64x2_epi64(unpacked, 2));
+            const __m512i converted4 = mm512_extend_epi8_epi32<SIGN_VALUES>(_mm512_extracti64x2_epi64(unpacked, 3));
 
             const __m512 dequantized1 = mm512_dequantize_epi32(converted1, scale_v);
             const __m512 dequantized2 = mm512_dequantize_epi32(converted2, scale_v);
@@ -68,8 +113,8 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
         const __m256i source   = mm256_loadu_elements_epi32(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted1 = _mm512_cvtepi8_epi32(_mm256_castsi256_si128(unpacked));
-        const __m512i converted2 = _mm512_cvtepi8_epi32(_mm256_extracti128_si256(unpacked, 1));
+        const __m512i converted1 = mm512_extend_epi8_epi32<SIGN_VALUES>(_mm256_castsi256_si128(unpacked));
+        const __m512i converted2 = mm512_extend_epi8_epi32<SIGN_VALUES>(_mm256_extracti128_si256(unpacked, 1));
 
         const __m512 dequantized1 = mm512_dequantize_epi32(converted1, scale_v);
         const __m512 dequantized2 = mm512_dequantize_epi32(converted2, scale_v);
@@ -85,7 +130,7 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
         const __m128i source   = mm_loadu_elements_epi16(BIT_WIDTH, input);
         const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted = _mm512_cvtepi8_epi32(unpacked);
+        const __m512i converted = mm512_extend_epi8_epi32<SIGN_VALUES>(unpacked);
 
         const __m512 dequantized = mm512_dequantize_epi32(converted, scale_v);
 
@@ -99,7 +144,7 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
         const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted = _mm512_cvtepi8_epi32(unpacked);
+        const __m512i converted = mm512_extend_epi8_epi32<SIGN_VALUES>(unpacked);
 
         const __m512 dequantized = mm512_dequantize_epi32(converted, scale_v);
 
@@ -132,14 +177,14 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
             const __m128i extracted3 = _mm512_extracti64x2_epi64(unpacked, 2);
             const __m128i extracted4 = _mm512_extracti64x2_epi64(unpacked, 3);
 
-            const __m512i converted1 = _mm512_cvtepi8_epi64(extracted1);
-            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted1, 8));
-            const __m512i converted3 = _mm512_cvtepi8_epi64(extracted2);
-            const __m512i converted4 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted2, 8));
-            const __m512i converted5 = _mm512_cvtepi8_epi64(extracted3);
-            const __m512i converted6 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted3, 8));
-            const __m512i converted7 = _mm512_cvtepi8_epi64(extracted4);
-            const __m512i converted8 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted4, 8));
+            const __m512i converted1 = mm512_extend_epi8_epi64<SIGN_VALUES>(extracted1);
+            const __m512i converted2 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(extracted1, 8));
+            const __m512i converted3 = mm512_extend_epi8_epi64<SIGN_VALUES>(extracted2);
+            const __m512i converted4 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(extracted2, 8));
+            const __m512i converted5 = mm512_extend_epi8_epi64<SIGN_VALUES>(extracted3);
+            const __m512i converted6 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(extracted3, 8));
+            const __m512i converted7 = mm512_extend_epi8_epi64<SIGN_VALUES>(extracted4);
+            const __m512i converted8 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(extracted4, 8));
 
             const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
             const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
@@ -170,10 +215,10 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
             const __m128i extracted1 = _mm256_castsi256_si128(unpacked);
             const __m128i extracted2 = _mm256_extracti64x2_epi64(unpacked, 1);
 
-            const __m512i converted1 = _mm512_cvtepi8_epi64(extracted1);
-            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted1, 8));
-            const __m512i converted3 = _mm512_cvtepi8_epi64(extracted2);
-            const __m512i converted4 = _mm512_cvtepi8_epi64(_mm_srli_si128(extracted2, 8));
+            const __m512i converted1 = mm512_extend_epi8_epi64<SIGN_VALUES>(extracted1);
+            const __m512i converted2 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(extracted1, 8));
+            const __m512i converted3 = mm512_extend_epi8_epi64<SIGN_VALUES>(extracted2);
+            const __m512i converted4 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(extracted2, 8));
 
             const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
             const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
@@ -193,8 +238,8 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
             const __m128i source   = mm_loadu_elements_epi16(BIT_WIDTH, input);
             const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-            const __m512i converted1 = _mm512_cvtepi8_epi64(unpacked);
-            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(unpacked, 8));
+            const __m512i converted1 = mm512_extend_epi8_epi64<SIGN_VALUES>(unpacked);
+            const __m512i converted2 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(unpacked, 8));
 
             const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
             const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
@@ -210,8 +255,8 @@ __always_inline int mm512_decompress_block_avx512vbmi_1to8(const u8* __restrict_
             const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
             const __m128i unpacked = m128::mm_unpack_epi8_avx512vbmi_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-            const __m512i converted1 = _mm512_cvtepi8_epi64(unpacked);
-            const __m512i converted2 = _mm512_cvtepi8_epi64(_mm_srli_si128(unpacked, 8));
+            const __m512i converted1 = mm512_extend_epi8_epi64<SIGN_VALUES>(unpacked);
+            const __m512i converted2 = mm512_extend_epi8_epi64<SIGN_VALUES>(_mm_srli_si128(unpacked, 8));
 
             const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
             const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
@@ -245,8 +290,8 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
             const __m512i source   = mm512_loadu_elements_epi32(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-            const __m512i converted1 = _mm512_cvtepi16_epi32(_mm512_castsi512_si256(unpacked));
-            const __m512i converted2 = _mm512_cvtepi16_epi32(_mm512_extracti32x8_epi32(unpacked, 1));
+            const __m512i converted1 = mm512_extend_epi16_epi32<SIGN_VALUES>(_mm512_castsi512_si256(unpacked));
+            const __m512i converted2 = mm512_extend_epi16_epi32<SIGN_VALUES>(_mm512_extracti32x8_epi32(unpacked, 1));
 
             const __m512 dequantized1 = mm512_dequantize_epi32(converted1, scale_v);
             const __m512 dequantized2 = mm512_dequantize_epi32(converted2, scale_v);
@@ -263,7 +308,7 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
         const __m256i source   = mm256_loadu_elements_epi16(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted  = _mm512_cvtepi16_epi32(unpacked);
+        const __m512i converted  = mm512_extend_epi16_epi32<SIGN_VALUES>(unpacked);
         const __m512 dequantized = mm512_dequantize_epi32(converted, scale_v);
 
         _mm512_storeu_ps(output, dequantized);
@@ -276,7 +321,7 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
         const __m128i source   = mm_loadu_elements_epi8(BIT_WIDTH, input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m256i converted  = _mm256_cvtepi16_epi32(unpacked);
+        const __m256i converted  = mm256_extend_epi16_epi32<SIGN_VALUES>(unpacked);
         const __m256 dequantized = mm256_dequantize_epi32(converted, scale_v256);
 
         _mm256_storeu_ps(output, dequantized);
@@ -289,7 +334,7 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
         const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m256i converted  = _mm256_cvtepi16_epi32(unpacked);
+        const __m256i converted  = mm256_extend_epi16_epi32<SIGN_VALUES>(unpacked);
         const __m256 dequantized = mm256_dequantize_epi32(converted, scale_v256);
 
         mm256_storeu_elements_ps(output, remaining_elements, dequantized);
@@ -316,10 +361,10 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
             const __m512i source   = mm512_loadu_elements_epi32(BIT_WIDTH, input);
             const __m512i unpacked = m512::mm512_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-            const __m512i converted1 = _mm512_cvtepi16_epi64(_mm512_castsi512_si128(unpacked));
-            const __m512i converted2 = _mm512_cvtepi16_epi64(_mm512_extracti64x2_epi64(unpacked, 1));
-            const __m512i converted3 = _mm512_cvtepi16_epi64(_mm512_extracti64x2_epi64(unpacked, 2));
-            const __m512i converted4 = _mm512_cvtepi16_epi64(_mm512_extracti64x2_epi64(unpacked, 3));
+            const __m512i converted1 = mm512_extend_epi16_epi64<SIGN_VALUES>(_mm512_castsi512_si128(unpacked));
+            const __m512i converted2 = mm512_extend_epi16_epi64<SIGN_VALUES>(_mm512_extracti64x2_epi64(unpacked, 1));
+            const __m512i converted3 = mm512_extend_epi16_epi64<SIGN_VALUES>(_mm512_extracti64x2_epi64(unpacked, 2));
+            const __m512i converted4 = mm512_extend_epi16_epi64<SIGN_VALUES>(_mm512_extracti64x2_epi64(unpacked, 3));
 
             const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
             const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
@@ -340,8 +385,8 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
         const __m256i source   = mm256_loadu_elements_epi16(BIT_WIDTH, input);
         const __m256i unpacked = m256::mm256_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted1 = _mm512_cvtepi16_epi64(_mm256_castsi256_si128(unpacked));
-        const __m512i converted2 = _mm512_cvtepi16_epi64(_mm256_extracti64x2_epi64(unpacked, 1));
+        const __m512i converted1 = mm512_extend_epi16_epi64<SIGN_VALUES>(_mm256_castsi256_si128(unpacked));
+        const __m512i converted2 = mm512_extend_epi16_epi64<SIGN_VALUES>(_mm256_extracti64x2_epi64(unpacked, 1));
 
         const __m512d dequantized1 = mm512_dequantize_epi64(converted1, scale_v);
         const __m512d dequantized2 = mm512_dequantize_epi64(converted2, scale_v);
@@ -357,7 +402,7 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
         const __m128i source   = mm_loadu_elements_epi8(BIT_WIDTH, input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted = _mm512_cvtepi16_epi64(unpacked);
+        const __m512i converted = mm512_extend_epi16_epi64<SIGN_VALUES>(unpacked);
 
         const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
 
@@ -371,7 +416,7 @@ __always_inline int mm512_decompress_block_avx512vbmi_9to16(const u8* __restrict
         const __m128i source   = mm_loadu_elements_epi8(tail_bytes(BIT_WIDTH, remaining_elements), input);
         const __m128i unpacked = m128::mm_unpack_epi16_avx512vbmi_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const __m512i converted = _mm512_cvtepi16_epi64(unpacked);
+        const __m512i converted = mm512_extend_epi16_epi64<SIGN_VALUES>(unpacked);
 
         const __m512d dequantized = mm512_dequantize_epi64(converted, scale_v);
 

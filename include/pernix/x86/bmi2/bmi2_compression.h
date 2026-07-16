@@ -186,13 +186,8 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scal
     }
 
     if constexpr (remaining) {
-        std::vector<u32> block_values(remaining);
-#pragma GCC unroll 8
-        for (u32 i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_ps_epi32(input[i], scale)));
-        }
-
-        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        internal::quantize_and_pack_fallback<BIT_WIDTH, f32>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
     }
 
     return 0;
@@ -237,13 +232,8 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
     }
 
     if constexpr (remaining) {
-        std::vector<u32> block_values(remaining);
-#pragma GCC unroll 8
-        for (u32 i = 0; i < remaining; i++) {
-            block_values[i] = static_cast<u32>(internal::clamp_signed_quantized<BIT_WIDTH>(internal::quantize_pd_epi64(input[i], scale)));
-        }
-
-        internal::pack_epi32_fallback<BIT_WIDTH>(block_values, output);
+        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        internal::quantize_and_pack_fallback<BIT_WIDTH, f64>(std::span(input, remaining), scale, remaining, std::span(output, tail_bytes));
     }
     return 0;
 }

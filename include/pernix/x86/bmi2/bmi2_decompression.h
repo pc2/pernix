@@ -226,10 +226,9 @@ int mm256_decompress_block_bmi2(const void* __restrict__ input_ptr, const f32 sc
     }
 
     if constexpr (remaining > 0) {
-        const std::vector<i32> tail_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
-        for (u32 i = 0; i < remaining; i++) {
-            output[i] = internal::dequantize_epi32(tail_values[i], scale);
-        }
+        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        internal::unpack_and_dequantize_fallback<BIT_WIDTH, SIGN_VALUES, f32>(std::span(input, tail_bytes), remaining, scale,
+                                                                              std::span(output, remaining));
     }
 
     return 0;
@@ -276,10 +275,9 @@ int mm256_decompress_block_bmi2(const void* __restrict__ input_ptr, const f64 sc
     }
 
     if constexpr (remaining > 0) {
-        const std::vector<i32> tail_values = internal::unpack_epi32_fallback<BIT_WIDTH, SIGN_VALUES>(input, remaining);
-        for (u32 i = 0; i < remaining; i++) {
-            output[i] = internal::dequantize_epi64(tail_values[i], scale);
-        }
+        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        internal::unpack_and_dequantize_fallback<BIT_WIDTH, SIGN_VALUES, f64>(std::span(input, tail_bytes), remaining, scale,
+                                                                              std::span(output, remaining));
     }
 
     return 0;

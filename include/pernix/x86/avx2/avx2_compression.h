@@ -41,7 +41,7 @@ __always_inline __m256i mm256_clamp_signed_epi32(__m256i input) {
  * @param scale per-lane scale factor.
  * @return __m128i quantized values.
  */
-__always_inline __m128i mm_quantize_ps_epi32(const __m128& input, const __m128& scale) {
+__always_inline __m128i mm_quantize_ps_epi32(__m128 input, __m128 scale) {
     const __m128 scaled = _mm_mul_ps(input, scale);
     // const __m128 rounded = _mm_round_ps(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
     return _mm_cvtps_epi32(scaled);
@@ -54,7 +54,7 @@ __always_inline __m128i mm_quantize_ps_epi32(const __m128& input, const __m128& 
  * @param scale per-lane scale factor.
  * @return __m128i quantized values in the low lanes.
  */
-__always_inline __m128i mm_quantize_pd_epi32(const __m128d& input, const __m128d& scale) {
+__always_inline __m128i mm_quantize_pd_epi32(__m128d input, __m128d scale) {
     const __m128d scaled = _mm_mul_pd(input, scale);
     return _mm_cvtpd_epi32(scaled);
 }
@@ -66,7 +66,7 @@ __always_inline __m128i mm_quantize_pd_epi32(const __m128d& input, const __m128d
  * @param scale per-lane scale factor.
  * @return __m256i quantized values.
  */
-__always_inline __m256i mm256_quantize_ps_epi32(const __m256& input, const __m256& scale) {
+__always_inline __m256i mm256_quantize_ps_epi32(__m256 input, __m256 scale) {
     const __m256 scaled = _mm256_mul_ps(input, scale);
     // const __m256 rounded = _mm256_round_ps(scaled, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
     return _mm256_cvtps_epi32(scaled);
@@ -79,7 +79,7 @@ __always_inline __m256i mm256_quantize_ps_epi32(const __m256& input, const __m25
  * @param scale per-lane scale factor.
  * @return __m128i quantized values in the low lanes.
  */
-__always_inline __m128i mm256_quantize_pd_epi32(const __m256d& input, const __m256d& scale) {
+__always_inline __m128i mm256_quantize_pd_epi32(__m256d input, __m256d scale) {
     const __m256d scaled = _mm256_mul_pd(input, scale);
     return _mm256_cvtpd_epi32(scaled);
 }
@@ -189,7 +189,7 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 3)
-__always_inline auto mm_pack_epi32_avx2_1to3(__m128i& input) -> __m128i {
+__always_inline auto mm_pack_epi32_avx2_1to3(__m128i input) -> __m128i {
     constexpr u32 bitmask = (1U << BIT_WIDTH) - 1U;
     const __m128i masked  = _mm_and_si128(input, _mm_set1_epi32(static_cast<i32>(bitmask)));
 
@@ -207,7 +207,7 @@ __always_inline auto mm_pack_epi32_avx2_1to3(__m128i& input) -> __m128i {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 3)
-__always_inline __m256i mm256_pack_epi32_avx2_1to3(const __m256i& input) {
+__always_inline __m256i mm256_pack_epi32_avx2_1to3(__m256i input) {
     constexpr u32 bitmask = (1u << BIT_WIDTH) - 1u;
 
     const __m256i masked = _mm256_and_si256(input, _mm256_set1_epi32(static_cast<i32>(bitmask)));
@@ -225,7 +225,7 @@ __always_inline __m256i mm256_pack_epi32_avx2_1to3(const __m256i& input) {
     return _mm256_castsi128_si256(x);
 }
 
-__always_inline __m256i mm256_pack_epi32_avx2_4(const __m256i& input) {
+__always_inline __m256i mm256_pack_epi32_avx2_4(__m256i input) {
     const __m256i zero   = _mm256_setzero_si256();
     const __m256i masked = _mm256_and_si256(input, _mm256_set1_epi32(0x0f));
 
@@ -246,7 +246,7 @@ __always_inline __m256i mm256_pack_epi32_avx2_4(const __m256i& input) {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline auto mm_pack_epi32_avx2_9to16(__m128i& input) -> __m128i {
+__always_inline auto mm_pack_epi32_avx2_9to16(__m128i input) -> __m128i {
     using tables          = pack_tables_avx2_16<BIT_WIDTH, __m128i>;
     constexpr u16 bitmask = (1 << BIT_WIDTH) - 1;
     const __m128i masked  = _mm_and_si128(input, _mm_set1_epi16(bitmask));
@@ -279,7 +279,7 @@ __always_inline auto mm_pack_epi32_avx2_9to16(__m128i& input) -> __m128i {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline auto mm256_pack_epi32_avx2_9to16(const __m256i& input) -> __m256i {
+__always_inline auto mm256_pack_epi32_avx2_9to16(__m256i input) -> __m256i {
     using tables          = pack_tables_avx2_16<BIT_WIDTH, __m128i>;
     constexpr u16 bitmask = (1 << BIT_WIDTH) - 1;
     const __m128i packed  = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
@@ -310,7 +310,7 @@ __always_inline auto mm256_pack_epi32_avx2_9to16(const __m256i& input) -> __m256
 
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 5 && BIT_WIDTH <= 7)
-__always_inline auto mm256_pack_epi32_avx2_5to7(const __m256i& input) -> __m256i {
+__always_inline auto mm256_pack_epi32_avx2_5to7(__m256i input) -> __m256i {
     const __m256i zero   = _mm256_setzero_si256();
     const __m256i masked = _mm256_and_si256(input, _mm256_set1_epi32((1 << BIT_WIDTH) - 1));
 
@@ -332,7 +332,7 @@ __always_inline auto mm256_pack_epi32_avx2_5to7(const __m256i& input) -> __m256i
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline auto mm256_pack_epi32_avx2_17to24(const __m256i& input) -> __m256i {
+__always_inline auto mm256_pack_epi32_avx2_17to24(__m256i input) -> __m256i {
     using tables          = pack_tables_avx2_24<BIT_WIDTH, __m256i>;
     constexpr u32 bitmask = (1 << BIT_WIDTH) - 1;
     const __m256i masked  = _mm256_and_si256(input, _mm256_set1_epi32(bitmask));
@@ -366,7 +366,7 @@ __always_inline auto mm256_pack_epi32_avx2_17to24(const __m256i& input) -> __m25
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-auto mm_pack_aligned_epi32_avx2(__m128i& input) -> __m128i {
+auto mm_pack_aligned_epi32_avx2(__m128i input) -> __m128i {
     if constexpr (BIT_WIDTH == 8) {
         return _mm_packus_epi16(_mm_packs_epi32(input, _mm_setzero_si128()), _mm_setzero_si128());
     } else {
@@ -379,7 +379,7 @@ auto mm_pack_aligned_epi32_avx2(__m128i& input) -> __m128i {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 16)
-auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
+auto mm_pack_epi32_avx2(__m128i input) -> __m128i {
     if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 3) {
         return internal::mm_pack_epi32_avx2_1to3<BIT_WIDTH>(input);
     } else if constexpr (BIT_WIDTH >= 4 && BIT_WIDTH <= 8) {
@@ -397,7 +397,7 @@ auto mm_pack_epi32_avx2(__m128i& input) -> __m128i {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH == 8 || BIT_WIDTH == 16)
-__m256i mm256_pack_aligned_epi32_avx2(const __m256i& input) {
+__m256i mm256_pack_aligned_epi32_avx2(__m256i input) {
     if constexpr (BIT_WIDTH == 8) {
         const __m128i packed16 = _mm_packs_epi32(_mm256_castsi256_si128(input), _mm256_extracti128_si256(input, 1));
         const __m128i packed8  = _mm_packs_epi16(packed16, _mm_setzero_si128());
@@ -412,7 +412,7 @@ __m256i mm256_pack_aligned_epi32_avx2(const __m256i& input) {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
-__m256i mm256_pack_epi32_avx2(const __m256i& input) {
+__m256i mm256_pack_epi32_avx2(__m256i input) {
     if constexpr (BIT_WIDTH == 8 || BIT_WIDTH == 16) {
         return internal::mm256_pack_aligned_epi32_avx2<BIT_WIDTH>(input);
     } else {
@@ -471,7 +471,7 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f32 scal
     }
 
     if constexpr (remaining) {
-        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        constexpr u32 tail_bytes   = (BIT_WIDTH * remaining + 7) / 8;
         const __m256 source        = _mm256_maskload_ps(input, internal::mm256_tail_mask_epi32<remaining>());
         const __m256i quantized    = internal::mm256_quantize_ps_epi32(source, scale_v);
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
@@ -524,7 +524,7 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
     }
 
     if constexpr (remaining) {
-        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        constexpr u32 tail_bytes  = (BIT_WIDTH * remaining + 7) / 8;
         constexpr u8 first_lanes  = remaining < 4 ? remaining : 4;
         constexpr u8 second_lanes = remaining > 4 ? remaining - 4 : 0;
 
@@ -536,10 +536,10 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
                 return _mm256_setzero_pd();
             }
         }();
-        const __m128i quantized1 = internal::mm256_quantize_pd_epi32(source1, scale_v);
-        const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
-        __m256i combined         = _mm256_castsi128_si256(quantized1);
-        combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
+        const __m128i quantized1   = internal::mm256_quantize_pd_epi32(source1, scale_v);
+        const __m128i quantized2   = internal::mm256_quantize_pd_epi32(source2, scale_v);
+        __m256i combined           = _mm256_castsi128_si256(quantized1);
+        combined                   = _mm256_inserti128_si256(combined, quantized2, 1);
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined);
         const __m256i packed       = internal::mm256_pack_epi32_avx2<BIT_WIDTH>(packed_input);
         std::memcpy(output, &packed, tail_bytes);

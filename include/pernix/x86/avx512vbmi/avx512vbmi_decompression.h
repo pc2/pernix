@@ -16,12 +16,12 @@ namespace internal {
 /**
  * @brief Dequantize sixteen integer values to floats.
  */
-__always_inline __m512 mm512_dequantize_epi32(const __m512i& input, const __m512& scale) {
+__always_inline __m512 mm512_dequantize_epi32(__m512i input, __m512 scale) {
     const __m512 converted = _mm512_cvtepi32_ps(input);
     return _mm512_mul_ps(converted, scale);
 }
 
-__always_inline __m512d mm512_dequantize_epi64(const __m512i& input, const __m512d& scale) {
+__always_inline __m512d mm512_dequantize_epi64(__m512i input, __m512d scale) {
     const __m512d converted = _mm512_cvtepi64_pd(input);
     return _mm512_mul_pd(converted, scale);
 }

@@ -30,7 +30,7 @@ __always_inline __m256i mm256_convert_vmask_epi64(const __mmask8 mask8) {
 /**
  * @brief Dequantize four 32-bit integers to floats.
  */
-__always_inline __m128 mm_dequantize_epi32(const __m128i& input, const __m128& scale) {
+__always_inline __m128 mm_dequantize_epi32(__m128i input, __m128 scale) {
     const __m128 converted = _mm_cvtepi32_ps(input);
     return _mm_mul_ps(converted, scale);
 }
@@ -48,7 +48,7 @@ __always_inline __m128d convert_epi64_pd(const __m128i v) {
 /**
  * @brief Dequantize two 64-bit integers to doubles.
  */
-__always_inline __m128d mm_dequantize_epi64_pd(const __m128i& input, const __m128d& scale) {
+__always_inline __m128d mm_dequantize_epi64_pd(__m128i input, __m128d scale) {
     const __m128d converted = convert_epi64_pd(input);
     return _mm_mul_pd(converted, scale);
 }
@@ -56,7 +56,7 @@ __always_inline __m128d mm_dequantize_epi64_pd(const __m128i& input, const __m12
 /**
  * @brief Dequantize eight 32-bit integers to floats.
  */
-__always_inline __m256 mm256_dequantize_epi32(const __m256i& input, const __m256& scale) {
+__always_inline __m256 mm256_dequantize_epi32(__m256i input, __m256 scale) {
     const __m256 converted = _mm256_cvtepi32_ps(input);
     return _mm256_mul_ps(converted, scale);
 }
@@ -74,7 +74,7 @@ __always_inline __m256d convert_epi64_pd(__m256i v) {
 /**
  * @brief Dequantize four 64-bit integers to doubles.
  */
-__always_inline __m256d mm256_dequantize_epi64_pd(const __m256i& input, const __m256d& scale) {
+__always_inline __m256d mm256_dequantize_epi64_pd(__m256i input, __m256d scale) {
     const __m256d converted = convert_epi64_pd(input);
     return _mm256_mul_pd(converted, scale);
 }

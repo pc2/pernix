@@ -41,17 +41,17 @@ static __always_inline __m512i mm512_clamp_signed_epi64(__m512i input) {
  * @brief Quantize sixteen float values to 32-bit integers.
  */
 
-static __always_inline __m512i mm512_quantize_ps_epi32(const __m512& input, const __m512& scale) {
+static __always_inline __m512i mm512_quantize_ps_epi32(__m512 input, __m512 scale) {
     const __m512 scaled = _mm512_mul_ps(input, scale);
     return _mm512_cvtps_epi32(scaled);
 }
 
-static __always_inline __m512i mm512_quantize_pd_epi64(const __m512d& input, const __m512d& scale) {
+static __always_inline __m512i mm512_quantize_pd_epi64(__m512d input, __m512d scale) {
     const __m512d scaled = _mm512_mul_pd(input, scale);
     return _mm512_cvtpd_epi64(scaled);
 }
 
-static __always_inline __m256i mm512_quantize_pd_epi32(const __m512d& input, const __m512d& scale) {
+static __always_inline __m256i mm512_quantize_pd_epi32(__m512d input, __m512d scale) {
     const __m512d scaled = _mm512_mul_pd(input, scale);
     return _mm512_cvtpd_epi32(scaled);
 }

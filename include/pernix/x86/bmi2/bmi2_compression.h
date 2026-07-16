@@ -50,7 +50,7 @@ static constexpr std::tuple<u16, u64, u16, u16> pack_avx2_bmi2_constants() {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 32)
-static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
+static inline auto mm_pack_epi32_bmi2(__m128i input) -> __m128i {
     const auto [mask, pext_mask, shift1, shift2] = pack_avx2_bmi2_constants<BIT_WIDTH>();
 
     if constexpr (BIT_WIDTH > 0 && BIT_WIDTH <= 16) {
@@ -81,7 +81,7 @@ static inline auto mm_pack_epi32_bmi2(const __m128i& input) -> __m128i {
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
-static inline auto mm256_pack_epi32_bmi2(const __m256i& input) -> __m256i {
+static inline auto mm256_pack_epi32_bmi2(__m256i input) -> __m256i {
     const auto [mask, pext_mask, shift1, shift2] = pack_avx2_bmi2_constants<BIT_WIDTH>();
 
     if constexpr (BIT_WIDTH > 0 && BIT_WIDTH <= 8) {
@@ -186,7 +186,7 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f32 scal
     }
 
     if constexpr (remaining) {
-        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        constexpr u32 tail_bytes   = (BIT_WIDTH * remaining + 7) / 8;
         const __m256 source        = _mm256_maskload_ps(input, internal::mm256_tail_mask_epi32<remaining>());
         const __m256i quantized    = internal::mm256_quantize_ps_epi32(source, scale_v);
         const __m256i packed_input = internal::mm256_clamp_signed_epi32<BIT_WIDTH>(quantized);
@@ -236,7 +236,7 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
     }
 
     if constexpr (remaining) {
-        constexpr u32 tail_bytes = (BIT_WIDTH * remaining + 7) / 8;
+        constexpr u32 tail_bytes  = (BIT_WIDTH * remaining + 7) / 8;
         constexpr u8 first_lanes  = remaining < 4 ? remaining : 4;
         constexpr u8 second_lanes = remaining > 4 ? remaining - 4 : 0;
 
@@ -252,7 +252,7 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
         const __m128i quantized2 = internal::mm256_quantize_pd_epi32(source2, scale_v);
         __m256i combined         = _mm256_castsi128_si256(quantized1);
         combined                 = _mm256_inserti128_si256(combined, quantized2, 1);
-        const __m256i packed = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined));
+        const __m256i packed     = internal::mm256_pack_epi32_bmi2<BIT_WIDTH>(internal::mm256_clamp_signed_epi32<BIT_WIDTH>(combined));
         std::memcpy(output, &packed, tail_bytes);
     }
     return 0;

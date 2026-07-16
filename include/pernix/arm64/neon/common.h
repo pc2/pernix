@@ -16,7 +16,7 @@ static constexpr u32 tail_bytes(const u8 bit_width, const u32 remaining_elements
     return tail_bytes;
 }
 
-__always_inline int32x4x4_t neon_convert_int8x16_int32x4x4(const int8x16_t& input) {
+__always_inline int32x4x4_t neon_convert_int8x16_int32x4x4(int8x16_t input) {
     const int16x8_t s16_lo = vmovl_s8(vget_low_s8(input));
     const int16x8_t s16_hi = vmovl_s8(vget_high_s8(input));
 
@@ -28,14 +28,14 @@ __always_inline int32x4x4_t neon_convert_int8x16_int32x4x4(const int8x16_t& inpu
     }};
 }
 
-__always_inline int32x4x2_t neon_convert_int16x8_int32x4x2(const int16x8_t& input) {
+__always_inline int32x4x2_t neon_convert_int16x8_int32x4x2(int16x8_t input) {
     return {{
         vmovl_s16(vget_low_s16(input)),
         vmovl_s16(vget_high_s16(input)),
     }};
 }
 
-__always_inline float32x4x4_t neon_dequantize_epi32(const int32x4x4_t& input, const float32x4_t& scale) {
+__always_inline float32x4x4_t neon_dequantize_epi32(const int32x4x4_t& input, float32x4_t scale) {
     return {{
         vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
         vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
@@ -44,29 +44,29 @@ __always_inline float32x4x4_t neon_dequantize_epi32(const int32x4x4_t& input, co
     }};
 }
 
-__always_inline float32x4x2_t neon_dequantize_epi32(const int32x4x2_t& input, const float32x4_t& scale) {
+__always_inline float32x4x2_t neon_dequantize_epi32(const int32x4x2_t& input, float32x4_t scale) {
     return {{
         vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
         vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
     }};
 }
 
-__always_inline float32x4_t neon_dequantize_epi32(const int32x4_t& input, const float32x4_t& scale) {
+__always_inline float32x4_t neon_dequantize_epi32(int32x4_t input, float32x4_t scale) {
     return vmulq_f32(vcvtq_f32_s32(input), scale);
 }
 
-__always_inline float64x2_t neon_dequantize_epi32_f64(const int32x2_t& input, const float64x2_t& scale) {
+__always_inline float64x2_t neon_dequantize_epi32_f64(int32x2_t input, float64x2_t scale) {
     return vmulq_f64(vcvtq_f64_s64(vmovl_s32(input)), scale);
 }
 
-__always_inline float64x2x2_t neon_dequantize_epi32_f64(const int32x4_t& input, const float64x2_t& scale) {
+__always_inline float64x2x2_t neon_dequantize_epi32_f64(int32x4_t input, float64x2_t scale) {
     return {{
         neon_dequantize_epi32_f64(vget_low_s32(input), scale),
         neon_dequantize_epi32_f64(vget_high_s32(input), scale),
     }};
 }
 
-__always_inline float64x2x4_t neon_dequantize_epi32_f64(const int32x4x2_t& input, const float64x2_t& scale) {
+__always_inline float64x2x4_t neon_dequantize_epi32_f64(const int32x4x2_t& input, float64x2_t scale) {
     const float64x2x2_t dequantized_low  = neon_dequantize_epi32_f64(input.val[0], scale);
     const float64x2x2_t dequantized_high = neon_dequantize_epi32_f64(input.val[1], scale);
 
@@ -78,7 +78,7 @@ __always_inline float64x2x4_t neon_dequantize_epi32_f64(const int32x4x2_t& input
     }};
 }
 
-__always_inline float64x2x8_t neon_dequantize_epi32_f64(const int32x4x4_t& input, const float64x2_t& scale) {
+__always_inline float64x2x8_t neon_dequantize_epi32_f64(const int32x4x4_t& input, float64x2_t scale) {
     const float64x2x2_t dequantized0 = neon_dequantize_epi32_f64(input.val[0], scale);
     const float64x2x2_t dequantized1 = neon_dequantize_epi32_f64(input.val[1], scale);
     const float64x2x2_t dequantized2 = neon_dequantize_epi32_f64(input.val[2], scale);
@@ -166,7 +166,7 @@ __always_inline void neon_store_tail_elements_f32(float32_t* output, const float
     std::memcpy(output, buffer, tail_elements * sizeof(float32_t));
 }
 
-__always_inline void neon_store_tail_elements_f32(float32_t* output, const float32x4_t& data, const u32 tail_elements) {
+__always_inline void neon_store_tail_elements_f32(float32_t* output, float32x4_t data, const u32 tail_elements) {
     float32_t buffer[4];
     vst1q_f32(buffer, data);
     std::memcpy(output, buffer, tail_elements * sizeof(float32_t));

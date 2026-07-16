@@ -53,7 +53,7 @@ __always_inline static __m128i _mm_srai_epi8(const __m128i a, const i8 imm8) {
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-__always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(__m128i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
@@ -85,7 +85,7 @@ __always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(const __m128i& input) {
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline __m128i mm_unpack_epi16_avx512vbmi_9to16(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi16_avx512vbmi_9to16(__m128i input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
@@ -116,7 +116,7 @@ __always_inline __m128i mm_unpack_epi16_avx512vbmi_9to16(const __m128i& input) {
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(__m128i input) {
     using tables = detail::unpack_table<i32, BIT_WIDTH, sizeof(__m128i)>;
 
     const __m128i permuted    = _mm_permutexvar_epi8(load_table<__m128i>(tables::primary_permute), input);
@@ -182,7 +182,7 @@ __always_inline static __m256i _mm256_srai_epi8(const __m256i a, const i8 imm8) 
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-__always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(__m256i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
@@ -214,7 +214,7 @@ __always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) 
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(__m256i input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
@@ -245,7 +245,7 @@ __always_inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(const __m256i& input
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(__m256i input) {
     using tables = detail::unpack_table<i32, BIT_WIDTH, sizeof(__m256i)>;
 
     const __m256i permuted    = _mm256_permutexvar_epi8(load_table<__m256i>(tables::primary_permute), input);
@@ -311,7 +311,7 @@ __always_inline static __m512i _mm512_srai_epi8(const __m512i a, const i8 imm8) 
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-__always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) {
+__always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(__m512i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
@@ -343,7 +343,7 @@ __always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) 
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(const __m512i& input) {
+__always_inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(__m512i input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
@@ -373,7 +373,7 @@ __always_inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(const __m512i& input
 
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(const __m512i& input) {
+__always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(__m512i input) {
     using tables = detail::unpack_table<i32, BIT_WIDTH, sizeof(__m512i)>;
 
     const __m512i permuted    = _mm512_permutexvar_epi8(load_table<__m512i>(tables::primary_permute), input);

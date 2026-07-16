@@ -1,11 +1,127 @@
+---
 Language: Cpp
 BasedOnStyle: Google
 
-AccessModifierOffset: -4
-AlignConsecutiveAssignments: true
-AllowShortFunctionsOnASingleLine: InlineOnly
+# General layout
 ColumnLimit: 140
-DerivePointerAlignment: false
-FixNamespaceComments: true
 IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Braces and compact constructs
+BreakBeforeBraces: Attach
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseExpressionOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortLambdasOnASingleLine: Inline
+
+# Alignment
+AlignAfterOpenBracket: true
+AlignArrayOfStructures: Left
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  PadOperators: true
+AlignConsecutiveBitFields:
+  Enabled: false
+AlignConsecutiveDeclarations:
+  Enabled: false
+AlignConsecutiveMacros:
+  Enabled: false
+AlignOperands: Align
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+
+# Pointers and references
+DerivePointerAlignment: false
 PointerAlignment: Left
+ReferenceAlignment: Pointer
+
+# Function declarations and calls
+BinPackArguments: true
+BinPackParameters: BinPack
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+PenaltyBreakBeforeFirstCallParameter: 19
+
+# Templates
+AlwaysBreakTemplateDeclarations: MultiLine
+BreakTemplateDeclarations: MultiLine
+
+# Constructor initializers
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 4
+PackConstructorInitializers: BinPack
+
+# Operators and expressions
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: true
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Includes
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<pernix/'
+    Priority: 1
+    SortPriority: 1
+
+  - Regex: '^<[^/]+>'
+    Priority: 2
+    SortPriority: 2
+
+  - Regex: '^<'
+    Priority: 3
+    SortPriority: 3
+
+  - Regex: '^"'
+    Priority: 4
+    SortPriority: 4
+
+
+# Namespaces
+NamespaceIndentation: None
+FixNamespaceComments: true
+CompactNamespaces: false
+ShortNamespaceLines: 1
+
+# Access modifiers
+AccessModifierOffset: -4
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+
+# Preprocessor
+IndentPPDirectives: None
+PPIndentWidth: 4
+IndentCaseLabels: true
+IndentCaseBlocks: false
+
+# Comments
+ReflowComments: Always
+SpacesBeforeTrailingComments: 2
+
+# Miscellaneous
+InsertBraces: false
+InsertNewlineAtEOF: true
+KeepEmptyLines:
+  AtEndOfFile: false
+  AtStartOfBlock: false
+  AtStartOfFile: false
+MaxEmptyLinesToKeep: 1
+SeparateDefinitionBlocks: Always
+RequiresClausePosition: OwnLine
+RequiresExpressionIndentation: OuterScope

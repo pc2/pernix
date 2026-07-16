@@ -1,0 +1,69 @@
+---
+CompileFlags:
+  CompilationDatabase: build
+  Add:
+    - -Wall
+    - -Wextra
+    - -Wpedantic
+    - -Wconversion
+    - -Wsign-conversion
+    - -Wshadow
+    - -Wundef
+    - -Wdouble-promotion
+    - -Wformat=2
+    - -Wimplicit-fallthrough
+    - -Wmissing-declarations
+    - -Wmissing-prototypes
+    - -Wnon-virtual-dtor
+    - -Wold-style-cast
+    - -Woverloaded-virtual
+    - -Wzero-as-null-pointer-constant
+  Remove:
+    - -Werror
+    - -Wno-*
+
+Diagnostics:
+  Suppress:
+    - pp_including_mainfile_in_preamble
+
+  ClangTidy:
+    Add:
+      - clang-analyzer-*
+      - bugprone-*
+      - performance-*
+      - portability-*
+
+    Remove:
+      - bugprone-easily-swappable-parameters
+      - bugprone-narrowing-conversions
+      - bugprone-signed-char-misuse
+
+    FastCheckFilter: Strict
+
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+
+Index:
+  Background: Build
+  StandardLibrary: true
+
+Completion:
+  AllScopes: true
+  ArgumentLists: FullPlaceholders
+  HeaderInsertion: IWYU
+  CodePatterns: All
+
+Hover:
+  ShowAKA: true
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
+  Designators: true
+  BlockEnd: false
+  TypeNameLimit: 32
+
+SemanticTokens:
+  DisabledKinds: []
+  DisabledModifiers: []

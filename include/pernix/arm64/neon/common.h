@@ -20,35 +20,43 @@ __always_inline int32x4x4_t neon_convert_int8x16_int32x4x4(int8x16_t input) {
     const int16x8_t s16_lo = vmovl_s8(vget_low_s8(input));
     const int16x8_t s16_hi = vmovl_s8(vget_high_s8(input));
 
-    return {{
-        vmovl_s16(vget_low_s16(s16_lo)),
-        vmovl_s16(vget_high_s16(s16_lo)),
-        vmovl_s16(vget_low_s16(s16_hi)),
-        vmovl_s16(vget_high_s16(s16_hi)),
-    }};
+    return {
+        {
+         vmovl_s16(vget_low_s16(s16_lo)),
+         vmovl_s16(vget_high_s16(s16_lo)),
+         vmovl_s16(vget_low_s16(s16_hi)),
+         vmovl_s16(vget_high_s16(s16_hi)),
+         }
+    };
 }
 
 __always_inline int32x4x2_t neon_convert_int16x8_int32x4x2(int16x8_t input) {
-    return {{
-        vmovl_s16(vget_low_s16(input)),
-        vmovl_s16(vget_high_s16(input)),
-    }};
+    return {
+        {
+         vmovl_s16(vget_low_s16(input)),
+         vmovl_s16(vget_high_s16(input)),
+         }
+    };
 }
 
 __always_inline float32x4x4_t neon_dequantize_epi32(const int32x4x4_t& input, float32x4_t scale) {
-    return {{
-        vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
-        vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
-        vmulq_f32(vcvtq_f32_s32(input.val[2]), scale),
-        vmulq_f32(vcvtq_f32_s32(input.val[3]), scale),
-    }};
+    return {
+        {
+         vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
+         vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
+         vmulq_f32(vcvtq_f32_s32(input.val[2]), scale),
+         vmulq_f32(vcvtq_f32_s32(input.val[3]), scale),
+         }
+    };
 }
 
 __always_inline float32x4x2_t neon_dequantize_epi32(const int32x4x2_t& input, float32x4_t scale) {
-    return {{
-        vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
-        vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
-    }};
+    return {
+        {
+         vmulq_f32(vcvtq_f32_s32(input.val[0]), scale),
+         vmulq_f32(vcvtq_f32_s32(input.val[1]), scale),
+         }
+    };
 }
 
 __always_inline float32x4_t neon_dequantize_epi32(int32x4_t input, float32x4_t scale) {
@@ -60,22 +68,26 @@ __always_inline float64x2_t neon_dequantize_epi32_f64(int32x2_t input, float64x2
 }
 
 __always_inline float64x2x2_t neon_dequantize_epi32_f64(int32x4_t input, float64x2_t scale) {
-    return {{
-        neon_dequantize_epi32_f64(vget_low_s32(input), scale),
-        neon_dequantize_epi32_f64(vget_high_s32(input), scale),
-    }};
+    return {
+        {
+         neon_dequantize_epi32_f64(vget_low_s32(input), scale),
+         neon_dequantize_epi32_f64(vget_high_s32(input), scale),
+         }
+    };
 }
 
 __always_inline float64x2x4_t neon_dequantize_epi32_f64(const int32x4x2_t& input, float64x2_t scale) {
     const float64x2x2_t dequantized_low  = neon_dequantize_epi32_f64(input.val[0], scale);
     const float64x2x2_t dequantized_high = neon_dequantize_epi32_f64(input.val[1], scale);
 
-    return {{
-        dequantized_low.val[0],
-        dequantized_low.val[1],
-        dequantized_high.val[0],
-        dequantized_high.val[1],
-    }};
+    return {
+        {
+         dequantized_low.val[0],
+         dequantized_low.val[1],
+         dequantized_high.val[0],
+         dequantized_high.val[1],
+         }
+    };
 }
 
 __always_inline float64x2x8_t neon_dequantize_epi32_f64(const int32x4x4_t& input, float64x2_t scale) {
@@ -84,16 +96,18 @@ __always_inline float64x2x8_t neon_dequantize_epi32_f64(const int32x4x4_t& input
     const float64x2x2_t dequantized2 = neon_dequantize_epi32_f64(input.val[2], scale);
     const float64x2x2_t dequantized3 = neon_dequantize_epi32_f64(input.val[3], scale);
 
-    return {{
-        dequantized0.val[0],
-        dequantized0.val[1],
-        dequantized1.val[0],
-        dequantized1.val[1],
-        dequantized2.val[0],
-        dequantized2.val[1],
-        dequantized3.val[0],
-        dequantized3.val[1],
-    }};
+    return {
+        {
+         dequantized0.val[0],
+         dequantized0.val[1],
+         dequantized1.val[0],
+         dequantized1.val[1],
+         dequantized2.val[0],
+         dequantized2.val[1],
+         dequantized3.val[0],
+         dequantized3.val[1],
+         }
+    };
 }
 
 __always_inline uint8x16_t neon_load_tail_elements_int8(const u8* input, const u32 tail_bytes_count) {

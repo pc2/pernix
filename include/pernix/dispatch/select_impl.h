@@ -1351,24 +1351,28 @@ inline Kernel<KernelBlocksF64Func> select_fallback_simd_compress_blocks_f64(cons
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                                        \
-    case N:                                                                                                           \
-        if (sign_values) return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, true, BS, f32>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                           \
+    case N:                                                                                              \
+        if (sign_values)                                                                                 \
+            return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, true, BS, f32>); \
         return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, false, BS, f32>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                                         \
-    case N:                                                                                                             \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, true, BS, f32>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                            \
+    case N:                                                                                                \
+        if (sign_values)                                                                                   \
+            return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, true, BS, f32>); \
         return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, false, BS, f32>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                                        \
-    case N:                                                                                                           \
-        if (sign_values) return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, true, BS, f64>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                           \
+    case N:                                                                                              \
+        if (sign_values)                                                                                 \
+            return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, true, BS, f64>); \
         return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, false, BS, f64>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                                         \
-    case N:                                                                                                             \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, true, BS, f64>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                            \
+    case N:                                                                                                \
+        if (sign_values)                                                                                   \
+            return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, true, BS, f64>); \
         return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, false, BS, f64>)
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
     case BS:                                         \
@@ -1566,24 +1570,28 @@ inline Kernel<KernelBlocksF64Func> select_fallback_scalar_decompress_blocks_f64(
     return select_fallback_decompress_blocks_f64(bit_width, block_size, sign_values);
 }
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(N, BS)                                                                               \
-    case N:                                                                                                                         \
-        if (sign_values) return Kernel<KernelBlockF32Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f32>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(N, BS)                                                                  \
+    case N:                                                                                                            \
+        if (sign_values)                                                                                               \
+            return Kernel<KernelBlockF32Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f32>); \
         return Kernel<KernelBlockF32Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, false, BS, f32>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(N, BS)                                                                                \
-    case N:                                                                                                                           \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f32>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(N, BS)                                                                   \
+    case N:                                                                                                              \
+        if (sign_values)                                                                                                 \
+            return Kernel<KernelBlocksF32Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f32>); \
         return Kernel<KernelBlocksF32Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, false, BS, f32>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(N, BS)                                                                               \
-    case N:                                                                                                                         \
-        if (sign_values) return Kernel<KernelBlockF64Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f64>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(N, BS)                                                                  \
+    case N:                                                                                                            \
+        if (sign_values)                                                                                               \
+            return Kernel<KernelBlockF64Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f64>); \
         return Kernel<KernelBlockF64Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, false, BS, f64>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(N, BS)                                                                                \
-    case N:                                                                                                                           \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f64>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(N, BS)                                                                   \
+    case N:                                                                                                              \
+        if (sign_values)                                                                                                 \
+            return Kernel<KernelBlocksF64Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f64>); \
         return Kernel<KernelBlocksF64Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, false, BS, f64>)
 
 #define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_32(BS)   \
@@ -2049,24 +2057,28 @@ inline Kernel<KernelBlocksF64Func> select_avx2_compress_blocks_f64(const u8 bit_
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                                 \
-    case N:                                                                                                    \
-        if (sign_values) return Kernel<KernelBlockF32Func>("avx2", &mm256_decompress_block_avx2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                    \
+    case N:                                                                                       \
+        if (sign_values)                                                                          \
+            return Kernel<KernelBlockF32Func>("avx2", &mm256_decompress_block_avx2<N, true, BS>); \
         return Kernel<KernelBlockF32Func>("avx2", &mm256_decompress_block_avx2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                                  \
-    case N:                                                                                                      \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("avx2", &mm256_decompress_blocks_avx2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                     \
+    case N:                                                                                         \
+        if (sign_values)                                                                            \
+            return Kernel<KernelBlocksF32Func>("avx2", &mm256_decompress_blocks_avx2<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>("avx2", &mm256_decompress_blocks_avx2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                                 \
-    case N:                                                                                                    \
-        if (sign_values) return Kernel<KernelBlockF64Func>("avx2", &mm256_decompress_block_avx2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                    \
+    case N:                                                                                       \
+        if (sign_values)                                                                          \
+            return Kernel<KernelBlockF64Func>("avx2", &mm256_decompress_block_avx2<N, true, BS>); \
         return Kernel<KernelBlockF64Func>("avx2", &mm256_decompress_block_avx2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                                  \
-    case N:                                                                                                      \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("avx2", &mm256_decompress_blocks_avx2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                     \
+    case N:                                                                                         \
+        if (sign_values)                                                                            \
+            return Kernel<KernelBlocksF64Func>("avx2", &mm256_decompress_blocks_avx2<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>("avx2", &mm256_decompress_blocks_avx2<N, false, BS>)
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
     case BS:                                         \
@@ -2464,24 +2476,28 @@ inline Kernel<KernelBlocksF64Func> select_bmi2_compress_blocks_f64(const u8 bit_
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                                 \
-    case N:                                                                                                    \
-        if (sign_values) return Kernel<KernelBlockF32Func>("bmi2", &mm256_decompress_block_bmi2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                    \
+    case N:                                                                                       \
+        if (sign_values)                                                                          \
+            return Kernel<KernelBlockF32Func>("bmi2", &mm256_decompress_block_bmi2<N, true, BS>); \
         return Kernel<KernelBlockF32Func>("bmi2", &mm256_decompress_block_bmi2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                                  \
-    case N:                                                                                                      \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("bmi2", &mm256_decompress_blocks_bmi2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                     \
+    case N:                                                                                         \
+        if (sign_values)                                                                            \
+            return Kernel<KernelBlocksF32Func>("bmi2", &mm256_decompress_blocks_bmi2<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>("bmi2", &mm256_decompress_blocks_bmi2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                                 \
-    case N:                                                                                                    \
-        if (sign_values) return Kernel<KernelBlockF64Func>("bmi2", &mm256_decompress_block_bmi2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                    \
+    case N:                                                                                       \
+        if (sign_values)                                                                          \
+            return Kernel<KernelBlockF64Func>("bmi2", &mm256_decompress_block_bmi2<N, true, BS>); \
         return Kernel<KernelBlockF64Func>("bmi2", &mm256_decompress_block_bmi2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                                  \
-    case N:                                                                                                      \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("bmi2", &mm256_decompress_blocks_bmi2<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                     \
+    case N:                                                                                         \
+        if (sign_values)                                                                            \
+            return Kernel<KernelBlocksF64Func>("bmi2", &mm256_decompress_blocks_bmi2<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>("bmi2", &mm256_decompress_blocks_bmi2<N, false, BS>)
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
     case BS:                                         \
@@ -2871,24 +2887,28 @@ inline Kernel<KernelBlocksF64Func> select_avx512vbmi_compress_blocks_f64(const u
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                                             \
-    case N:                                                                                                                \
-        if (sign_values) return Kernel<KernelBlockF32Func>("avx512vbmi", &mm512_decompress_block_avx512vbmi<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                                \
+    case N:                                                                                                   \
+        if (sign_values)                                                                                      \
+            return Kernel<KernelBlockF32Func>("avx512vbmi", &mm512_decompress_block_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlockF32Func>("avx512vbmi", &mm512_decompress_block_avx512vbmi<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                                              \
-    case N:                                                                                                                  \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("avx512vbmi", &mm512_decompress_blocks_avx512vbmi<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                                 \
+    case N:                                                                                                     \
+        if (sign_values)                                                                                        \
+            return Kernel<KernelBlocksF32Func>("avx512vbmi", &mm512_decompress_blocks_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>("avx512vbmi", &mm512_decompress_blocks_avx512vbmi<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                                             \
-    case N:                                                                                                                \
-        if (sign_values) return Kernel<KernelBlockF64Func>("avx512vbmi", &mm512_decompress_block_avx512vbmi<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                                \
+    case N:                                                                                                   \
+        if (sign_values)                                                                                      \
+            return Kernel<KernelBlockF64Func>("avx512vbmi", &mm512_decompress_block_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlockF64Func>("avx512vbmi", &mm512_decompress_block_avx512vbmi<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                                              \
-    case N:                                                                                                                  \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("avx512vbmi", &mm512_decompress_blocks_avx512vbmi<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                                 \
+    case N:                                                                                                     \
+        if (sign_values)                                                                                        \
+            return Kernel<KernelBlocksF64Func>("avx512vbmi", &mm512_decompress_blocks_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>("avx512vbmi", &mm512_decompress_blocks_avx512vbmi<N, false, BS>)
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
     case BS:                                         \
@@ -3108,24 +3128,28 @@ using pernix::arm64::neon::neon_decompress_block;
 using pernix::arm64::neon::neon_decompress_blocks;
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values) return Kernel<KernelBlockF32Func>("neon", &neon_decompress_block<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                              \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
+            return Kernel<KernelBlockF32Func>("neon", &neon_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF32Func>("neon", &neon_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("neon", &neon_decompress_blocks<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                               \
+    case N:                                                                                   \
+        if (sign_values)                                                                      \
+            return Kernel<KernelBlocksF32Func>("neon", &neon_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>("neon", &neon_decompress_blocks<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values) return Kernel<KernelBlockF64Func>("neon", &neon_decompress_block<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                              \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
+            return Kernel<KernelBlockF64Func>("neon", &neon_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF64Func>("neon", &neon_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("neon", &neon_decompress_blocks<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                               \
+    case N:                                                                                   \
+        if (sign_values)                                                                      \
+            return Kernel<KernelBlocksF64Func>("neon", &neon_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>("neon", &neon_decompress_blocks<N, false, BS>)
 
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
@@ -3346,24 +3370,28 @@ using pernix::arm64::sve2::sve2_decompress_block;
 using pernix::arm64::sve2::sve2_decompress_blocks;
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values) return Kernel<KernelBlockF32Func>("sve2", &sve2_decompress_block<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                              \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
+            return Kernel<KernelBlockF32Func>("sve2", &sve2_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF32Func>("sve2", &sve2_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("sve2", &sve2_decompress_blocks<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                               \
+    case N:                                                                                   \
+        if (sign_values)                                                                      \
+            return Kernel<KernelBlocksF32Func>("sve2", &sve2_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>("sve2", &sve2_decompress_blocks<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values) return Kernel<KernelBlockF64Func>("sve2", &sve2_decompress_block<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                              \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
+            return Kernel<KernelBlockF64Func>("sve2", &sve2_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF64Func>("sve2", &sve2_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("sve2", &sve2_decompress_blocks<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                               \
+    case N:                                                                                   \
+        if (sign_values)                                                                      \
+            return Kernel<KernelBlocksF64Func>("sve2", &sve2_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>("sve2", &sve2_decompress_blocks<N, false, BS>)
 
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \

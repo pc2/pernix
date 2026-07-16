@@ -48,7 +48,9 @@ inline CpuFeatures detect_cpu_features() {
 
 #if defined(_MSC_VER)
     __cpuidex(regs, 1, 0);
-    const auto xgetbv = [](const unsigned int index) -> u64 { return _xgetbv(index); };
+    const auto xgetbv = [](const unsigned int index) -> u64 {
+        return _xgetbv(index);
+    };
 #else
     __cpuid_count(1, 0, regs[0], regs[1], regs[2], regs[3]);
     const auto xgetbv = [](const unsigned int index) -> u64 {

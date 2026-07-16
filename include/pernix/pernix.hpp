@@ -1,9 +1,10 @@
 #ifndef PERNIX_HPP
 #define PERNIX_HPP
 
-#include <limits>
 #include <pernix/backend.hpp>
 #include <pernix/detail/api.hpp>
+
+#include <limits>
 #include <span>
 
 namespace pernix {

@@ -1,10 +1,9 @@
-#include <testset.h>
-
 #include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <testset.h>
 #include <vector>
 
 #if defined(__linux__) && defined(__aarch64__)
@@ -56,10 +55,10 @@ template <typename FixtureT, typename CompressFn>
 void expect_backend_compress_blocks_matches_scalar(FixtureT& fixture, CompressFn compress_fn, const pernix_backend backend) {
     using ScaleType = std::remove_cvref_t<decltype(fixture.testSet.getScales()[0])>;
 
-    const u32 blocks              = fixture.testSet.numberOfBlocks;
-    const u32 elements_per_block  = fixture.testSet.elementsPerBlock;
-    const u32 total_elements      = blocks * elements_per_block;
-    const usize compressed_bytes  = static_cast<usize>(blocks) * FixtureT::BlockSize;
+    const u32 blocks             = fixture.testSet.numberOfBlocks;
+    const u32 elements_per_block = fixture.testSet.elementsPerBlock;
+    const u32 total_elements     = blocks * elements_per_block;
+    const usize compressed_bytes = static_cast<usize>(blocks) * FixtureT::BlockSize;
     std::vector<ScaleType> input(total_elements);
 
     for (u32 block = 0; block < blocks; ++block) {
@@ -71,8 +70,8 @@ void expect_backend_compress_blocks_matches_scalar(FixtureT& fixture, CompressFn
     std::vector<u8> scalar_output(compressed_bytes);
     std::vector<u8> stdpar_output(compressed_bytes);
 
-    auto status = compress_fn(PERNIX_BACKEND_FALLBACK, FixtureT::BitWidth, FixtureT::BlockSize, input.data(), scale_inv, scalar_output.data(),
-                              blocks);
+    auto status = compress_fn(PERNIX_BACKEND_FALLBACK, FixtureT::BitWidth, FixtureT::BlockSize, input.data(), scale_inv,
+                              scalar_output.data(), blocks);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     status = compress_fn(backend, FixtureT::BitWidth, FixtureT::BlockSize, input.data(), scale_inv, stdpar_output.data(), blocks);
@@ -761,8 +760,8 @@ TEST(FallbackStdparEdgeTest, RepeatedExecutionIsDeterministic) {
                                       true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, second_compressed.data(), 0.25f,
-                                      second_restored.data(), blocks, true);
+    st = pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, second_compressed.data(), 0.25f, second_restored.data(),
+                                      blocks, true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
     EXPECT_EQ(second_compressed, first_compressed);

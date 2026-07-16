@@ -1,7 +1,8 @@
+#include <pernix/pernix.hpp>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <pernix/pernix.hpp>
 
 int main() {
     constexpr u8 bit_width   = 8;

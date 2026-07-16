@@ -1,6 +1,5 @@
-#include <testset.h>
-
 #include <cstdint>
+#include <testset.h>
 #include <vector>
 
 // ---------------------------------------------------------------------------

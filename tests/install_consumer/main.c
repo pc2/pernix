@@ -1,7 +1,12 @@
 #include <pernix/pernix.h>
 
 int main(void) {
-    enum { bit_width = 8, block_size = 64, elements = (block_size * 8) / bit_width };
+    enum {
+        bit_width  = 8,
+        block_size = 64,
+        elements   = (block_size * 8) / bit_width
+    };
+
     float input[elements];
     float restored[elements];
     u8 compressed[block_size];

@@ -1,11 +1,11 @@
 #ifndef PERNIX_DETAIL_API_HPP
 #define PERNIX_DETAIL_API_HPP
 
+#include <pernix/backend.hpp>
 #include <pernix/dispatch/select.h>
 
 #include <cmath>
 #include <limits>
-#include <pernix/backend.hpp>
 #include <string_view>
 #include <type_traits>
 

@@ -1,13 +1,13 @@
-#include <testset.h>
+#include <pernix/pernix.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <limits>
-#include <pernix/pernix.hpp>
 #include <random>
 #include <span>
 #include <string_view>
+#include <testset.h>
 #include <type_traits>
 #include <vector>
 
@@ -16,31 +16,41 @@ namespace {
 constexpr u32 kBlockSize = 64;
 constexpr u32 kBlocks    = 3;
 
-enum class Pattern { Zero, Constant, Increasing, Decreasing, SmallMagnitude, LargeMagnitude, QuantizationBoundary, PseudoRandom };
+enum class Pattern {
+    Zero,
+    Constant,
+    Increasing,
+    Decreasing,
+    SmallMagnitude,
+    LargeMagnitude,
+    QuantizationBoundary,
+    PseudoRandom
+};
 
 struct PatternCase {
     Pattern pattern;
     std::string_view name;
 };
 
-constexpr std::array<PatternCase, 8> kPatternCases{{
-    {Pattern::Zero, "zero"},
-    {Pattern::Constant, "constant"},
-    {Pattern::Increasing, "increasing"},
-    {Pattern::Decreasing, "decreasing"},
-    {Pattern::SmallMagnitude, "small_magnitude"},
-    {Pattern::LargeMagnitude, "large_magnitude"},
-    {Pattern::QuantizationBoundary, "quantization_boundary"},
-    {Pattern::PseudoRandom, "pseudo_random"},
-}};
+constexpr std::array<PatternCase, 8> kPatternCases{
+    {
+     {Pattern::Zero, "zero"},
+     {Pattern::Constant, "constant"},
+     {Pattern::Increasing, "increasing"},
+     {Pattern::Decreasing, "decreasing"},
+     {Pattern::SmallMagnitude, "small_magnitude"},
+     {Pattern::LargeMagnitude, "large_magnitude"},
+     {Pattern::QuantizationBoundary, "quantization_boundary"},
+     {Pattern::PseudoRandom, "pseudo_random"},
+     }
+};
 
-constexpr std::array<pernix_backend, 5> kComparisonBackends{{
-    PERNIX_BACKEND_X86_AVX2,
-    PERNIX_BACKEND_X86_BMI2,
-    PERNIX_BACKEND_X86_AVX512_VBMI,
-    PERNIX_BACKEND_ARM64_NEON,
-    PERNIX_BACKEND_ARM64_SVE,
-}};
+constexpr std::array<pernix_backend, 5> kComparisonBackends{
+    {
+     PERNIX_BACKEND_X86_AVX2, PERNIX_BACKEND_X86_BMI2,
+     PERNIX_BACKEND_X86_AVX512_VBMI, PERNIX_BACKEND_ARM64_NEON,
+     PERNIX_BACKEND_ARM64_SVE, }
+};
 
 template <typename FloatT>
 FloatT abs_value(const FloatT value) {

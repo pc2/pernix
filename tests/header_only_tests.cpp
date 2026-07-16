@@ -1,10 +1,11 @@
-#include <gtest/gtest.h>
+#include <pernix/pernix.hpp>
 
 #include <array>
 #include <cmath>
 #include <limits>
-#include <pernix/pernix.hpp>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 namespace {
 constexpr u8 kBitWidth       = 8;
@@ -140,8 +141,8 @@ void expect_single_block_partial_group_matches_scalar(const u8 bit_width) {
     std::vector<FloatT> scalar_restored(elements_per_block, static_cast<FloatT>(0));
     std::vector<FloatT> stdpar_restored(elements_per_block, static_cast<FloatT>(0));
 
-    ASSERT_EQ(pernix::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input), static_cast<FloatT>(4),
-                                     std::span<u8>(scalar_compressed)),
+    ASSERT_EQ(pernix::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input),
+                                     static_cast<FloatT>(4), std::span<u8>(scalar_compressed)),
               PERNIX_STATUS_OK);
     ASSERT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const FloatT>(input),
                                      static_cast<FloatT>(4), std::span<u8>(stdpar_compressed)),
@@ -329,10 +330,9 @@ TEST(HeaderOnlyPernix, FallbackStdparMatchesScalarForEdgeValues) {
     ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(scalar_compressed), 1.0f,
                                         std::span<float>(scalar_signed), blocks, true),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(
-        pernix::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed), 1.0f,
-                                  std::span<float>(stdpar_signed), blocks, true),
-        PERNIX_STATUS_OK);
+    ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed),
+                                        1.0f, std::span<float>(stdpar_signed), blocks, true),
+              PERNIX_STATUS_OK);
     EXPECT_EQ(stdpar_signed, scalar_signed);
 }
 
@@ -353,7 +353,7 @@ TEST(HeaderOnlyPernix, FallbackStdparCrossCompatibilityMatchesScalarForUnsignedD
 }
 
 TEST(HeaderOnlyPernix, FallbackStdparSignValuesFalseMatchesScalar) {
-    constexpr u8 bit_width = 4;
+    constexpr u8 bit_width       = 4;
     const u32 elements_per_block = pernix::elements_per_block(bit_width);
 
     std::vector<u8> compressed(kBlockSize, 0);

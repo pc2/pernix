@@ -53,7 +53,7 @@ PenaltyBreakBeforeFirstCallParameter: 19
 
 # Templates
 AlwaysBreakTemplateDeclarations: MultiLine
-BreakTemplateDeclarations: MultiLine
+BreakTemplateDeclarations: Yes
 
 # Constructor initializers
 BreakConstructorInitializers: BeforeColon

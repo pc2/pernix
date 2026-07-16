@@ -2,24 +2,28 @@
 #include <pernix/fallback/scalar_decompression.h>
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                                        \
-    case N:                                                                                                           \
-        if (sign_values) return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, true, BS, f32>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                           \
+    case N:                                                                                              \
+        if (sign_values)                                                                                 \
+            return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, true, BS, f32>); \
         return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, false, BS, f32>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                                         \
-    case N:                                                                                                             \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, true, BS, f32>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                            \
+    case N:                                                                                                \
+        if (sign_values)                                                                                   \
+            return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, true, BS, f32>); \
         return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, false, BS, f32>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                                        \
-    case N:                                                                                                           \
-        if (sign_values) return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, true, BS, f64>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                           \
+    case N:                                                                                              \
+        if (sign_values)                                                                                 \
+            return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, true, BS, f64>); \
         return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, false, BS, f64>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                                         \
-    case N:                                                                                                             \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, true, BS, f64>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                            \
+    case N:                                                                                                \
+        if (sign_values)                                                                                   \
+            return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, true, BS, f64>); \
         return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, false, BS, f64>)
 
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \

@@ -61,7 +61,9 @@ __always_inline __m128i mm_pack_table_avx512vbmi(const __m128i values) {
         }
     };
 
-    const auto combine = [](__m128i left, __m128i right) { return _mm_or_si128(left, right); };
+    const auto combine = [](__m128i left, __m128i right) {
+        return _mm_or_si128(left, right);
+    };
     __m128i result =
         combine_primary_contributors<tables, __m128i>(pack_contributor, combine, std::make_index_sequence<tables::contributor_count - 1>{});
 
@@ -163,7 +165,9 @@ __always_inline __m256i mm256_pack_table_avx512vbmi(const __m256i values) {
         }
     };
 
-    const auto combine = [](__m256i left, __m256i right) { return _mm256_or_si256(left, right); };
+    const auto combine = [](__m256i left, __m256i right) {
+        return _mm256_or_si256(left, right);
+    };
     __m256i result =
         combine_primary_contributors<tables, __m256i>(pack_contributor, combine, std::make_index_sequence<tables::contributor_count - 1>{});
 
@@ -265,7 +269,9 @@ __always_inline __m512i mm512_pack_table_avx512vbmi(const __m512i values) {
         }
     };
 
-    const auto combine = [](__m512i left, __m512i right) { return _mm512_or_si512(left, right); };
+    const auto combine = [](__m512i left, __m512i right) {
+        return _mm512_or_si512(left, right);
+    };
     __m512i result =
         combine_primary_contributors<tables, __m512i>(pack_contributor, combine, std::make_index_sequence<tables::contributor_count - 1>{});
 

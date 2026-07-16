@@ -5,24 +5,28 @@ using pernix::arm64::neon::neon_decompress_block;
 using pernix::arm64::neon::neon_decompress_blocks;
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values) return Kernel<KernelBlockF32Func>("neon", &neon_decompress_block<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                              \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
+            return Kernel<KernelBlockF32Func>("neon", &neon_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF32Func>("neon", &neon_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("neon", &neon_decompress_blocks<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                               \
+    case N:                                                                                   \
+        if (sign_values)                                                                      \
+            return Kernel<KernelBlocksF32Func>("neon", &neon_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>("neon", &neon_decompress_blocks<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values) return Kernel<KernelBlockF64Func>("neon", &neon_decompress_block<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                              \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
+            return Kernel<KernelBlockF64Func>("neon", &neon_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF64Func>("neon", &neon_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("neon", &neon_decompress_blocks<N, true, BS>); \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                               \
+    case N:                                                                                   \
+        if (sign_values)                                                                      \
+            return Kernel<KernelBlocksF64Func>("neon", &neon_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>("neon", &neon_decompress_blocks<N, false, BS>)
 
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \

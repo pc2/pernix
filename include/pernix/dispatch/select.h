@@ -1,9 +1,8 @@
 #ifndef PERNIX_SELECT_H
 #define PERNIX_SELECT_H
 
-#include <pernix/dispatch/kernel.h>
-
 #include <pernix/backend.hpp>
+#include <pernix/dispatch/kernel.h>
 
 #if !defined(PERNIX_BUILD_X86_AVX2) && !defined(PERNIX_DISABLE_AVX2)
 #if defined(PERNIX_USE_SIMDE) || defined(__AVX2__)

@@ -1,7 +1,6 @@
 #ifndef PERNIX_TESTSET_H
 #define PERNIX_TESTSET_H
 
-#include <gtest/gtest.h>
 #include <pernix/pernix.h>
 
 #include <algorithm>
@@ -13,6 +12,8 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+
+#include <gtest/gtest.h>
 
 #ifndef PERNIX_TEST_BLOCK_SIZE
 #define PERNIX_TEST_BLOCK_SIZE 64

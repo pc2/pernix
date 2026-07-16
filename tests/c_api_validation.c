@@ -1,8 +1,13 @@
-#include <math.h>
 #include <pernix/pernix.h>
+
+#include <math.h>
 #include <string.h>
 
-enum { bit_width = 8, block_size = 64, elements = (block_size * 8) / bit_width };
+enum {
+    bit_width  = 8,
+    block_size = 64,
+    elements   = (block_size * 8) / bit_width
+};
 
 static int expect_status(pernix_status actual, pernix_status expected) {
     return actual == expected ? 0 : 1;

@@ -14,8 +14,8 @@ enum class Backend {
     Arm64Neon      = PERNIX_BACKEND_ARM64_NEON,
     Arm64Sve       = PERNIX_BACKEND_ARM64_SVE,
     FallbackStdpar = PERNIX_BACKEND_FALLBACK_STDPAR,
-    FallbackSimd   = PERNIX_BACKEND_FALLBACK_SIMD
+    FallbackSimd   = PERNIX_BACKEND_FALLBACK_SIMD,
 };
-}
+}  // namespace pernix
 
 #endif  // PERNIX_BACKEND_HPP

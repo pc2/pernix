@@ -2,24 +2,28 @@
 #include <pernix/fallback/stdpar_decompression.h>
 
 namespace pernix::internal {
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(N, BS)                                                                               \
-    case N:                                                                                                                         \
-        if (sign_values) return Kernel<KernelBlockF32Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f32>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(N, BS)                                                                  \
+    case N:                                                                                                            \
+        if (sign_values)                                                                                               \
+            return Kernel<KernelBlockF32Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f32>); \
         return Kernel<KernelBlockF32Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, false, BS, f32>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(N, BS)                                                                                \
-    case N:                                                                                                                           \
-        if (sign_values) return Kernel<KernelBlocksF32Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f32>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(N, BS)                                                                   \
+    case N:                                                                                                              \
+        if (sign_values)                                                                                                 \
+            return Kernel<KernelBlocksF32Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f32>); \
         return Kernel<KernelBlocksF32Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, false, BS, f32>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(N, BS)                                                                               \
-    case N:                                                                                                                         \
-        if (sign_values) return Kernel<KernelBlockF64Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f64>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(N, BS)                                                                  \
+    case N:                                                                                                            \
+        if (sign_values)                                                                                               \
+            return Kernel<KernelBlockF64Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, true, BS, f64>); \
         return Kernel<KernelBlockF64Func>("fallback_stdpar", &decompress_block_fallback_stdpar<N, false, BS, f64>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(N, BS)                                                                                \
-    case N:                                                                                                                           \
-        if (sign_values) return Kernel<KernelBlocksF64Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f64>); \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(N, BS)                                                                   \
+    case N:                                                                                                              \
+        if (sign_values)                                                                                                 \
+            return Kernel<KernelBlocksF64Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, true, BS, f64>); \
         return Kernel<KernelBlocksF64Func>("fallback_stdpar", &decompress_blocks_fallback_stdpar<N, false, BS, f64>)
 
 #define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_32(BS)   \
@@ -146,8 +150,7 @@ namespace pernix::internal {
                 return {"fallback_stdpar", nullptr};             \
         }
 
-Kernel<KernelBlockF32Func> select_fallback_stdpar_decompress_block_f32(const u8 bit_width, const u32 block_size,
-                                                                       const bool sign_values) {
+Kernel<KernelBlockF32Func> select_fallback_stdpar_decompress_block_f32(const u8 bit_width, const u32 block_size, const bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_32(64);
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_32(128);
@@ -159,8 +162,7 @@ Kernel<KernelBlockF32Func> select_fallback_stdpar_decompress_block_f32(const u8 
     }
 }
 
-Kernel<KernelBlocksF32Func> select_fallback_stdpar_decompress_blocks_f32(const u8 bit_width, const u32 block_size,
-                                                                         const bool sign_values) {
+Kernel<KernelBlocksF32Func> select_fallback_stdpar_decompress_blocks_f32(const u8 bit_width, const u32 block_size, const bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_32(64);
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_32(128);
@@ -172,8 +174,7 @@ Kernel<KernelBlocksF32Func> select_fallback_stdpar_decompress_blocks_f32(const u
     }
 }
 
-Kernel<KernelBlockF64Func> select_fallback_stdpar_decompress_block_f64(const u8 bit_width, const u32 block_size,
-                                                                       const bool sign_values) {
+Kernel<KernelBlockF64Func> select_fallback_stdpar_decompress_block_f64(const u8 bit_width, const u32 block_size, const bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_64(64);
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_64(128);
@@ -185,8 +186,7 @@ Kernel<KernelBlockF64Func> select_fallback_stdpar_decompress_block_f64(const u8 
     }
 }
 
-Kernel<KernelBlocksF64Func> select_fallback_stdpar_decompress_blocks_f64(const u8 bit_width, const u32 block_size,
-                                                                         const bool sign_values) {
+Kernel<KernelBlocksF64Func> select_fallback_stdpar_decompress_blocks_f64(const u8 bit_width, const u32 block_size, const bool sign_values) {
     switch (block_size) {
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_64(64);
         PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_64(128);

@@ -1,7 +1,11 @@
 #include <pernix/pernix.h>
 
 int main(void) {
-    enum { bit_width = 16, block_size = 64, elements = (block_size * 8) / bit_width };
+    enum {
+        bit_width  = 16,
+        block_size = 64,
+        elements   = (block_size * 8) / bit_width
+    };
 
     if (pernix_min_bit_width() != 1 || pernix_max_bit_width() != 24) {
         return 1;

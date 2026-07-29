@@ -10,7 +10,7 @@ namespace pernix::internal {
 template <u8 BIT_WIDTH, typename T>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16 && (std::is_same_v<T, __m128i> || std::is_same_v<T, __m256i>))
 struct pack_tables_avx2_16 {
-    alignas(64) inline static constexpr std::array<i8, 32> permute1 = [] {
+    alignas(64) static constexpr std::array<i8, 32> permute1 = [] {
         // clang-format off
         if constexpr (BIT_WIDTH == 9) {
             return std::array<i8, 32>{
@@ -22,7 +22,7 @@ struct pack_tables_avx2_16 {
                 0, 1, 4, 5,
                 8, 9, 12, 13,
                 -1, -1, -1, -1,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 10) {
             return std::array<i8, 32>{
@@ -34,7 +34,7 @@ struct pack_tables_avx2_16 {
                 0, 1, 4, 5,
                 -1, -1, 10, 11,
                 14, 15, -1, -1,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 11) {
             return std::array<i8, 32>{
@@ -46,7 +46,7 @@ struct pack_tables_avx2_16 {
                 0, 1, 4, 5,
                 6, 7, 10, 11,
                 12, 13, -1, -1,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 12) {
             return std::array<i8, 32>{
@@ -58,7 +58,7 @@ struct pack_tables_avx2_16 {
                 2, 3, 4, 5,
                 6, 7, 10, 11,
                 12, 13, 14, 15,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 13) {
             return std::array<i8, 32>{
@@ -70,7 +70,7 @@ struct pack_tables_avx2_16 {
                 0, 1, -1, -1,
                 6, 7, 8, 9,
                 10, 11, -1, -1,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 14) {
             return std::array<i8, 32>{
@@ -82,7 +82,7 @@ struct pack_tables_avx2_16 {
                 2, 3, 4, 5,
                 6, 7, 8, 9,
                 10, 11, 12, 13,
-                14, 15, -1, -1
+                14, 15, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 15) {
             return std::array<i8, 32>{
@@ -94,14 +94,14 @@ struct pack_tables_avx2_16 {
                 2, 3, 4, 5,
                 6, 7, 8, 9,
                 10, 11, 12, 13,
-                14, 15, -1, -1
+                14, 15, -1, -1,
             };
         }
         return std::array<i8, 32>{};
         // clang-format on
     }();
 
-    alignas(64) inline static constexpr std::array<i8, 32> permute2 = [] {
+    alignas(64) static constexpr std::array<i8, 32> permute2 = [] {
         // clang-format off
         if constexpr (BIT_WIDTH == 9) {
             return std::array<i8, 32>{
@@ -113,7 +113,7 @@ struct pack_tables_avx2_16 {
                 2, 3, 6, 7,
                 10, 11, 14, 15,
                 -1, -1, -1, -1,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 10) {
             return std::array<i8, 32>{
@@ -125,7 +125,7 @@ struct pack_tables_avx2_16 {
                 2, 3, 6, 7,
                 8, 9, 12, 13,
                 -1, -1, -1, -1,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 11) {
             return std::array<i8, 32>{
@@ -137,7 +137,7 @@ struct pack_tables_avx2_16 {
                 2, 3, -1, -1,
                 8, 9, -1, -1,
                 14, 15, -1, -1,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 12) {
             return std::array<i8, 32>{
@@ -149,7 +149,7 @@ struct pack_tables_avx2_16 {
                 0, 1, 2, 3,
                 4, 5, 8, 9,
                 10, 11, 12, 13,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 13) {
             return std::array<i8, 32>{
@@ -161,7 +161,7 @@ struct pack_tables_avx2_16 {
                 2, 3, 4, 5,
                 -1, -1, -1, -1,
                 12, 13, 14, 15,
-                -1, -1, -1, -1
+                -1, -1, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 14) {
             return std::array<i8, 32>{
@@ -173,7 +173,7 @@ struct pack_tables_avx2_16 {
                 0, 1, 2, 3,
                 4, 5, 6, 7,
                 8, 9, 10, 11,
-                12, 13, -1, -1
+                12, 13, -1, -1,
             };
         } else if constexpr (BIT_WIDTH == 15) {
             return std::array<i8, 32>{
@@ -185,14 +185,14 @@ struct pack_tables_avx2_16 {
                 0, 1, 2, 3,
                 4, 5, 6, 7,
                 8, 9, 10, 11,
-                12, 13, 14, 15
+                12, 13, 14, 15,
             };
         }
         return std::array<i8, 32>{};
         // clang-format on
     }();
 
-    alignas(64) inline static constexpr std::array<i8, 32> permute3 = [] {
+    alignas(64) static constexpr std::array<i8, 32> permute3 = [] {
         // clang-format off
         if constexpr (BIT_WIDTH == 9) {
             return std::array<i8, 32>{

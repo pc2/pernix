@@ -13,9 +13,9 @@ template <typename ShiftType, u8 BitWidth, usize VectorBytes>
 constexpr bool validate_unpack_table() {
     using table = pernix::detail::unpack_table<ShiftType, BitWidth, VectorBytes>;
 
-    constexpr usize lane_bytes    = sizeof(ShiftType);
-    constexpr usize lanes         = VectorBytes / lane_bytes;
-    bool const expected_has_spill = false;
+    constexpr usize lane_bytes = sizeof(ShiftType);
+    constexpr usize lanes      = VectorBytes / lane_bytes;
+    bool expected_has_spill    = false;
 
     if (table::primary_permute.size() != VectorBytes || table::right_shift.size() != lanes ||
         table::right_shift_magnitude.size() != lanes) {

@@ -45,38 +45,42 @@ endif ()
 set(PERNIX_BUILD_FALLBACK_SIMD OFF)
 if (NOT PERNIX_ENABLE_FALLBACK_SIMD STREQUAL "OFF")
     include(CheckCXXSourceCompiles)
-    if (DEFINED CMAKE_CXX_STANDARD)
-        set(PERNIX_SAVED_CMAKE_CXX_STANDARD "${CMAKE_CXX_STANDARD}")
-        set(PERNIX_CXX_STANDARD_WAS_DEFINED ON)
-    endif ()
-    if (DEFINED CMAKE_CXX_STANDARD_REQUIRED)
-        set(PERNIX_SAVED_CMAKE_CXX_STANDARD_REQUIRED "${CMAKE_CXX_STANDARD_REQUIRED}")
-        set(PERNIX_CXX_STANDARD_REQUIRED_WAS_DEFINED ON)
-    endif ()
-    set(CMAKE_CXX_STANDARD 26)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    check_cxx_source_compiles([=[
-        #include <simd>
-        #include <version>
+    if ("cxx_std_26" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+        if (DEFINED CMAKE_CXX_STANDARD)
+            set(PERNIX_SAVED_CMAKE_CXX_STANDARD "${CMAKE_CXX_STANDARD}")
+            set(PERNIX_CXX_STANDARD_WAS_DEFINED ON)
+        endif ()
+        if (DEFINED CMAKE_CXX_STANDARD_REQUIRED)
+            set(PERNIX_SAVED_CMAKE_CXX_STANDARD_REQUIRED "${CMAKE_CXX_STANDARD_REQUIRED}")
+            set(PERNIX_CXX_STANDARD_REQUIRED_WAS_DEFINED ON)
+        endif ()
+        set(CMAKE_CXX_STANDARD 26)
+        set(CMAKE_CXX_STANDARD_REQUIRED ON)
+        check_cxx_source_compiles([=[
+            #include <simd>
+            #include <version>
 
-        #if !defined(__cpp_lib_simd)
-        #error "The standard library does not provide C++26 std::simd"
-        #endif
+            #if !defined(__cpp_lib_simd)
+            #error "The standard library does not provide C++26 std::simd"
+            #endif
 
-        int main() {
-            std::simd<int> values{};
-            return static_cast<int>(values.size() == 0);
-        }
-    ]=] PERNIX_HAS_CXX26_STDSIMD)
-    if (PERNIX_CXX_STANDARD_WAS_DEFINED)
-        set(CMAKE_CXX_STANDARD "${PERNIX_SAVED_CMAKE_CXX_STANDARD}")
+            int main() {
+                std::simd<int> values{};
+                return static_cast<int>(values.size() == 0);
+            }
+        ]=] PERNIX_HAS_CXX26_STDSIMD)
+        if (PERNIX_CXX_STANDARD_WAS_DEFINED)
+            set(CMAKE_CXX_STANDARD "${PERNIX_SAVED_CMAKE_CXX_STANDARD}")
+        else ()
+            unset(CMAKE_CXX_STANDARD)
+        endif ()
+        if (PERNIX_CXX_STANDARD_REQUIRED_WAS_DEFINED)
+            set(CMAKE_CXX_STANDARD_REQUIRED "${PERNIX_SAVED_CMAKE_CXX_STANDARD_REQUIRED}")
+        else ()
+            unset(CMAKE_CXX_STANDARD_REQUIRED)
+        endif ()
     else ()
-        unset(CMAKE_CXX_STANDARD)
-    endif ()
-    if (PERNIX_CXX_STANDARD_REQUIRED_WAS_DEFINED)
-        set(CMAKE_CXX_STANDARD_REQUIRED "${PERNIX_SAVED_CMAKE_CXX_STANDARD_REQUIRED}")
-    else ()
-        unset(CMAKE_CXX_STANDARD_REQUIRED)
+        set(PERNIX_HAS_CXX26_STDSIMD OFF)
     endif ()
 
     if (PERNIX_HAS_CXX26_STDSIMD)

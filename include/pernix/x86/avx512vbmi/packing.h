@@ -108,11 +108,35 @@ template <u8 BIT_WIDTH>
 __always_inline __m128i mm_pack_epi8_avx512vbmi_1to8(const __m128i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
-    }
+    } else if constexpr (BIT_WIDTH == 1) {
+        return _mm_cvtsi32_si128(_mm_movemask_epi8(_mm_slli_epi16(input, 7)));
+    } else {
+        constexpr u16 value_mask = (1U << BIT_WIDTH) - 1U;
 
-    const __m128i maskv         = _mm_set1_epi8(static_cast<i8>(detail::low_bit_mask<BIT_WIDTH>()));
-    const __m128i masked_values = _mm_and_si128(input, maskv);
-    return mm_pack_table_avx512vbmi<i8, BIT_WIDTH>(masked_values);
+        const __m128i even  = _mm_and_si128(input, _mm_set1_epi16(static_cast<i16>(value_mask)));
+        const __m128i odd   = _mm_srli_epi16(_mm_and_si128(input, _mm_set1_epi16(static_cast<i16>(value_mask << 8U))), 8 - BIT_WIDTH);
+        const __m128i pairs = _mm_or_si128(even, odd);
+
+        if constexpr (BIT_WIDTH == 2 || BIT_WIDTH == 3) {
+            constexpr u8 pair_bit_width = 2 * BIT_WIDTH;
+            constexpr u32 pair_mask     = (1U << pair_bit_width) - 1U;
+
+            const __m128i low = _mm_and_si128(pairs, _mm_set1_epi32(static_cast<i32>(pair_mask)));
+            const __m128i high =
+                _mm_srli_epi32(_mm_and_si128(pairs, _mm_set1_epi32(static_cast<i32>(pair_mask << 16U))), 16 - pair_bit_width);
+            const __m128i groups = _mm_or_si128(low, high);
+
+            if constexpr (BIT_WIDTH == 2) {
+                return _mm_cvtepi32_epi8(groups);
+            } else {
+                return mm_pack_epi16_avx512vbmi_9to16<4 * BIT_WIDTH>(_mm_cvtepi32_epi16(groups));
+            }
+        } else if constexpr (BIT_WIDTH == 4) {
+            return _mm_cvtepi16_epi8(pairs);
+        } else {
+            return mm_pack_epi16_avx512vbmi_9to16<2 * BIT_WIDTH>(pairs);
+        }
+    }
 }
 
 /**
@@ -212,11 +236,36 @@ template <u8 BIT_WIDTH>
 __always_inline __m256i mm256_pack_epi8_avx512vbmi_1to8(const __m256i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
-    }
+    } else if constexpr (BIT_WIDTH == 1) {
+        return _mm256_zextsi128_si256(_mm_cvtsi32_si128(_mm256_movemask_epi8(_mm256_slli_epi16(input, 7))));
+    } else {
+        constexpr u16 value_mask = (1U << BIT_WIDTH) - 1U;
 
-    const __m256i maskv         = _mm256_set1_epi8(static_cast<i8>(detail::low_bit_mask<BIT_WIDTH>()));
-    const __m256i masked_values = _mm256_and_si256(input, maskv);
-    return mm256_pack_table_avx512vbmi<i8, BIT_WIDTH>(masked_values);
+        const __m256i even = _mm256_and_si256(input, _mm256_set1_epi16(static_cast<i16>(value_mask)));
+        const __m256i odd =
+            _mm256_srli_epi16(_mm256_and_si256(input, _mm256_set1_epi16(static_cast<i16>(value_mask << 8U))), 8 - BIT_WIDTH);
+        const __m256i pairs = _mm256_or_si256(even, odd);
+
+        if constexpr (BIT_WIDTH == 2 || BIT_WIDTH == 3) {
+            constexpr u8 pair_bit_width = 2 * BIT_WIDTH;
+            constexpr u32 pair_mask     = (1U << pair_bit_width) - 1U;
+
+            const __m256i low = _mm256_and_si256(pairs, _mm256_set1_epi32(static_cast<i32>(pair_mask)));
+            const __m256i high =
+                _mm256_srli_epi32(_mm256_and_si256(pairs, _mm256_set1_epi32(static_cast<i32>(pair_mask << 16U))), 16 - pair_bit_width);
+            const __m256i groups = _mm256_or_si256(low, high);
+
+            if constexpr (BIT_WIDTH == 2) {
+                return _mm256_zextsi128_si256(_mm256_cvtepi32_epi8(groups));
+            } else {
+                return _mm256_zextsi128_si256(m128::mm_pack_epi16_avx512vbmi_9to16<4 * BIT_WIDTH>(_mm256_cvtepi32_epi16(groups)));
+            }
+        } else if constexpr (BIT_WIDTH == 4) {
+            return _mm256_zextsi128_si256(_mm256_cvtepi16_epi8(pairs));
+        } else {
+            return mm256_pack_epi16_avx512vbmi_9to16<2 * BIT_WIDTH>(pairs);
+        }
+    }
 }
 
 /**
@@ -316,11 +365,38 @@ template <u8 BIT_WIDTH>
 __always_inline __m512i mm512_pack_epi8_avx512vbmi_1to8(const __m512i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
-    }
+    } else if constexpr (BIT_WIDTH == 1) {
+        const __mmask64 packed = _mm512_movepi8_mask(_mm512_slli_epi16(input, 7));
+        return _mm512_zextsi128_si512(_mm_cvtsi64_si128(static_cast<i64>(packed)));
+    } else {
+        constexpr u16 value_mask = (1U << BIT_WIDTH) - 1U;
 
-    const __m512i maskv         = _mm512_set1_epi8(static_cast<i8>(detail::low_bit_mask<BIT_WIDTH>()));
-    const __m512i masked_values = _mm512_and_si512(input, maskv);
-    return mm512_pack_table_avx512vbmi<i8, BIT_WIDTH>(masked_values);
+        const __m512i even = _mm512_and_si512(input, _mm512_set1_epi16(static_cast<i16>(value_mask)));
+        const __m512i odd =
+            _mm512_srli_epi16(_mm512_and_si512(input, _mm512_set1_epi16(static_cast<i16>(value_mask << 8U))), 8 - BIT_WIDTH);
+        const __m512i pairs = _mm512_or_si512(even, odd);
+
+        if constexpr (BIT_WIDTH == 2 || BIT_WIDTH == 3) {
+            constexpr u8 pair_bit_width = 2 * BIT_WIDTH;
+            constexpr u32 pair_mask     = (1U << pair_bit_width) - 1U;
+
+            const __m512i low = _mm512_and_si512(pairs, _mm512_set1_epi32(static_cast<i32>(pair_mask)));
+            const __m512i high =
+                _mm512_srli_epi32(_mm512_and_si512(pairs, _mm512_set1_epi32(static_cast<i32>(pair_mask << 16U))), 16 - pair_bit_width);
+            const __m512i groups = _mm512_or_si512(low, high);
+
+            if constexpr (BIT_WIDTH == 2) {
+                return _mm512_zextsi128_si512(_mm512_cvtepi32_epi8(groups));
+            } else {
+                const __m256i group_words = _mm512_cvtepi32_epi16(groups);
+                return _mm512_zextsi256_si512(m256::mm256_pack_epi16_avx512vbmi_9to16<4 * BIT_WIDTH>(group_words));
+            }
+        } else if constexpr (BIT_WIDTH == 4) {
+            return _mm512_zextsi256_si512(_mm512_cvtepi16_epi8(pairs));
+        } else {
+            return mm512_pack_epi16_avx512vbmi_9to16<2 * BIT_WIDTH>(pairs);
+        }
+    }
 }
 
 /**

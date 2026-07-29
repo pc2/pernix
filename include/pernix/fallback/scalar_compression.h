@@ -99,7 +99,7 @@ int compress_blocks_fallback(const void* __restrict__ input_ptr, const FloatT sc
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
     const auto input_span = std::span<const FloatT>(static_cast<const FloatT*>(input_ptr), elements_per_block * blocks);
-    auto output_span      = std::span(static_cast<u8*>(output_ptr), blocks * BLOCK_SIZE);
+    auto output_span      = std::span(static_cast<u8*>(output_ptr), static_cast<usize>(blocks * BLOCK_SIZE));
 
     return compress_blocks_fallback<BIT_WIDTH, BLOCK_SIZE, FloatT>(input_span, scale, output_span, blocks);
 }

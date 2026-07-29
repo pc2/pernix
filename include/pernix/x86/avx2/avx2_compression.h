@@ -1,15 +1,11 @@
 #ifndef PERNIX_AVX2_COMPRESSION_H
 #define PERNIX_AVX2_COMPRESSION_H
 
-#include <pernix/fallback/scalar_compression.h>
 #include <pernix/simd_compat.h>
 #include <pernix/x86/avx2/avx2_tables.h>
 
 #include <array>
-#include <cmath>
-#include <cstdint>
 #include <cstring>
-#include <vector>
 
 namespace pernix {
 namespace internal {
@@ -29,8 +25,8 @@ __always_inline __m256i mm256_tail_mask_epi64() {
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_clamp_signed_epi32(__m256i input) {
-    constexpr i32 min_value = BIT_WIDTH == 1 ? 0 : -(1 << (BIT_WIDTH - 1));
-    constexpr i32 max_value = BIT_WIDTH == 1 ? 1 : ((1 << (BIT_WIDTH - 1)) - 1);
+    constexpr i32 min_value = BIT_WIDTH == 1 ? 0 : -(1U << (BIT_WIDTH - 1U));
+    constexpr i32 max_value = BIT_WIDTH == 1 ? 1 : ((1U << (BIT_WIDTH - 1U)) - 1);
     return _mm256_min_epi32(_mm256_max_epi32(input, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
 }
 

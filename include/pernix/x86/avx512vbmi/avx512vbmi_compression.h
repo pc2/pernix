@@ -540,6 +540,94 @@ __always_inline int mm512_compress_block_avx512vbmi_17to24(const f64* __restrict
 
     return 0;
 }
+
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH == 8) && (BLOCK_SIZE % 32 == 0)
+__always_inline int mm512_compress_block_avx512vbmi_8(const f32* __restrict__ input, const f32 scale, u8* __restrict__ output) {
+    constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr u32 iterations         = elements_per_block / 16;
+
+    const __m512 scale_v = _mm512_set1_ps(scale);
+
+#pragma GCC unroll 32
+    for (u32 i = 0; i < iterations; ++i) {
+        const __m512 source     = _mm512_loadu_ps(input);
+        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m128i converted = _mm512_cvtepi32_epi8(quantized);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(output), converted);
+
+        input += 16;
+        output += 16;
+    }
+
+    return 0;
+}
+
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH == 8) && (BLOCK_SIZE % 32 == 0)
+__always_inline int mm512_compress_block_avx512vbmi_8(const f64* __restrict__ input, const f64 scale, u8* __restrict__ output) {
+    constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr u32 iterations         = elements_per_block / 8;
+
+    const __m512d scale_v = _mm512_set1_pd(scale);
+
+#pragma GCC unroll 32
+    for (u32 i = 0; i < iterations; ++i) {
+        const __m512d source    = _mm512_loadu_pd(input);
+        const __m512i quantized = mm512_quantize_pd_epi64(source, scale_v);
+        const __m128i converted = _mm512_cvtepi64_epi8(quantized);
+        _mm_storeu_si64(output, converted);
+
+        input += 8;
+        output += 8;
+    }
+
+    return 0;
+}
+
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH == 16) && (BLOCK_SIZE % 32 == 0)
+__always_inline int mm512_compress_block_avx512vbmi_16(const f32* __restrict__ input, const f32 scale, u8* __restrict__ output) {
+    constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr u32 iterations         = elements_per_block / 16;
+
+    const __m512 scale_v = _mm512_set1_ps(scale);
+
+#pragma GCC unroll 16
+    for (u32 i = 0; i < iterations; ++i) {
+        const __m512 source     = _mm512_loadu_ps(input);
+        const __m512i quantized = mm512_quantize_ps_epi32(source, scale_v);
+        const __m256i converted = _mm512_cvtepi32_epi16(quantized);
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(output), converted);
+
+        input += 16;
+        output += 32;
+    }
+
+    return 0;
+}
+
+template <u8 BIT_WIDTH, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH == 16) && (BLOCK_SIZE % 32 == 0)
+__always_inline int mm512_compress_block_avx512vbmi_16(const f64* __restrict__ input, const f64 scale, u8* __restrict__ output) {
+    constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr u32 iterations         = elements_per_block / 8;
+
+    const __m512d scale_v = _mm512_set1_pd(scale);
+
+#pragma GCC unroll 16
+    for (u32 i = 0; i < iterations; ++i) {
+        const __m512d source    = _mm512_loadu_pd(input);
+        const __m512i quantized = mm512_quantize_pd_epi64(source, scale_v);
+        const __m128i converted = _mm512_cvtepi64_epi16(quantized);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(output), converted);
+
+        input += 8;
+        output += 16;
+    }
+
+    return 0;
+}
 }  // namespace internal
 
 /**
@@ -560,13 +648,18 @@ int mm512_compress_block_avx512vbmi(const void* __restrict__ input_ptr, const f3
     const auto* input = static_cast<const float*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
-    std::memset(output, 0, BLOCK_SIZE);
-
-    if constexpr (BIT_WIDTH <= 8) {
+    if constexpr (BIT_WIDTH <= 7) {
+        std::memset(output, 0, BLOCK_SIZE);
         return internal::mm512_compress_block_avx512vbmi_1to8<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
-    } else if constexpr (BIT_WIDTH <= 16) {
+    } else if constexpr (BIT_WIDTH == 8) {
+        return internal::mm512_compress_block_avx512vbmi_8<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+    } else if constexpr (BIT_WIDTH <= 15) {
+        std::memset(output, 0, BLOCK_SIZE);
         return internal::mm512_compress_block_avx512vbmi_9to16<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+    } else if constexpr (BIT_WIDTH == 16) {
+        return internal::mm512_compress_block_avx512vbmi_16<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
     } else {
+        std::memset(output, 0, BLOCK_SIZE);
         return internal::mm512_compress_block_avx512vbmi_17to24<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
     }
 }
@@ -588,13 +681,18 @@ int mm512_compress_block_avx512vbmi(const void* __restrict__ input_ptr, const f6
     const auto* input = static_cast<const double*>(input_ptr);
     auto* output      = static_cast<u8*>(output_ptr);
 
-    std::memset(output, 0, BLOCK_SIZE);
-
-    if constexpr (BIT_WIDTH <= 8) {
+    if constexpr (BIT_WIDTH <= 7) {
+        std::memset(output, 0, BLOCK_SIZE);
         return internal::mm512_compress_block_avx512vbmi_1to8<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
-    } else if constexpr (BIT_WIDTH <= 16) {
+    } else if constexpr (BIT_WIDTH == 8) {
+        return internal::mm512_compress_block_avx512vbmi_8<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+    } else if constexpr (BIT_WIDTH <= 15) {
+        std::memset(output, 0, BLOCK_SIZE);
         return internal::mm512_compress_block_avx512vbmi_9to16<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
+    } else if constexpr (BIT_WIDTH == 16) {
+        return internal::mm512_compress_block_avx512vbmi_16<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
     } else {
+        std::memset(output, 0, BLOCK_SIZE);
         return internal::mm512_compress_block_avx512vbmi_17to24<BIT_WIDTH, BLOCK_SIZE>(input, scale, output);
     }
 }

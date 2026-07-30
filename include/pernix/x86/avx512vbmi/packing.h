@@ -7,22 +7,8 @@
 #include <pernix/x86/avx512vbmi/tables.h>
 
 #include <array>
-#include <utility>
 
 namespace pernix::internal {
-template <typename Tables, typename Vec, typename PackContributor, typename Combine, usize... Indices>
-__always_inline Vec combine_primary_contributors(const PackContributor& pack_contributor, const Combine& combine,
-                                                 std::index_sequence<Indices...>) {
-    static_assert(Tables::contributor_count > 0);
-    static_assert(sizeof...(Indices) + 1 == Tables::contributor_count);
-
-    Vec result = pack_contributor(Tables::primary_permutes[0], Tables::primary_shifts[0], Tables::primary_masks[0]);
-    ((result = combine(result, pack_contributor(Tables::primary_permutes[Indices + 1], Tables::primary_shifts[Indices + 1],
-                                                Tables::primary_masks[Indices + 1]))),
-     ...);
-    return result;
-}
-
 namespace m128 {
 constexpr __mmask16 kPackAlternateByteMask16 = 0xAAAAULL;
 
@@ -44,45 +30,45 @@ template <typename LaneType, u8 BIT_WIDTH>
 __always_inline __m128i mm_pack_table_avx512vbmi(const __m128i values) {
     using tables                = detail::pack_table<LaneType, BIT_WIDTH, sizeof(__m128i)>;
     using contributor_table     = std::array<LaneType, tables::element_count>;
-    const auto pack_contributor = [values](const contributor_table& permute_indices, const contributor_table& shift_counts,
-                                           const u64 active_mask) {
+    const auto pack_contributor = [values](const contributor_table& permute_indices, const contributor_table& shift_counts) {
         if constexpr (sizeof(LaneType) == sizeof(i8)) {
-            const __m128i value =
-                _mm_maskz_permutexvar_epi8(static_cast<__mmask16>(active_mask), load_table<__m128i>(permute_indices), values);
+            const __m128i value = _mm_permutexvar_epi8(load_table<__m128i>(permute_indices), values);
             return mm_pack_sllv_epi8(value, load_table<__m128i>(shift_counts));
         } else if constexpr (sizeof(LaneType) == sizeof(i16)) {
-            const __m128i value =
-                _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(active_mask), load_table<__m128i>(permute_indices), values);
+            const __m128i value = _mm_permutexvar_epi16(load_table<__m128i>(permute_indices), values);
             return _mm_sllv_epi16(value, load_table<__m128i>(shift_counts));
         } else {
-            const __m128i value =
-                _mm_maskz_permutexvar_epi32(static_cast<__mmask8>(active_mask), load_table<__m128i>(permute_indices), values);
+            const __m128i value = _mm_permutexvar_epi32(load_table<__m128i>(permute_indices), values);
             return _mm_sllv_epi32(value, load_table<__m128i>(shift_counts));
         }
     };
 
-    const auto combine = [](__m128i left, __m128i right) {
-        return _mm_or_si128(left, right);
-    };
-    __m128i result =
-        combine_primary_contributors<tables, __m128i>(pack_contributor, combine, std::make_index_sequence<tables::contributor_count - 1>{});
-
-    if constexpr (tables::spill_mask != 0) {
+    const auto pack_spill = [values]() {
         if constexpr (sizeof(LaneType) == sizeof(i8)) {
-            const __m128i permuted =
-                _mm_maskz_permutexvar_epi8(static_cast<__mmask16>(tables::spill_mask), load_table<__m128i>(tables::spill_permute), values);
-            result = _mm_or_si128(result, mm_pack_srlv_epi8(permuted, load_table<__m128i>(tables::spill_shift)));
+            const __m128i permuted = _mm_permutexvar_epi8(load_table<__m128i>(tables::spill_permute), values);
+            return mm_pack_srlv_epi8(permuted, load_table<__m128i>(tables::spill_shift));
         } else if constexpr (sizeof(LaneType) == sizeof(i16)) {
-            const __m128i permuted =
-                _mm_maskz_permutexvar_epi16(static_cast<__mmask8>(tables::spill_mask), load_table<__m128i>(tables::spill_permute), values);
-            result = _mm_or_si128(result, _mm_srlv_epi16(permuted, load_table<__m128i>(tables::spill_shift)));
+            const __m128i permuted = _mm_permutexvar_epi16(load_table<__m128i>(tables::spill_permute), values);
+            return _mm_srlv_epi16(permuted, load_table<__m128i>(tables::spill_shift));
         } else {
-            const __m128i permuted =
-                _mm_maskz_permutexvar_epi32(static_cast<__mmask8>(tables::spill_mask), load_table<__m128i>(tables::spill_permute), values);
-            result = _mm_or_si128(result, _mm_srlv_epi32(permuted, load_table<__m128i>(tables::spill_shift)));
+            const __m128i permuted = _mm_permutexvar_epi32(load_table<__m128i>(tables::spill_permute), values);
+            return _mm_srlv_epi32(permuted, load_table<__m128i>(tables::spill_shift));
         }
+    };
+
+    static_assert(tables::contributor_count <= 2);
+    const __m128i first = pack_contributor(tables::primary_permutes[0], tables::primary_shifts[0]);
+    if constexpr (tables::contributor_count == 2) {
+        const __m128i second = pack_contributor(tables::primary_permutes[1], tables::primary_shifts[1]);
+        if constexpr (tables::spill_mask != 0) {
+            return _mm_ternarylogic_epi32(first, second, pack_spill(), 0xFE);
+        }
+        return _mm_or_si128(first, second);
+    } else if constexpr (tables::spill_mask != 0) {
+        return _mm_or_si128(first, pack_spill());
+    } else {
+        return first;
     }
-    return result;
 }
 
 /**
@@ -172,45 +158,45 @@ template <typename LaneType, u8 BIT_WIDTH>
 __always_inline __m256i mm256_pack_table_avx512vbmi(const __m256i values) {
     using tables                = detail::pack_table<LaneType, BIT_WIDTH, sizeof(__m256i)>;
     using contributor_table     = std::array<LaneType, tables::element_count>;
-    const auto pack_contributor = [values](const contributor_table& permute_indices, const contributor_table& shift_counts,
-                                           const u64 active_mask) {
+    const auto pack_contributor = [values](const contributor_table& permute_indices, const contributor_table& shift_counts) {
         if constexpr (sizeof(LaneType) == sizeof(i8)) {
-            const __m256i value =
-                _mm256_maskz_permutexvar_epi8(static_cast<__mmask32>(active_mask), load_table<__m256i>(permute_indices), values);
+            const __m256i value = _mm256_permutexvar_epi8(load_table<__m256i>(permute_indices), values);
             return mm256_pack_sllv_epi8(value, load_table<__m256i>(shift_counts));
         } else if constexpr (sizeof(LaneType) == sizeof(i16)) {
-            const __m256i value =
-                _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(active_mask), load_table<__m256i>(permute_indices), values);
+            const __m256i value = _mm256_permutexvar_epi16(load_table<__m256i>(permute_indices), values);
             return _mm256_sllv_epi16(value, load_table<__m256i>(shift_counts));
         } else {
-            const __m256i value =
-                _mm256_maskz_permutexvar_epi32(static_cast<__mmask8>(active_mask), load_table<__m256i>(permute_indices), values);
+            const __m256i value = _mm256_permutexvar_epi32(load_table<__m256i>(permute_indices), values);
             return _mm256_sllv_epi32(value, load_table<__m256i>(shift_counts));
         }
     };
 
-    const auto combine = [](__m256i left, __m256i right) {
-        return _mm256_or_si256(left, right);
-    };
-    __m256i result =
-        combine_primary_contributors<tables, __m256i>(pack_contributor, combine, std::make_index_sequence<tables::contributor_count - 1>{});
-
-    if constexpr (tables::spill_mask != 0) {
+    const auto pack_spill = [values]() {
         if constexpr (sizeof(LaneType) == sizeof(i8)) {
-            const __m256i permuted = _mm256_maskz_permutexvar_epi8(static_cast<__mmask32>(tables::spill_mask),
-                                                                   load_table<__m256i>(tables::spill_permute), values);
-            result                 = _mm256_or_si256(result, mm256_pack_srlv_epi8(permuted, load_table<__m256i>(tables::spill_shift)));
+            const __m256i permuted = _mm256_permutexvar_epi8(load_table<__m256i>(tables::spill_permute), values);
+            return mm256_pack_srlv_epi8(permuted, load_table<__m256i>(tables::spill_shift));
         } else if constexpr (sizeof(LaneType) == sizeof(i16)) {
-            const __m256i permuted = _mm256_maskz_permutexvar_epi16(static_cast<__mmask16>(tables::spill_mask),
-                                                                    load_table<__m256i>(tables::spill_permute), values);
-            result                 = _mm256_or_si256(result, _mm256_srlv_epi16(permuted, load_table<__m256i>(tables::spill_shift)));
+            const __m256i permuted = _mm256_permutexvar_epi16(load_table<__m256i>(tables::spill_permute), values);
+            return _mm256_srlv_epi16(permuted, load_table<__m256i>(tables::spill_shift));
         } else {
-            const __m256i permuted = _mm256_maskz_permutexvar_epi32(static_cast<__mmask8>(tables::spill_mask),
-                                                                    load_table<__m256i>(tables::spill_permute), values);
-            result                 = _mm256_or_si256(result, _mm256_srlv_epi32(permuted, load_table<__m256i>(tables::spill_shift)));
+            const __m256i permuted = _mm256_permutexvar_epi32(load_table<__m256i>(tables::spill_permute), values);
+            return _mm256_srlv_epi32(permuted, load_table<__m256i>(tables::spill_shift));
         }
+    };
+
+    static_assert(tables::contributor_count <= 2);
+    const __m256i first = pack_contributor(tables::primary_permutes[0], tables::primary_shifts[0]);
+    if constexpr (tables::contributor_count == 2) {
+        const __m256i second = pack_contributor(tables::primary_permutes[1], tables::primary_shifts[1]);
+        if constexpr (tables::spill_mask != 0) {
+            return _mm256_ternarylogic_epi32(first, second, pack_spill(), 0xFE);
+        }
+        return _mm256_or_si256(first, second);
+    } else if constexpr (tables::spill_mask != 0) {
+        return _mm256_or_si256(first, pack_spill());
+    } else {
+        return first;
     }
-    return result;
 }
 
 /**
@@ -301,45 +287,45 @@ template <typename LaneType, u8 BIT_WIDTH>
 __always_inline __m512i mm512_pack_table_avx512vbmi(const __m512i values) {
     using tables                = detail::pack_table<LaneType, BIT_WIDTH, sizeof(__m512i)>;
     using contributor_table     = std::array<LaneType, tables::element_count>;
-    const auto pack_contributor = [values](const contributor_table& permute_indices, const contributor_table& shift_counts,
-                                           const u64 active_mask) {
+    const auto pack_contributor = [values](const contributor_table& permute_indices, const contributor_table& shift_counts) {
         if constexpr (sizeof(LaneType) == sizeof(i8)) {
-            const __m512i value =
-                _mm512_maskz_permutexvar_epi8(static_cast<__mmask64>(active_mask), load_table<__m512i>(permute_indices), values);
+            const __m512i value = _mm512_permutexvar_epi8(load_table<__m512i>(permute_indices), values);
             return mm512_pack_sllv_epi8(value, load_table<__m512i>(shift_counts));
         } else if constexpr (sizeof(LaneType) == sizeof(i16)) {
-            const __m512i value =
-                _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(active_mask), load_table<__m512i>(permute_indices), values);
+            const __m512i value = _mm512_permutexvar_epi16(load_table<__m512i>(permute_indices), values);
             return _mm512_sllv_epi16(value, load_table<__m512i>(shift_counts));
         } else {
-            const __m512i value =
-                _mm512_maskz_permutexvar_epi32(static_cast<__mmask16>(active_mask), load_table<__m512i>(permute_indices), values);
+            const __m512i value = _mm512_permutexvar_epi32(load_table<__m512i>(permute_indices), values);
             return _mm512_sllv_epi32(value, load_table<__m512i>(shift_counts));
         }
     };
 
-    const auto combine = [](__m512i left, __m512i right) {
-        return _mm512_or_si512(left, right);
-    };
-    __m512i result =
-        combine_primary_contributors<tables, __m512i>(pack_contributor, combine, std::make_index_sequence<tables::contributor_count - 1>{});
-
-    if constexpr (tables::spill_mask != 0) {
+    const auto pack_spill = [values]() {
         if constexpr (sizeof(LaneType) == sizeof(i8)) {
-            const __m512i permuted = _mm512_maskz_permutexvar_epi8(static_cast<__mmask64>(tables::spill_mask),
-                                                                   load_table<__m512i>(tables::spill_permute), values);
-            result                 = _mm512_or_si512(result, mm512_pack_srlv_epi8(permuted, load_table<__m512i>(tables::spill_shift)));
+            const __m512i permuted = _mm512_permutexvar_epi8(load_table<__m512i>(tables::spill_permute), values);
+            return mm512_pack_srlv_epi8(permuted, load_table<__m512i>(tables::spill_shift));
         } else if constexpr (sizeof(LaneType) == sizeof(i16)) {
-            const __m512i permuted = _mm512_maskz_permutexvar_epi16(static_cast<__mmask32>(tables::spill_mask),
-                                                                    load_table<__m512i>(tables::spill_permute), values);
-            result                 = _mm512_or_si512(result, _mm512_srlv_epi16(permuted, load_table<__m512i>(tables::spill_shift)));
+            const __m512i permuted = _mm512_permutexvar_epi16(load_table<__m512i>(tables::spill_permute), values);
+            return _mm512_srlv_epi16(permuted, load_table<__m512i>(tables::spill_shift));
         } else {
-            const __m512i permuted = _mm512_maskz_permutexvar_epi32(static_cast<__mmask16>(tables::spill_mask),
-                                                                    load_table<__m512i>(tables::spill_permute), values);
-            result                 = _mm512_or_si512(result, _mm512_srlv_epi32(permuted, load_table<__m512i>(tables::spill_shift)));
+            const __m512i permuted = _mm512_permutexvar_epi32(load_table<__m512i>(tables::spill_permute), values);
+            return _mm512_srlv_epi32(permuted, load_table<__m512i>(tables::spill_shift));
         }
+    };
+
+    static_assert(tables::contributor_count <= 2);
+    const __m512i first = pack_contributor(tables::primary_permutes[0], tables::primary_shifts[0]);
+    if constexpr (tables::contributor_count == 2) {
+        const __m512i second = pack_contributor(tables::primary_permutes[1], tables::primary_shifts[1]);
+        if constexpr (tables::spill_mask != 0) {
+            return _mm512_ternarylogic_epi32(first, second, pack_spill(), 0xFE);
+        }
+        return _mm512_or_si512(first, second);
+    } else if constexpr (tables::spill_mask != 0) {
+        return _mm512_or_si512(first, pack_spill());
+    } else {
+        return first;
     }
-    return result;
 }
 
 /**

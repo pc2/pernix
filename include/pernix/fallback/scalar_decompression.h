@@ -21,7 +21,6 @@ __always_inline void unpack_and_dequantize_fallback_inner(const std::span<const 
     u8 bits_in_buffer = 8 - bit_offset;
     u64 buffer        = static_cast<u64>(input[idx++]) >> bit_offset;
 
-#pragma GCC unroll 512
     for (usize i = 0; i < elements; i++) {
         while (BIT_WIDTH > bits_in_buffer) {
             const auto next_value = static_cast<u64>(input[idx++]) << bits_in_buffer;

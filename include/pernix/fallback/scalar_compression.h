@@ -23,7 +23,6 @@ __always_inline void quantize_and_pack_fallback_inner(const std::span<const Floa
     usize bits_in_buffer = bit_offset;
     u64 buffer           = bit_offset ? static_cast<u64>(destination[0] & ((1U << bit_offset) - 1U)) : 0;
 
-#pragma GCC unroll 512
     for (usize i = 0; i < elements; i++) {
         const i32 quantized  = quantize_clamped<BIT_WIDTH, FloatT, i32>(input[i], scale);
         const u32 next_value = static_cast<u32>(quantized) & static_cast<u32>(bitmask);

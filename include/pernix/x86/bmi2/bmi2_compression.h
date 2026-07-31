@@ -26,11 +26,11 @@ template <int LANE>
  */
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH > 0 && BIT_WIDTH <= 32)
-static constexpr std::tuple<u16, u64, u16, u16> pack_avx2_bmi2_constants() {
-    const u32 mask = BIT_WIDTH == 32 ? std::numeric_limits<u32>::max() : (1ULL << BIT_WIDTH) - 1U;
+static constexpr std::tuple<u16, u64, u32, u32> pack_avx2_bmi2_constants() {
+    constexpr u32 mask = BIT_WIDTH == 32 ? std::numeric_limits<u32>::max() : (1ULL << BIT_WIDTH) - 1U;
     u64 pext_mask;
-    const u16 shift1 = BIT_WIDTH * 4;
-    const u16 shift2 = 64 - shift1;
+    constexpr u32 shift1 = BIT_WIDTH * 4;
+    constexpr u32 shift2 = 64 - shift1;
 
     if constexpr (BIT_WIDTH > 0 && BIT_WIDTH <= 8) {
         pext_mask = 0x0101010101010101ULL * mask;
@@ -100,9 +100,9 @@ static inline auto mm256_pack_epi32_bmi2(__m256i input) -> __m256i {
         const __m256i result = _mm256_setr_epi64x(static_cast<i64>(value), 0, 0, 0);
         return result;
     } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 16) {
-        const __m256i packed16    = _mm256_packs_epi32(input, _mm256_setzero_si256());
-        alignas(16) u64 values[2] = {};
-        values[0]                 = _pext_u64(mm256_extract_u64<0>(packed16), pext_mask);
+        const __m256i packed16 = _mm256_packs_epi32(input, _mm256_setzero_si256());
+        alignas(64) std::array<u64, 4> values{};
+        values[0] = _pext_u64(mm256_extract_u64<0>(packed16), pext_mask);
 
         const u64 temp_combined = _pext_u64(mm256_extract_u64<2>(packed16), pext_mask);
         values[1]               = temp_combined >> shift2;
@@ -110,8 +110,7 @@ static inline auto mm256_pack_epi32_bmi2(__m256i input) -> __m256i {
             values[0] |= static_cast<u64>(temp_combined << shift1);
         }
 
-        const __m256i result = _mm256_setr_epi64x(values[0], values[1], 0, 0);
-        return result;
+        return _mm256_load_si256(reinterpret_cast<const __m256i*>(values.data()));
     } else {
         constexpr u32 chunk_bits = BIT_WIDTH * 2;  // bits extracted per 64-bit lane
         static_assert(chunk_bits < 64);
@@ -245,7 +244,7 @@ int mm256_compress_block_bmi2(const void* __restrict__ input_ptr, const f64 scal
     if constexpr (remaining) {
         constexpr usize tail_bytes   = ((BIT_WIDTH * remaining) + 7) / 8;
         constexpr usize first_lanes  = remaining < 4 ? remaining : 4;
-        constexpr usize second_lanes = remaining > 4 ? remaining - 4 : 0;
+        constexpr usize second_lanes = remaining > 4U ? remaining - 4U : 0U;
 
         const __m256d source1 = _mm256_maskload_pd(input, internal::mm256_tail_mask_epi64<first_lanes>());
         const __m256d source2 = [&] {

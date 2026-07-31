@@ -95,13 +95,14 @@ __m128i mm_unpack_epi32_bmi2(const u8* __restrict__ input) {
         constexpr u32 shift2    = 64 - shift1;
 
         alignas(16) u64 temp_values[2]{};
-        std::memcpy(temp_values, input, packed_bytes);
+        std::memcpy(&temp_values, input, packed_bytes);
 
-        alignas(16) u64 values[2];
-        values[0] = _pdep_u64(temp_values[0], pdep_mask);
-        values[1] = _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask);
+        const std::array<u64, 2> values{
+            _pdep_u64(temp_values[0], pdep_mask),
+            _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask),
+        };
 
-        result = _mm_set_epi64x(values[1], values[0]);
+        result = _mm_loadu_si128(reinterpret_cast<const __m128i*>(values.data()));
     }
 
     if constexpr (SIGN_VALUES) {
@@ -150,11 +151,12 @@ __m256i mm256_unpack_epi32_bmi2(const __m256i packed_source) {
         alignas(16) u64 temp_values[2]{};
         std::memcpy(temp_values, input, packed_bytes);
 
-        alignas(16) u64 values[2];
-        values[0] = _pdep_u64(temp_values[0], pdep_mask);
-        values[1] = _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask);
+        const std::array<u64, 2> values{
+            _pdep_u64(temp_values[0], pdep_mask),
+            _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask),
+        };
 
-        const __m128i source = _mm_set_epi64x(values[1], values[0]);
+        const __m128i source = _mm_loadu_si128(reinterpret_cast<const __m128i*>(values.data()));
         result               = _mm256_cvtepi16_epi32(source);
     } else {
         constexpr u64 pdep_mask = 0x0000000100000001ULL * mask;
@@ -162,30 +164,30 @@ __m256i mm256_unpack_epi32_bmi2(const __m256i packed_source) {
         constexpr u32 shift2    = 64 - shift1;
 
         alignas(16) u64 temp_values[4]{};
-        std::memcpy(temp_values, input, packed_bytes);
+        std::memcpy(&temp_values, input, packed_bytes);
 
         if constexpr ((BIT_WIDTH % 2) == 0) {
-            std::memcpy(temp_values + 2, input + BIT_WIDTH / 2, packed_bytes - BIT_WIDTH / 2);
+            std::memcpy(&temp_values[2], input + (BIT_WIDTH / 2), packed_bytes - (BIT_WIDTH / 2));
         } else {
             constexpr u32 second_group_bit_offset  = BIT_WIDTH * 4;
             constexpr u32 second_group_byte_offset = second_group_bit_offset / 8;
             constexpr u32 second_group_shift       = second_group_bit_offset % 8;
 
             alignas(16) u64 raw_values[2]{};
-            std::memcpy(raw_values, input + second_group_byte_offset, packed_bytes - second_group_byte_offset);
+            std::memcpy(&raw_values, input + second_group_byte_offset, packed_bytes - second_group_byte_offset);
 
             temp_values[2] = (raw_values[0] >> second_group_shift) | (raw_values[1] << (64 - second_group_shift));
             temp_values[3] = raw_values[1] >> second_group_shift;
         }
 
-        alignas(16) u64 values[4];
-        values[0] = _pdep_u64((temp_values[0]), pdep_mask);
-        values[1] = _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask);
-        values[2] = _pdep_u64((temp_values[2]), pdep_mask);
-        values[3] = _pdep_u64((temp_values[2] >> shift1) | (temp_values[3] << shift2), pdep_mask);
+        const std::array<u64, 4> values{
+            _pdep_u64((temp_values[0]), pdep_mask),
+            _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask),
+            _pdep_u64((temp_values[2]), pdep_mask),
+            _pdep_u64((temp_values[2] >> shift1) | (temp_values[3] << shift2), pdep_mask),
+        };
 
-        result = _mm256_set_epi64x(static_cast<i64>(values[3]), static_cast<i64>(values[2]), static_cast<i64>(values[1]),
-                                   static_cast<i64>(values[0]));
+        result = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(values.data()));
     }
 
     if constexpr (SIGN_VALUES) {

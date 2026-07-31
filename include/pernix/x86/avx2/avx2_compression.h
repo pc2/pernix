@@ -561,7 +561,7 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
     if constexpr (remaining) {
         constexpr usize tail_bytes   = ((BIT_WIDTH * remaining) + 7) / 8;
         constexpr usize first_lanes  = remaining < 4 ? remaining : 4;
-        constexpr usize second_lanes = remaining > 4 ? remaining - 4 : 0;
+        constexpr usize second_lanes = remaining > 4U ? remaining - 4U : 0U;
 
         const __m256d source1 = _mm256_maskload_pd(input, internal::mm256_tail_mask_epi64<first_lanes>());
         const __m256d source2 = [&] {

@@ -25,8 +25,8 @@ __always_inline __m256i mm256_tail_mask_epi64() {
 template <u8 BIT_WIDTH>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __always_inline __m256i mm256_clamp_signed_epi32(__m256i input) {
-    constexpr i32 min_value = BIT_WIDTH == 1 ? 0 : -(1U << (BIT_WIDTH - 1U));
-    constexpr i32 max_value = BIT_WIDTH == 1 ? 1 : ((1U << (BIT_WIDTH - 1U)) - 1);
+    constexpr i32 min_value = BIT_WIDTH == 1 ? i32{0} : -(i32{1} << (BIT_WIDTH - 1U));
+    constexpr i32 max_value = BIT_WIDTH == 1 ? i32{1} : (i32{1} << (BIT_WIDTH - 1U)) - i32{1};
     return _mm256_min_epi32(_mm256_max_epi32(input, _mm256_set1_epi32(min_value)), _mm256_set1_epi32(max_value));
 }
 
@@ -89,7 +89,7 @@ __always_inline __m128i mm256_quantize_pd_epi32(__m256d input, __m256d scale) {
  * @return __m128i shifted values.
  */
 __always_inline static __m128i _mm_sllv_epi16(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi32(0xffff0000);
+    const __m128i mask      = _mm_set1_epi32(-65536);
     const __m128i low_half  = _mm_sllv_epi32(a, _mm_andnot_si128(mask, count));
     const __m128i high_half = _mm_sllv_epi32(_mm_and_si128(mask, a), _mm_srli_epi32(count, 16));
     return _mm_blend_epi16(low_half, high_half, 0xaa);
@@ -109,7 +109,7 @@ __always_inline static __m128i _mm_srlv_epi16(const __m128i a, const __m128i cou
  * @brief Emulate per-16-bit left shifts on 256-bit AVX2 vectors.
  */
 __always_inline static __m256i _mm256_sllv_epi16(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi32(0xffff0000);
+    const __m256i mask      = _mm256_set1_epi32(-65536);
     const __m256i low_half  = _mm256_sllv_epi32(a, _mm256_andnot_si256(mask, count));
     const __m256i high_half = _mm256_sllv_epi32(_mm256_and_si256(mask, a), _mm256_srli_epi32(count, 16));
     return _mm256_blend_epi16(low_half, high_half, 0xaa);
@@ -559,9 +559,9 @@ int mm256_compress_block_avx2(const void* __restrict__ input_ptr, const f64 scal
     }
 
     if constexpr (remaining) {
-        constexpr u32 tail_bytes  = ((BIT_WIDTH * remaining) + 7) / 8;
-        constexpr u8 first_lanes  = remaining < 4 ? remaining : 4;
-        constexpr u8 second_lanes = remaining > 4 ? remaining - 4 : 0;
+        constexpr usize tail_bytes   = ((BIT_WIDTH * remaining) + 7) / 8;
+        constexpr usize first_lanes  = remaining < 4 ? remaining : 4;
+        constexpr usize second_lanes = remaining > 4 ? remaining - 4 : 0;
 
         const __m256d source1 = _mm256_maskload_pd(input, internal::mm256_tail_mask_epi64<first_lanes>());
         const __m256d source2 = [&] {

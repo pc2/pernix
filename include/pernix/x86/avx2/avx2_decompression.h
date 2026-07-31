@@ -3,6 +3,7 @@
 
 #include <pernix/simd_compat.h>
 #include <pernix/x86/avx2/avx2_tables.h>
+#include <pernix/x86/avx2/avx2_unpacking.h>
 
 #include <cmath>
 #include <cstddef>
@@ -173,9 +174,39 @@ __always_inline __m256i mm256_unpack_epi32_avx2(const __m256i source) {
 
 template <u8 N, usize... I>
     requires(N <= 32)
-__always_inline __m256i dword_load_mask(std::index_sequence<I...>) {
+__always_inline __m256i mm256_dword_mask(std::index_sequence<I...>) {
     constexpr u8 k = (N + 3) / 4;
     return _mm256_setr_epi32((I < k ? -1 : 0)...);
+}
+
+template <u8 N, usize... I>
+    requires(N <= 16)
+__always_inline __m128i mm_dword_mask(std::index_sequence<I...>) {
+    constexpr u8 k = (N + 3) / 4;
+    return _mm_setr_epi32((I < k ? -1 : 0)...);
+}
+
+template <u8 N>
+    requires(N <= 16)
+__always_inline __m128i mm_loadu_partial_epi8(const void* input) noexcept {
+    if constexpr (N == 0) {
+        return _mm_setzero_si128();
+    }
+
+    if constexpr (N == 4) {
+        return _mm_loadu_si32(input);
+    }
+
+    if constexpr (N == 8) {
+        return _mm_loadu_si64(input);
+    }
+
+    if constexpr (N == 16) {
+        return _mm_loadu_si128(static_cast<const __m128i*>(input));
+    }
+
+    const __m128i dmask = mm_dword_mask<N>(std::make_index_sequence<4>{});
+    return _mm_maskload_epi32(static_cast<const int*>(input), dmask);
 }
 
 template <u8 N>
@@ -201,9 +232,195 @@ __always_inline __m256i mm256_loadu_partial_epi8(const void* input) noexcept {
         return _mm256_loadu_si256(static_cast<const __m256i*>(input));
     }
 
-    const __m256i dmask = dword_load_mask<N>(std::make_index_sequence<8>{});
+    const __m256i dmask = mm256_dword_mask<N>(std::make_index_sequence<8>{});
     return _mm256_maskload_epi32(static_cast<const int*>(input), dmask);
 }
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
+    requires(BIT_WIDTH > 0 && BIT_WIDTH <= 24)
+__always_inline __m256i mm256_unpack_epi32_avx2(const u8* __restrict__ input) {
+    if constexpr (BIT_WIDTH == 8 || BIT_WIDTH == 16) {
+        return mm256_unpack_aligned_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
+    } else {
+        const __m256i source = mm256_loadu_partial_epi8<BIT_WIDTH>(input);
+        return mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+    }
+}
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 4) && (BLOCK_SIZE % 32 == 0)
+int mm256_decompress_block_avx2_1to4(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr) {
+    const auto* input = static_cast<const u8*>(input_ptr);
+    auto* output      = static_cast<f32*>(output_ptr);
+
+    constexpr usize elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr usize values_per_group   = BIT_WIDTH == 4 ? 16 : 32;
+    constexpr usize bytes_per_group    = (values_per_group * BIT_WIDTH) / 8;
+    constexpr usize iterations         = elements_per_block / values_per_group;
+    constexpr usize remaining          = elements_per_block - (iterations * values_per_group);
+
+    const __m256 scale_v = _mm256_set1_ps(scale);
+
+    for (usize iter = 0; iter < iterations; ++iter) {
+        if constexpr (BIT_WIDTH == 4) {
+            const __m128i source   = mm_loadu_partial_epi8<8>(input);
+            const auto [low, high] = avx2::m256::mm256_unpack_epi32_4to7<BIT_WIDTH, SIGN_VALUES>(source);
+
+            _mm256_storeu_ps(output, mm256_dequantize_epi32(low, scale_v));
+            _mm256_storeu_ps(output + 8, mm256_dequantize_epi32(high, scale_v));
+        } else {
+            const __m128i source                            = mm_loadu_partial_epi8<4 * BIT_WIDTH>(input);
+            const auto [values0, values1, values2, values3] = avx2::m256::mm256_unpack_epi32_1to3<BIT_WIDTH, SIGN_VALUES>(source);
+
+            _mm256_storeu_ps(output, mm256_dequantize_epi32(values0, scale_v));
+            _mm256_storeu_ps(output + 8, mm256_dequantize_epi32(values1, scale_v));
+            _mm256_storeu_ps(output + 16, mm256_dequantize_epi32(values2, scale_v));
+            _mm256_storeu_ps(output + 24, mm256_dequantize_epi32(values3, scale_v));
+        }
+
+        input += bytes_per_group;
+        output += values_per_group;
+    }
+
+    if constexpr (remaining >= 8) {
+        constexpr usize iterations_8 = remaining / 8;
+        for (usize iter = 0; iter < iterations_8; ++iter) {
+            const __m256i source     = mm256_loadu_partial_epi8<BIT_WIDTH>(input);
+            const __m256i unpacked   = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+            const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v);
+            _mm256_storeu_ps(output, dequantized);
+
+            input += BIT_WIDTH;
+            output += 8;
+        }
+    }
+
+    constexpr usize tail_elements = remaining % 8;
+    if constexpr (tail_elements > 0) {
+        constexpr usize tail_bytes = ((BIT_WIDTH * tail_elements) + 7) / 8;
+        const __m256i source       = mm256_loadu_partial_epi8<tail_bytes>(input);
+        const __m256i unpacked     = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256 dequantized   = mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_maskstore_ps(output, mm256_dword_mask<tail_elements * sizeof(f32)>(std::make_index_sequence<8>{}), dequantized);
+    }
+
+    return 0;
+}
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH >= 5 && BIT_WIDTH <= 7) && (BLOCK_SIZE % 32 == 0)
+int mm256_decompress_block_avx2_5to7(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr) {
+    const auto* input = static_cast<const u8*>(input_ptr);
+    auto* output      = static_cast<f32*>(output_ptr);
+
+    constexpr usize elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr usize iterations_16      = elements_per_block / 16;
+    constexpr usize remaining          = elements_per_block - (iterations_16 * 16);
+
+    const __m256 scale_v = _mm256_set1_ps(scale);
+
+    for (usize iter = 0; iter < iterations_16; ++iter) {
+        const __m128i source   = mm_loadu_partial_epi8<2 * BIT_WIDTH>(input);
+        const auto [low, high] = avx2::m256::mm256_unpack_epi32_4to7<BIT_WIDTH, SIGN_VALUES>(source);
+
+        _mm256_storeu_ps(output, mm256_dequantize_epi32(low, scale_v));
+        _mm256_storeu_ps(output + 8, mm256_dequantize_epi32(high, scale_v));
+
+        input += static_cast<ptrdiff_t>(2 * BIT_WIDTH);
+        output += 16;
+    }
+
+    if constexpr (remaining >= 8) {
+        const __m256i source     = mm256_loadu_partial_epi8<BIT_WIDTH>(input);
+        const __m256i unpacked   = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_storeu_ps(output, dequantized);
+
+        input += BIT_WIDTH;
+        output += 8;
+    }
+
+    constexpr usize tail_elements = remaining % 8;
+    if constexpr (tail_elements > 0) {
+        constexpr usize tail_bytes = ((BIT_WIDTH * tail_elements) + 7) / 8;
+        const __m256i source       = mm256_loadu_partial_epi8<tail_bytes>(input);
+        const __m256i unpacked     = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256 dequantized   = mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_maskstore_ps(output, mm256_dword_mask<tail_elements * sizeof(f32)>(std::make_index_sequence<8>{}), dequantized);
+    }
+
+    return 0;
+}
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24) && (BLOCK_SIZE % 32 == 0)
+int mm256_decompress_block_avx2_17to24(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr) {
+    const auto* input = static_cast<const u8*>(input_ptr);
+    auto* output      = static_cast<f32*>(output_ptr);
+
+    constexpr usize elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr usize iterations         = elements_per_block / 8;
+    constexpr usize remaining_elements = elements_per_block - (iterations * 8);
+    constexpr usize window_bytes       = ((4 * BIT_WIDTH) + 7) / 8;
+    constexpr usize second_offset      = (4 * BIT_WIDTH) / 8;
+
+    const __m256 scale_v = _mm256_set1_ps(scale);
+
+    for (usize iter = 0; iter < iterations; ++iter) {
+        const __m128i low        = mm_loadu_partial_epi8<window_bytes>(input);
+        const __m128i high       = mm_loadu_partial_epi8<window_bytes>(input + second_offset);
+        const __m256i unpacked   = avx2::m256::mm256_unpack_epi32_17to24<BIT_WIDTH, SIGN_VALUES>(low, high);
+        const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_storeu_ps(output, dequantized);
+
+        input += BIT_WIDTH;
+        output += 8;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        constexpr usize tail_bytes = ((BIT_WIDTH * remaining_elements) + 7) / 8;
+        const __m256i source       = mm256_loadu_partial_epi8<tail_bytes>(input);
+        const __m256i unpacked     = mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256 dequantized   = mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_maskstore_ps(output, mm256_dword_mask<remaining_elements * sizeof(f32)>(std::make_index_sequence<8>{}), dequantized);
+    }
+
+    return 0;
+}
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 15) && (BLOCK_SIZE % 32 == 0)
+int mm256_decompress_block_avx2_9to15(const void* __restrict__ input_ptr, const f32 scale, void* __restrict__ output_ptr) {
+    const auto* input = static_cast<const u8*>(input_ptr);
+    auto* output      = static_cast<f32*>(output_ptr);
+
+    constexpr usize elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
+    constexpr usize iterations         = elements_per_block / 8;
+    constexpr usize remaining_elements = elements_per_block - (iterations * 8);
+
+    const __m256 scale_v = _mm256_set1_ps(scale);
+
+    for (usize iter = 0; iter < iterations; ++iter) {
+        const __m128i source     = mm_loadu_partial_epi8<BIT_WIDTH>(input);
+        const __m256i unpacked   = avx2::m256::mm256_unpack_epi32_9to15<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256 dequantized = mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_storeu_ps(output, dequantized);
+
+        input += BIT_WIDTH;
+        output += 8;
+    }
+
+    if constexpr (remaining_elements > 0) {
+        constexpr usize tail_bytes = ((BIT_WIDTH * remaining_elements) + 7) / 8;
+        const __m128i source       = mm_loadu_partial_epi8<tail_bytes>(input);
+        const __m256i unpacked     = avx2::m256::mm256_unpack_epi32_9to15<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256 dequantized   = mm256_dequantize_epi32(unpacked, scale_v);
+        _mm256_maskstore_ps(output, mm256_dword_mask<remaining_elements * sizeof(f32)>(std::make_index_sequence<8>{}), dequantized);
+    }
+
+    return 0;
+}
+
 }  // namespace internal
 
 /**
@@ -225,6 +442,16 @@ int mm256_decompress_block_avx2(const void* __restrict__ input_ptr, const f32 sc
     const auto* input = static_cast<const u8*>(input_ptr);
     auto* output      = static_cast<f32*>(output_ptr);
 
+    if constexpr (BIT_WIDTH >= 1 && BIT_WIDTH <= 4) {
+        return internal::mm256_decompress_block_avx2_1to4<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input_ptr, scale, output_ptr);
+    } else if constexpr (BIT_WIDTH >= 5 && BIT_WIDTH <= 7) {
+        return internal::mm256_decompress_block_avx2_5to7<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input_ptr, scale, output_ptr);
+    } else if constexpr (BIT_WIDTH >= 9 && BIT_WIDTH <= 15) {
+        return internal::mm256_decompress_block_avx2_9to15<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input_ptr, scale, output_ptr);
+    } else if constexpr (BIT_WIDTH >= 17 && BIT_WIDTH <= 24) {
+        return internal::mm256_decompress_block_avx2_17to24<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE>(input_ptr, scale, output_ptr);
+    }
+
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
     constexpr u32 iterations_8       = elements_per_block / 8;
     constexpr u8 remaining           = elements_per_block - (iterations_8 * 8);
@@ -232,8 +459,7 @@ int mm256_decompress_block_avx2(const void* __restrict__ input_ptr, const f32 sc
     const __m256 scale_v = _mm256_set1_ps(scale);
 #pragma GCC unroll 4
     for (u32 iter = 0; iter < iterations_8; iter++) {
-        __m256i source           = internal::mm256_loadu_partial_epi8<BIT_WIDTH>(input);
-        const __m256i unpacked   = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256i unpacked   = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
         const __m256 dequantized = internal::mm256_dequantize_epi32(unpacked, scale_v);
         _mm256_storeu_ps(output, dequantized);
         input += BIT_WIDTH;
@@ -278,8 +504,7 @@ int mm256_decompress_block_avx2(const void* __restrict__ input_ptr, const f64 sc
     const __m256d scale_v            = _mm256_set1_pd(scale);
 #pragma GCC unroll 4
     for (u32 iter = 0; iter < iterations_8; iter++) {
-        __m256i source         = internal::mm256_loadu_partial_epi8<BIT_WIDTH>(input);
-        const __m256i unpacked = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(source);
+        const __m256i unpacked = internal::mm256_unpack_epi32_avx2<BIT_WIDTH, SIGN_VALUES>(input);
         const __m256i extend1  = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(unpacked));
         const __m256i extend2  = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(unpacked, 1));
 

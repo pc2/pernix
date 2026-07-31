@@ -300,7 +300,7 @@ __always_inline __m512i mm512_pack_table_avx512vbmi(const __m512i values) {
         }
     };
 
-    const auto pack_spill = [values]() {
+    const auto pack_spill = [values] {
         if constexpr (sizeof(LaneType) == sizeof(i8)) {
             const __m512i permuted = _mm512_permutexvar_epi8(load_table<__m512i>(tables::spill_permute), values);
             return mm512_pack_srlv_epi8(permuted, load_table<__m512i>(tables::spill_shift));

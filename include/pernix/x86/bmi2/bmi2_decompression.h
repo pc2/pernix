@@ -60,7 +60,7 @@ __m256i mm256_sign_extend32(__m256i source) {
  * @return __m128i unpacked values.
  */
 template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH > 0 && BIT_WIDTH <= 24)
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 24)
 __m128i mm_unpack_epi32_bmi2(const u8* __restrict__ input) {
     constexpr u32 mask           = BIT_WIDTH == 32 ? std::numeric_limits<u32>::max() : (1ULL << BIT_WIDTH) - 1U;
     constexpr usize packed_bytes = (4 * BIT_WIDTH + 7) / 8;
@@ -72,7 +72,7 @@ __m128i mm_unpack_epi32_bmi2(const u8* __restrict__ input) {
         u32 temp_value = 0;
         std::memcpy(&temp_value, input, packed_bytes);
 
-        const i32 value      = _pdep_u32(temp_value, static_cast<u32>(pdep_mask));
+        const u32 value      = _pdep_u32(temp_value, static_cast<u32>(pdep_mask));
         const __m128i source = _mm_insert_epi32(_mm_setzero_si128(), value, 0);
 
         result = _mm_cvtepi8_epi32(source);
@@ -85,7 +85,7 @@ __m128i mm_unpack_epi32_bmi2(const u8* __restrict__ input) {
         u64 temp_value = 0;
         std::memcpy(&temp_value, input, packed_bytes);
 
-        const i64 value      = _pdep_u64(temp_value, pdep_mask);
+        const u64 value      = _pdep_u64(temp_value, pdep_mask);
         const __m128i source = _mm_insert_epi64(_mm_setzero_si128(), value, 0);
 
         result = _mm_cvtepi16_epi32(source);
@@ -97,7 +97,7 @@ __m128i mm_unpack_epi32_bmi2(const u8* __restrict__ input) {
         alignas(16) u64 temp_values[2]{};
         std::memcpy(temp_values, input, packed_bytes);
 
-        alignas(16) i64 values[2];
+        alignas(16) u64 values[2];
         values[0] = _pdep_u64(temp_values[0], pdep_mask);
         values[1] = _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask);
 
@@ -135,7 +135,7 @@ __m256i mm256_unpack_epi32_bmi2(const __m256i packed_source) {
         u64 temp_value = 0;
         std::memcpy(&temp_value, input, packed_bytes);
 
-        const i64 value      = _pdep_u64(temp_value, pdep_mask);
+        const u64 value      = _pdep_u64(temp_value, pdep_mask);
         const __m128i source = _mm_insert_epi64(_mm_setzero_si128(), value, 0);
 
         result = _mm256_cvtepi8_epi32(source);
@@ -150,7 +150,7 @@ __m256i mm256_unpack_epi32_bmi2(const __m256i packed_source) {
         alignas(16) u64 temp_values[2]{};
         std::memcpy(temp_values, input, packed_bytes);
 
-        alignas(16) i64 values[2];
+        alignas(16) u64 values[2];
         values[0] = _pdep_u64(temp_values[0], pdep_mask);
         values[1] = _pdep_u64((temp_values[0] >> shift1) | (temp_values[1] << shift2), pdep_mask);
 

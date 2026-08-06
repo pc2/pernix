@@ -1,11 +1,12 @@
-prefix=@CMAKE_INSTALL_PREFIX@
+prefix=${pcfiledir}/../..
 exec_prefix=${prefix}
-libdir=@CMAKE_INSTALL_FULL_LIBDIR@
-includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 
 name: Pernix
 description: A high-performance C++ library for de/compression of floating-point data
 version: @NORMALIZED_VERSION@
+Requires: @PERNIX_PC_REQUIRES@
 
 Libs: -L${libdir} -lpernix
 Cflags: -I${includedir}

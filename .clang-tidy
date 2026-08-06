@@ -1,13 +1,102 @@
+---
 Checks: >
-  bugprone-*
-  cppcoreguidelines-*
-  clang-analyzer-*
-  modernize-*
-  performance-*
-  readability-*
-  misc-*
-  -modernize-use-trailing-return-type
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  portability-*,
+  misc-*,
+  modernize-*,
+  readability-*,
+  cppcoreguidelines-*,
 
-WarningsAsErrors: 'bugprone-*,clang-analyzer-*'
-HeaderFilterRegex: ''
-FormatStyle: none
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -bugprone-signed-char-misuse,
+
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-init-variables,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-non-private-member-variables-in-classes-owning-memory,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-cstyle-cast,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+
+  -misc-include-cleaner,
+  -misc-no-recursion,
+
+  -modernize-avoid-c-arrays,
+  -modernize-concat-nested-namespaces,
+  -modernize-loop-convert,
+  -modernize-return-braced-init-list,
+  -modernize-use-auto,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+
+  -performance-avoid-endl,
+
+  -readability-avoid-const-params-in-decls,
+  -readability-braces-around-statements,
+  -readability-convert-member-functions-to-static,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-function-size,
+  -readability-identifier-length,
+  -readability-identifier-naming,
+  -readability-implicit-bool-conversion,
+  -readability-isolate-declaration,
+  -readability-magic-numbers,
+  -readability-make-member-function-const,
+  -readability-named-parameter,
+  -readability-redundant-access-specifiers,
+  -readability-static-accessed-through-instance
+
+WarningsAsErrors: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*
+
+HeaderFilterRegex: '^(include|src|tests|benchmarks)/'
+ExcludeHeaderFilterRegex: >
+  (^|/)(build|cmake-build-[^/]*|third_party|external|vendor|generated)/
+
+SystemHeaders: false
+FormatStyle: file
+UseColor: true
+
+CheckOptions:
+  # Suspiciously adjacent parameters are common in low-level SIMD helpers.
+  bugprone-easily-swappable-parameters.MinimumLength: 3
+  bugprone-easily-swappable-parameters.IgnoredParameterNames: '"",begin,end,first,last,lhs,rhs,x,y,z'
+
+  # Treat assertions as side-effecting expressions.
+  bugprone-assert-side-effect.AssertMacros: 'assert,PERNIX_ASSERT'
+
+  # Permit common test and benchmark patterns.
+  bugprone-unchecked-optional-access.CheckOsLinuxAndMac: true
+
+  # Do not rewrite auto when it improves readability or hides intrinsic types.
+  modernize-use-auto.MinTypeNameLength: 12
+  modernize-use-auto.RemoveStars: false
+
+  # Allow compact SIMD and mathematical variable names.
+  readability-identifier-length.MinimumVariableNameLength: 1
+  readability-identifier-length.MinimumParameterNameLength: 1
+  readability-identifier-length.IgnoredVariableNames: '^[ijknxyz]|lo|hi|src|dst|tmp|mask|count|scale$'
+  readability-identifier-length.IgnoredParameterNames: '^[ijknxyz]|lo|hi|src|dst|input|output|count|scale$'
+
+  # Keep function complexity checks informative if enabled manually.
+  readability-function-cognitive-complexity.Threshold: 40
+  readability-function-cognitive-complexity.DescribeBasicIncrements: true
+
+  # Ignore conventional bit-oriented numeric literals.
+  readability-magic-numbers.IgnoredIntegerValues: >
+    0;1;2;3;4;7;8;15;16;24;31;32;63;64;127;128;255;256;511;512
+  readability-magic-numbers.IgnorePowersOf2IntegerValues: true
+  readability-magic-numbers.IgnoreTypeAliases: true
+  readability-magic-numbers.IgnoreBitFieldsWidths: true

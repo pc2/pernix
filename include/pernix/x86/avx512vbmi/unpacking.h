@@ -1,10 +1,41 @@
 #ifndef PERNIX_AVX512VBMI_UNPACKING_H
 #define PERNIX_AVX512VBMI_UNPACKING_H
 
-#include <pernix/x86/avx512vbmi/tables.h>
+#include <pernix/detail/unpack_tables.h>
 #include <pernix/simd_compat.h>
+#include <pernix/x86/avx512vbmi/tables.h>
 
 namespace pernix::internal {
+namespace unpacking_detail {
+template <usize SIZE, usize GROUP_SIZE>
+alignas(SIZE) inline constexpr std::array<u8, SIZE> kInterleaveBytes = [] {
+    std::array<u8, SIZE> indices{};
+    constexpr usize group_count = SIZE / GROUP_SIZE;
+    for (usize i = 0; i < SIZE; ++i) {
+        indices[i] = static_cast<u8>((i % GROUP_SIZE) * group_count + i / GROUP_SIZE);
+    }
+    return indices;
+}();
+
+template <usize SIZE, usize GROUP_SIZE>
+alignas(SIZE) inline constexpr std::array<u8, SIZE> kRepeatBytes = [] {
+    std::array<u8, SIZE> indices{};
+    for (usize i = 0; i < SIZE; ++i) {
+        indices[i] = static_cast<u8>(i / GROUP_SIZE);
+    }
+    return indices;
+}();
+
+template <usize SIZE, usize GROUP_SIZE, u8 BIT_WIDTH>
+alignas(SIZE) inline constexpr std::array<u8, SIZE> kGroupShifts = [] {
+    std::array<u8, SIZE> shifts{};
+    for (usize i = 0; i < SIZE; ++i) {
+        shifts[i] = static_cast<u8>((i % GROUP_SIZE) * BIT_WIDTH);
+    }
+    return shifts;
+}();
+}  // namespace unpacking_detail
+
 namespace m128 {
 constexpr __mmask16 kAlternateByteMask16 = 0xAAAAULL;
 
@@ -16,19 +47,19 @@ __always_inline static __m128i _mm_srlv_epi8(const __m128i a, const __m128i coun
 }
 
 __always_inline static __m128i _mm_sllv_epi8(const __m128i a, const __m128i count) {
-    const __m128i mask      = _mm_set1_epi16(0xff00);
+    const __m128i mask      = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i low_half  = _mm_sllv_epi16(a, _mm_andnot_si128(mask, count));
     const __m128i high_half = _mm_sllv_epi16(_mm_and_si128(mask, a), _mm_srli_epi16(count, 8));
     return _mm_mask_blend_epi8(kAlternateByteMask16, low_half, high_half);
 }
 
-__always_inline static __m128i _mm_slli_epi8(const __m128i a, const int8_t imm8) {
+__always_inline static __m128i _mm_slli_epi8(const __m128i a, const i8 imm8) {
     return _mm_sllv_epi8(a, _mm_set1_epi8(imm8));
 }
 
 __always_inline static __m128i _mm_srli_epi8(const __m128i a, const int imm8) {
     const __m128i lo_mask = _mm_set1_epi16(0x00ff);
-    const __m128i hi_mask = _mm_set1_epi16(0xff00);
+    const __m128i hi_mask = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m128i lo = _mm_srl_epi16(_mm_and_si128(a, lo_mask), shift);
@@ -37,9 +68,9 @@ __always_inline static __m128i _mm_srli_epi8(const __m128i a, const int imm8) {
     return _mm_mask_blend_epi8(kAlternateByteMask16, lo, hi);
 }
 
-__always_inline static __m128i _mm_srai_epi8(const __m128i a, const int8_t imm8) {
+__always_inline static __m128i _mm_srai_epi8(const __m128i a, const i8 imm8) {
     const __m128i lo_mask = _mm_set1_epi16(0x00ff);
-    const __m128i hi_mask = _mm_set1_epi16(0xff00);
+    const __m128i hi_mask = _mm_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m128i hi = _mm_and_si128(_mm_sra_epi16(a, shift), hi_mask);
@@ -50,116 +81,113 @@ __always_inline static __m128i _mm_srai_epi8(const __m128i a, const int8_t imm8)
     return _mm_mask_blend_epi8(kAlternateByteMask16, lo, hi);
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
+__always_inline __m128i mm_unpack_epi16_avx512vbmi_9to16(__m128i input);
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-__always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi8_avx512vbmi_1to8(__m128i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
+        __m128i unpacked;
+
         if constexpr (BIT_WIDTH == 1) {
-            const auto value       = static_cast<__mmask16>(_mm_cvtsi128_si64(input));
-            const __m128i source   = _mm_movm_epi8(value);
-            const __m128i unpacked = _mm_abs_epi8(source);
-            return unpacked;
+            const __m128i repeated = _mm_permutexvar_epi8(load_table<__m128i>(unpacking_detail::kRepeatBytes<16, 8>), input);
+            unpacked =
+                _mm_and_si128(_mm_srlv_epi8(repeated, load_table<__m128i>(unpacking_detail::kGroupShifts<16, 8, 1>)), _mm_set1_epi8(0x01));
         } else if constexpr (BIT_WIDTH == 2) {
-            __m128i values_shift0       = input;
-            __m128i values_shift2       = _mm_srli_epi16(values_shift0, 2);
-            const __m128i values_shift4 = _mm_srli_epi16(values_shift0, 4);
-            const __m128i values_shift6 = _mm_srli_epi16(values_shift0, 6);
+            const __m128i repeated = _mm_permutexvar_epi8(load_table<__m128i>(unpacking_detail::kRepeatBytes<16, 4>), input);
+            unpacked =
+                _mm_and_si128(_mm_srlv_epi8(repeated, load_table<__m128i>(unpacking_detail::kGroupShifts<16, 4, 2>)), _mm_set1_epi8(0x03));
+        } else if constexpr (BIT_WIDTH == 3) {
+            const __m128i groups = mm_unpack_epi16_avx512vbmi_9to16<4 * BIT_WIDTH, false>(input);
+            const __m128i mask   = _mm_set1_epi16(0x07);
 
-            __m128i interleave_tmp = _mm_unpacklo_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm_unpackhi_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm_unpacklo_epi64(interleave_tmp, values_shift0);
+            const __m128i values0 = _mm_cvtepi16_epi8(_mm_and_si128(groups, mask));
+            const __m128i values1 = _mm_cvtepi16_epi8(_mm_and_si128(_mm_srli_epi16(groups, 3), mask));
+            const __m128i values2 = _mm_cvtepi16_epi8(_mm_and_si128(_mm_srli_epi16(groups, 6), mask));
+            const __m128i values3 = _mm_cvtepi16_epi8(_mm_srli_epi16(groups, 9));
 
-            interleave_tmp = _mm_unpacklo_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm_unpackhi_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm_unpacklo_epi64(interleave_tmp, values_shift2);
+            __m128i combined = values0;
+            combined         = _mm_insert_epi32(combined, _mm_cvtsi128_si32(values1), 1);
+            combined         = _mm_insert_epi32(combined, _mm_cvtsi128_si32(values2), 2);
+            combined         = _mm_insert_epi32(combined, _mm_cvtsi128_si32(values3), 3);
 
-            interleave_tmp = _mm_unpacklo_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm_unpackhi_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm_unpacklo_epi64(interleave_tmp, values_shift0);
-            values_shift0  = _mm_shuffle_epi32(values_shift0, 0xD8);
-
-            values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0303));
-
-            return values_shift0;
+            unpacked = _mm_permutexvar_epi8(load_table<__m128i>(unpacking_detail::kInterleaveBytes<16, 4>), combined);
         } else if constexpr (BIT_WIDTH == 4) {
-            __m128i values_shift0       = input;
-            const __m128i values_shift4 = _mm_srli_epi16(values_shift0, 4);
+            const __m128i mask     = _mm_set1_epi8(0x0f);
+            const __m128i even     = _mm_and_si128(input, mask);
+            const __m128i odd      = _mm_and_si128(_mm_srli_epi16(input, BIT_WIDTH), mask);
+            const __m128i combined = _mm_unpacklo_epi64(even, odd);
 
-            const __m128i interleave_tmp = _mm_unpacklo_epi8(values_shift0, values_shift4);
-            values_shift0                = _mm_unpackhi_epi8(values_shift0, values_shift4);
-            values_shift0                = _mm_unpacklo_epi64(interleave_tmp, values_shift0);
-            values_shift0                = _mm_shuffle_epi32(values_shift0, 0xD8);
-
-            values_shift0 = _mm_and_si128(values_shift0, _mm_set1_epi16(0x0F0F));
-
-            return values_shift0;
+            unpacked = _mm_permutexvar_epi8(load_table<__m128i>(unpacking_detail::kInterleaveBytes<16, 2>), combined);
         } else {
-            using tables = unpack_tables_avx512_8<BIT_WIDTH, __m128i>;
+            constexpr u8 pair_bit_width = 2 * BIT_WIDTH;
+            constexpr u16 value_mask    = (1U << BIT_WIDTH) - 1U;
 
-            const __m128i permuted1 = _mm_permutexvar_epi8(tables::get_permute1(), input);
-            const __m128i permuted2 = _mm_permutexvar_epi8(tables::get_permute2(), input);
+            const __m128i pairs    = mm_unpack_epi16_avx512vbmi_9to16<pair_bit_width, false>(input);
+            const __m128i even     = _mm_cvtepi16_epi8(_mm_and_si128(pairs, _mm_set1_epi16(static_cast<i16>(value_mask))));
+            const __m128i odd      = _mm_cvtepi16_epi8(_mm_srli_epi16(pairs, BIT_WIDTH));
+            const __m128i combined = _mm_unpacklo_epi64(even, odd);
 
-            const __m128i shifted1 = _mm_srlv_epi8(permuted1, tables::get_shift1());
-            const __m128i shifted2 = _mm_sllv_epi8(permuted2, tables::get_shift2());
-
-            const __mmask16 spill_mask = _mm_cmpneq_epi8_mask(tables::get_shift2(), _mm_setzero_si128());
-            __m128i combined           = _mm_or_si128(shifted1, _mm_maskz_mov_epi8(spill_mask, shifted2));
-
-            constexpr uint32_t shift = 8 - BIT_WIDTH;
-            combined                 = _mm_slli_epi8(combined, shift);
-            if (SIGN_VALUES) {
-                combined = _mm_srai_epi8(combined, shift);
-            } else {
-                combined = _mm_srli_epi8(combined, shift);
-            }
-
-            return combined;
+            unpacked = _mm_permutexvar_epi8(load_table<__m128i>(unpacking_detail::kInterleaveBytes<16, 2>), combined);
         }
+
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
+            const __m128i sign = _mm_set1_epi8(1U << (BIT_WIDTH - 1U));
+            unpacked           = _mm_sub_epi8(_mm_xor_si128(unpacked, sign), sign);
+        }
+
+        return unpacked;
     }
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline __m128i mm_unpack_epi16_avx512vbmi_9to16(const __m128i& input) {
+__always_inline __m128i mm_unpack_epi16_avx512vbmi_9to16(__m128i input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
-        using tables = unpack_tables_avx512_16<BIT_WIDTH, __m128i>;
+        using tables = detail::unpack_table<i16, BIT_WIDTH, sizeof(__m128i)>;
 
-        const __m128i permuted = _mm_permutexvar_epi8(tables::get_permute1(), input);
+        const __m128i permuted = _mm_permutexvar_epi8(load_table<__m128i>(tables::primary_permute), input);
 
-        __m128i shifted = _mm_srlv_epi16(permuted, tables::get_shift1());
+        const __m128i right_shift = load_table<__m128i>(tables::right_shift_magnitude);
+        __m128i shifted           = _mm_srlv_epi16(permuted, right_shift);
 
-        if constexpr (BIT_WIDTH == 11 || BIT_WIDTH == 13 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
-            const __m128i permuted2 = _mm_permutexvar_epi8(tables::get_permute2(), input);
-            const __m128i shifted2  = _mm_sllv_epi16(permuted2, tables::get_shift2());
+        if constexpr (tables::has_spill) {
+            const __m128i permuted2 = _mm_permutexvar_epi8(load_table<__m128i>(tables::spill_permute), input);
+            const __m128i shifted2  = _mm_sllv_epi16(permuted2, load_table<__m128i>(tables::left_shift_for_spill));
             shifted                 = _mm_or_si128(shifted, shifted2);
         }
 
-        constexpr uint32_t shift = 16 - BIT_WIDTH;
-        shifted                  = _mm_slli_epi16(shifted, shift);
-        if (SIGN_VALUES) {
-            shifted = _mm_srai_epi16(shifted, shift);
+        if constexpr (SIGN_VALUES) {
+            constexpr u32 shift = 16 - BIT_WIDTH;
+            shifted             = _mm_slli_epi16(shifted, shift);
+            shifted             = _mm_srai_epi16(shifted, shift);
         } else {
-            shifted = _mm_srli_epi16(shifted, shift);
+            constexpr u16 value_mask = (1U << BIT_WIDTH) - 1U;
+            shifted                  = _mm_and_si128(shifted, _mm_set1_epi16(static_cast<i16>(value_mask)));
         }
 
         return shifted;
     }
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(const __m128i& input) {
-    using tables = unpack_tables_avx512_24<BIT_WIDTH, __m128i>;
+__always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(__m128i input) {
+    using tables = detail::unpack_table<i32, BIT_WIDTH, sizeof(__m128i)>;
 
-    const __m128i permuted = _mm_permutexvar_epi8(tables::get_permute(), input);
+    const __m128i permuted    = _mm_permutexvar_epi8(load_table<__m128i>(tables::primary_permute), input);
+    const __m128i right_shift = load_table<__m128i>(tables::right_shift_magnitude);
 
-    constexpr uint32_t shift = 32 - BIT_WIDTH;
-    __m128i shifted          = _mm_sllv_epi32(permuted, tables::get_shift());
-    if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
+    constexpr u32 shift = 32 - BIT_WIDTH;
+    __m128i shifted     = _mm_srlv_epi32(permuted, right_shift);
+    shifted             = _mm_slli_epi32(shifted, shift);
+    if constexpr (SIGN_VALUES) {
         shifted = _mm_srai_epi32(shifted, shift);
     } else {
         shifted = _mm_srli_epi32(shifted, shift);
@@ -167,7 +195,7 @@ __always_inline __m128i mm_unpack_epi32_avx512vbmi_17to24(const __m128i& input) 
 
     return shifted;
 }
-} // namespace m128
+}  // namespace m128
 
 namespace m256 {
 constexpr __mmask32 kAlternateByteMask32 = 0xAAAAAAAAULL;
@@ -180,19 +208,19 @@ __always_inline static __m256i _mm256_srlv_epi8(const __m256i a, const __m256i c
 }
 
 __always_inline static __m256i _mm256_sllv_epi8(const __m256i a, const __m256i count) {
-    const __m256i mask      = _mm256_set1_epi16(0xff00);
+    const __m256i mask      = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m256i low_half  = _mm256_sllv_epi16(a, _mm256_andnot_si256(mask, count));
     const __m256i high_half = _mm256_sllv_epi16(_mm256_and_si256(mask, a), _mm256_srli_epi16(count, 8));
     return _mm256_mask_blend_epi8(kAlternateByteMask32, low_half, high_half);
 }
 
-__always_inline static __m256i _mm256_slli_epi8(const __m256i a, const int8_t imm8) {
+__always_inline static __m256i _mm256_slli_epi8(const __m256i a, const i8 imm8) {
     return _mm256_sllv_epi8(a, _mm256_set1_epi8(imm8));
 }
 
-__always_inline static __m256i _mm256_srli_epi8(const __m256i a, const int8_t imm8) {
+__always_inline static __m256i _mm256_srli_epi8(const __m256i a, const i8 imm8) {
     const __m256i lo_mask = _mm256_set1_epi16(0x00ff);
-    const __m256i hi_mask = _mm256_set1_epi16(0xff00);
+    const __m256i hi_mask = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m256i lo = _mm256_srl_epi16(_mm256_and_si256(a, lo_mask), shift);
@@ -201,9 +229,9 @@ __always_inline static __m256i _mm256_srli_epi8(const __m256i a, const int8_t im
     return _mm256_mask_blend_epi8(kAlternateByteMask32, lo, hi);
 }
 
-__always_inline static __m256i _mm256_srai_epi8(const __m256i a, const int8_t imm8) {
+__always_inline static __m256i _mm256_srai_epi8(const __m256i a, const i8 imm8) {
     const __m256i lo_mask = _mm256_set1_epi16(0x00ff);
-    const __m256i hi_mask = _mm256_set1_epi16(0xff00);
+    const __m256i hi_mask = _mm256_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m256i hi = _mm256_and_si256(_mm256_sra_epi16(a, shift), hi_mask);
@@ -214,116 +242,117 @@ __always_inline static __m256i _mm256_srai_epi8(const __m256i a, const int8_t im
     return _mm256_mask_blend_epi8(kAlternateByteMask32, lo, hi);
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES>
+    requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
+__always_inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(__m256i input);
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-__always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi8_avx512vbmi_1to8(__m256i input) {
     if constexpr (BIT_WIDTH == 8) {
         return input;
     } else {
+        __m256i unpacked;
+
         if constexpr (BIT_WIDTH == 1) {
-            const auto value       = static_cast<__mmask32>(_mm_cvtsi128_si64(_mm256_castsi256_si128(input)));
-            const __m256i source   = _mm256_movm_epi8(value);
-            const __m256i unpacked = _mm256_abs_epi8(source);
-            return unpacked;
+            const __m256i repeated = _mm256_permutexvar_epi8(load_table<__m256i>(unpacking_detail::kRepeatBytes<32, 8>), input);
+            unpacked = _mm256_and_si256(_mm256_srlv_epi8(repeated, load_table<__m256i>(unpacking_detail::kGroupShifts<32, 8, 1>)),
+                                        _mm256_set1_epi8(0x01));
         } else if constexpr (BIT_WIDTH == 2) {
-            __m256i values_shift0       = input;
-            __m256i values_shift2       = _mm256_srli_epi16(values_shift0, 2);
-            const __m256i values_shift4 = _mm256_srli_epi16(values_shift0, 4);
-            const __m256i values_shift6 = _mm256_srli_epi16(values_shift0, 6);
+            const __m256i repeated = _mm256_permutexvar_epi8(load_table<__m256i>(unpacking_detail::kRepeatBytes<32, 4>), input);
+            unpacked = _mm256_and_si256(_mm256_srlv_epi8(repeated, load_table<__m256i>(unpacking_detail::kGroupShifts<32, 4, 2>)),
+                                        _mm256_set1_epi8(0x03));
+        } else if constexpr (BIT_WIDTH == 3) {
+            const __m256i groups = mm256_unpack_epi16_avx512vbmi_9to16<4 * BIT_WIDTH, false>(input);
+            const __m256i mask   = _mm256_set1_epi16(0x07);
 
-            __m256i interleave_tmp = _mm256_unpacklo_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm256_unpackhi_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm256_shuffle_i32x4(interleave_tmp, values_shift0, 0b00000000);
+            const __m128i values0 = _mm256_cvtepi16_epi8(_mm256_and_si256(groups, mask));
+            const __m128i values1 = _mm256_cvtepi16_epi8(_mm256_and_si256(_mm256_srli_epi16(groups, 3), mask));
+            const __m128i values2 = _mm256_cvtepi16_epi8(_mm256_and_si256(_mm256_srli_epi16(groups, 6), mask));
+            const __m128i values3 = _mm256_cvtepi16_epi8(_mm256_srli_epi16(groups, 9));
 
-            interleave_tmp = _mm256_unpacklo_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm256_unpackhi_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm256_shuffle_i32x4(interleave_tmp, values_shift2, 0b00000000);
+            const __m128i combined01 = _mm_unpacklo_epi64(values0, values1);
+            const __m128i combined23 = _mm_unpacklo_epi64(values2, values3);
+            __m256i combined         = _mm256_castsi128_si256(combined01);
+            combined                 = _mm256_inserti128_si256(combined, combined23, 1);
 
-            interleave_tmp = _mm256_unpacklo_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm256_unpackhi_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm256_shuffle_i32x4(interleave_tmp, values_shift0, 0b00);
-            values_shift0  = _mm256_shuffle_i32x4(values_shift0, values_shift0, 0b00);
-
-            values_shift0 = _mm256_and_si256(values_shift0, _mm256_set1_epi16(0x0303));
-
-            return values_shift0;
+            unpacked = _mm256_permutexvar_epi8(load_table<__m256i>(unpacking_detail::kInterleaveBytes<32, 4>), combined);
         } else if constexpr (BIT_WIDTH == 4) {
-            __m256i values_shift0       = input;
-            const __m256i values_shift4 = _mm256_srli_epi16(values_shift0, 4);
+            const __m256i mask = _mm256_set1_epi8(0x0f);
+            const __m256i even = _mm256_and_si256(input, mask);
+            const __m256i odd  = _mm256_and_si256(_mm256_srli_epi16(input, BIT_WIDTH), mask);
 
-            __m256i interleave_tmp = _mm256_unpacklo_epi8(values_shift0, values_shift4);
-            values_shift0          = _mm256_unpackhi_epi8(values_shift0, values_shift4);
-            values_shift0          = _mm256_shuffle_i32x4(interleave_tmp, values_shift0, 0b00);
-            values_shift0          = _mm256_shuffle_i32x4(values_shift0, values_shift0, 0b00);
+            __m256i combined = _mm256_castsi128_si256(_mm256_castsi256_si128(even));
+            combined         = _mm256_inserti128_si256(combined, _mm256_castsi256_si128(odd), 1);
 
-            values_shift0 = _mm256_and_si256(values_shift0, _mm256_set1_epi16(0x0F0F));
-
-            return values_shift0;
+            unpacked = _mm256_permutexvar_epi8(load_table<__m256i>(unpacking_detail::kInterleaveBytes<32, 2>), combined);
         } else {
-            using tables = unpack_tables_avx512_8<BIT_WIDTH, __m256i>;
+            constexpr u8 pair_bit_width = 2 * BIT_WIDTH;
+            constexpr u16 value_mask    = (1U << BIT_WIDTH) - 1U;
 
-            const __m256i permuted1 = _mm256_permutexvar_epi8(tables::get_permute1(), input);
-            const __m256i permuted2 = _mm256_permutexvar_epi8(tables::get_permute2(), input);
+            const __m256i pairs = mm256_unpack_epi16_avx512vbmi_9to16<pair_bit_width, false>(input);
+            const __m128i even  = _mm256_cvtepi16_epi8(_mm256_and_si256(pairs, _mm256_set1_epi16(static_cast<i16>(value_mask))));
+            const __m128i odd   = _mm256_cvtepi16_epi8(_mm256_srli_epi16(pairs, BIT_WIDTH));
 
-            const __m256i shifted1 = _mm256_srlv_epi8(permuted1, tables::get_shift1());
-            const __m256i shifted2 = _mm256_sllv_epi8(permuted2, tables::get_shift2());
+            __m256i combined = _mm256_castsi128_si256(even);
+            combined         = _mm256_inserti128_si256(combined, odd, 1);
 
-            const __mmask32 spill_mask = _mm256_cmpneq_epi8_mask(tables::get_shift2(), _mm256_setzero_si256());
-            __m256i combined           = _mm256_or_si256(shifted1, _mm256_maskz_mov_epi8(spill_mask, shifted2));
-
-            constexpr uint32_t shift = 8 - BIT_WIDTH;
-            combined                 = _mm256_slli_epi8(combined, shift);
-            if (SIGN_VALUES) {
-                combined = _mm256_srai_epi8(combined, shift);
-            } else {
-                combined = _mm256_srli_epi8(combined, shift);
-            }
-
-            return combined;
+            unpacked = _mm256_permutexvar_epi8(load_table<__m256i>(unpacking_detail::kInterleaveBytes<32, 2>), combined);
         }
+
+        if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
+            const __m256i sign = _mm256_set1_epi8(1U << (BIT_WIDTH - 1U));
+            unpacked           = _mm256_sub_epi8(_mm256_xor_si256(unpacked, sign), sign);
+        }
+
+        return unpacked;
     }
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(const __m256i& input) {
+__always_inline __m256i mm256_unpack_epi16_avx512vbmi_9to16(__m256i input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
-        using tables = unpack_tables_avx512_16<BIT_WIDTH, __m256i>;
+        using tables = detail::unpack_table<i16, BIT_WIDTH, sizeof(__m256i)>;
 
-        const __m256i permuted = _mm256_permutexvar_epi8(tables::get_permute1(), input);
+        const __m256i permuted = _mm256_permutexvar_epi8(load_table<__m256i>(tables::primary_permute), input);
 
-        __m256i shifted = _mm256_srlv_epi16(permuted, tables::get_shift1());
+        const __m256i right_shift = load_table<__m256i>(tables::right_shift_magnitude);
+        __m256i shifted           = _mm256_srlv_epi16(permuted, right_shift);
 
-        if constexpr (BIT_WIDTH == 11 || BIT_WIDTH == 13 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
-            const __m256i permuted2 = _mm256_permutexvar_epi8(tables::get_permute2(), input);
-            const __m256i shifted2  = _mm256_sllv_epi16(permuted2, tables::get_shift2());
+        if constexpr (tables::has_spill) {
+            const __m256i permuted2 = _mm256_permutexvar_epi8(load_table<__m256i>(tables::spill_permute), input);
+            const __m256i shifted2  = _mm256_sllv_epi16(permuted2, load_table<__m256i>(tables::left_shift_for_spill));
             shifted                 = _mm256_or_si256(shifted, shifted2);
         }
 
-        constexpr uint32_t shift = 16 - BIT_WIDTH;
-        shifted                  = _mm256_slli_epi16(shifted, shift);
-        if (SIGN_VALUES) {
-            shifted = _mm256_srai_epi16(shifted, shift);
+        if constexpr (SIGN_VALUES) {
+            constexpr u32 shift = 16 - BIT_WIDTH;
+            shifted             = _mm256_slli_epi16(shifted, shift);
+            shifted             = _mm256_srai_epi16(shifted, shift);
         } else {
-            shifted = _mm256_srli_epi16(shifted, shift);
+            constexpr u16 value_mask = (1U << BIT_WIDTH) - 1U;
+            shifted                  = _mm256_and_si256(shifted, _mm256_set1_epi16(static_cast<i16>(value_mask)));
         }
 
         return shifted;
     }
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(const __m256i& input) {
-    using tables = unpack_tables_avx512_24<BIT_WIDTH, __m256i>;
+__always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(__m256i input) {
+    using tables = detail::unpack_table<i32, BIT_WIDTH, sizeof(__m256i)>;
 
-    const __m256i permuted = _mm256_permutexvar_epi8(tables::get_permute(), input);
+    const __m256i permuted    = _mm256_permutexvar_epi8(load_table<__m256i>(tables::primary_permute), input);
+    const __m256i right_shift = load_table<__m256i>(tables::right_shift_magnitude);
 
-    constexpr uint32_t shift = 32 - BIT_WIDTH;
-    __m256i shifted          = _mm256_sllv_epi32(permuted, tables::get_shift());
-    if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
+    constexpr u32 shift = 32 - BIT_WIDTH;
+    __m256i shifted     = _mm256_srlv_epi32(permuted, right_shift);
+    shifted             = _mm256_slli_epi32(shifted, shift);
+    if constexpr (SIGN_VALUES) {
         shifted = _mm256_srai_epi32(shifted, shift);
     } else {
         shifted = _mm256_srli_epi32(shifted, shift);
@@ -331,7 +360,7 @@ __always_inline __m256i mm256_unpack_epi32_avx512vbmi_17to24(const __m256i& inpu
 
     return shifted;
 }
-} // namespace m256
+}  // namespace m256
 
 namespace m512 {
 constexpr __mmask64 kAlternateByteMask64 = 0xAAAAAAAAAAAAAAAAULL;
@@ -344,19 +373,19 @@ __always_inline static __m512i _mm512_srlv_epi8(const __m512i a, const __m512i c
 }
 
 __always_inline static __m512i _mm512_sllv_epi8(const __m512i a, const __m512i count) {
-    const __m512i mask      = _mm512_set1_epi16(0xff00);
+    const __m512i mask      = _mm512_set1_epi16(static_cast<i16>(0xff00u));
     const __m512i low_half  = _mm512_sllv_epi16(a, _mm512_andnot_si512(mask, count));
     const __m512i high_half = _mm512_sllv_epi16(_mm512_and_si512(mask, a), _mm512_srli_epi16(count, 8));
     return _mm512_mask_blend_epi8(kAlternateByteMask64, low_half, high_half);
 }
 
-__always_inline static __m512i _mm512_slli_epi8(const __m512i a, const int8_t imm8) {
+__always_inline static __m512i _mm512_slli_epi8(const __m512i a, const i8 imm8) {
     return _mm512_sllv_epi8(a, _mm512_set1_epi8(imm8));
 }
 
-__always_inline static __m512i _mm512_srli_epi8(const __m512i a, const int8_t imm8) {
+__always_inline static __m512i _mm512_srli_epi8(const __m512i a, const i8 imm8) {
     const __m512i lo_mask = _mm512_set1_epi16(0x00ff);
-    const __m512i hi_mask = _mm512_set1_epi16(0xff00);
+    const __m512i hi_mask = _mm512_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m512i lo = _mm512_srl_epi16(_mm512_and_si512(a, lo_mask), shift);
@@ -365,9 +394,9 @@ __always_inline static __m512i _mm512_srli_epi8(const __m512i a, const int8_t im
     return _mm512_mask_blend_epi8(kAlternateByteMask64, lo, hi);
 }
 
-__always_inline static __m512i _mm512_srai_epi8(const __m512i a, const int8_t imm8) {
+__always_inline static __m512i _mm512_srai_epi8(const __m512i a, const i8 imm8) {
     const __m512i lo_mask = _mm512_set1_epi16(0x00ff);
-    const __m512i hi_mask = _mm512_set1_epi16(0xff00);
+    const __m512i hi_mask = _mm512_set1_epi16(static_cast<i16>(0xff00u));
     const __m128i shift   = _mm_cvtsi32_si128(imm8);
 
     const __m512i hi = _mm512_and_si512(_mm512_sra_epi16(a, shift), hi_mask);
@@ -378,114 +407,48 @@ __always_inline static __m512i _mm512_srai_epi8(const __m512i a, const int8_t im
     return _mm512_mask_blend_epi8(kAlternateByteMask64, lo, hi);
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
-    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 8)
-__always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to8(const __m512i& input) {
-    if constexpr (BIT_WIDTH == 8) {
-        return input;
-    } else {
-        if constexpr (BIT_WIDTH == 1) {
-            const auto value       = static_cast<__mmask64>(_mm_cvtsi128_si64(_mm512_castsi512_si128(input)));
-            const __m512i source   = _mm512_movm_epi8(value);
-            const __m512i unpacked = _mm512_abs_epi8(source);
-            return unpacked;
-        } else if constexpr (BIT_WIDTH == 2) {
-            __m512i values_shift0       = input;
-            __m512i values_shift2       = _mm512_srli_epi16(values_shift0, 2);
-            const __m512i values_shift4 = _mm512_srli_epi16(values_shift0, 4);
-            const __m512i values_shift6 = _mm512_srli_epi16(values_shift0, 6);
-
-            __m512i interleave_tmp = _mm512_unpacklo_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm512_unpackhi_epi8(values_shift0, values_shift2);
-            values_shift0          = _mm512_shuffle_i32x4(interleave_tmp, values_shift0, 0b00000000);
-
-            interleave_tmp = _mm512_unpacklo_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm512_unpackhi_epi8(values_shift4, values_shift6);
-            values_shift2  = _mm512_shuffle_i32x4(interleave_tmp, values_shift2, 0b00000000);
-
-            interleave_tmp = _mm512_unpacklo_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm512_unpackhi_epi16(values_shift0, values_shift2);
-            values_shift0  = _mm512_shuffle_i32x4(interleave_tmp, values_shift0, 0x88);
-            values_shift0  = _mm512_shuffle_i32x4(values_shift0, values_shift0, 0xD8);
-
-            values_shift0 = _mm512_and_si512(values_shift0, _mm512_set1_epi16(0x0303));
-
-            return values_shift0;
-        } else if constexpr (BIT_WIDTH == 4) {
-            __m512i values_shift0       = input;
-            const __m512i values_shift4 = _mm512_srli_epi16(values_shift0, 4);
-
-            __m512i interleave_tmp = _mm512_unpacklo_epi8(values_shift0, values_shift4);
-            values_shift0          = _mm512_unpackhi_epi8(values_shift0, values_shift4);
-            values_shift0          = _mm512_shuffle_i32x4(interleave_tmp, values_shift0, 0x44);
-            values_shift0          = _mm512_shuffle_i32x4(values_shift0, values_shift0, 0xD8);
-
-            values_shift0 = _mm512_and_si512(values_shift0, _mm512_set1_epi16(0x0F0F));
-
-            return values_shift0;
-        } else {
-            using tables = unpack_tables_avx512_8<BIT_WIDTH, __m512i>;
-
-            const __m512i permuted1 = _mm512_permutexvar_epi8(tables::get_permute1(), input);
-            const __m512i permuted2 = _mm512_permutexvar_epi8(tables::get_permute2(), input);
-
-            const __m512i shifted1 = _mm512_srlv_epi8(permuted1, tables::get_shift1());
-            const __m512i shifted2 = _mm512_sllv_epi8(permuted2, tables::get_shift2());
-
-            const __mmask64 spill_mask = _mm512_cmpneq_epi8_mask(tables::get_shift2(), _mm512_setzero_si512());
-            __m512i combined           = _mm512_or_si512(shifted1, _mm512_maskz_mov_epi8(spill_mask, shifted2));
-
-            constexpr uint32_t shift = 8 - BIT_WIDTH;
-            combined                 = _mm512_slli_epi8(combined, shift);
-            if (SIGN_VALUES) {
-                combined = _mm512_srai_epi8(combined, shift);
-            } else {
-                combined = _mm512_srli_epi8(combined, shift);
-            }
-
-            return combined;
-        }
-    }
-}
-
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 9 && BIT_WIDTH <= 16)
-__always_inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(const __m512i& input) {
+__always_inline __m512i mm512_unpack_epi16_avx512vbmi_9to16(__m512i input) {
     if constexpr (BIT_WIDTH == 16) {
         return input;
     } else {
-        using tables = unpack_tables_avx512_16<BIT_WIDTH, __m512i>;
+        using tables = detail::unpack_table<i16, BIT_WIDTH, sizeof(__m512i)>;
 
-        const __m512i permuted = _mm512_permutexvar_epi8(tables::get_permute1(), input);
-        __m512i shifted        = _mm512_srlv_epi16(permuted, tables::get_shift1());
+        const __m512i permuted    = _mm512_permutexvar_epi8(load_table<__m512i>(tables::primary_permute), input);
+        const __m512i right_shift = load_table<__m512i>(tables::right_shift_magnitude);
+        __m512i shifted           = _mm512_srlv_epi16(permuted, right_shift);
 
-        if constexpr (BIT_WIDTH == 11 || BIT_WIDTH == 13 || BIT_WIDTH == 14 || BIT_WIDTH == 15) {
-            const __m512i permuted2 = _mm512_permutexvar_epi8(tables::get_permute2(), input);
-            const __m512i shifted2  = _mm512_sllv_epi16(permuted2, tables::get_shift2());
+        if constexpr (tables::has_spill) {
+            const __m512i permuted2 = _mm512_permutexvar_epi8(load_table<__m512i>(tables::spill_permute), input);
+            const __m512i shifted2  = _mm512_sllv_epi16(permuted2, load_table<__m512i>(tables::left_shift_for_spill));
             shifted                 = _mm512_or_si512(shifted, shifted2);
         }
 
-        constexpr uint32_t shift = 16 - BIT_WIDTH;
-        shifted                  = _mm512_slli_epi16(shifted, shift);
-        if (SIGN_VALUES) {
-            shifted = _mm512_srai_epi16(shifted, shift);
+        if constexpr (SIGN_VALUES) {
+            constexpr u32 shift = 16 - BIT_WIDTH;
+            shifted             = _mm512_slli_epi16(shifted, shift);
+            shifted             = _mm512_srai_epi16(shifted, shift);
         } else {
-            shifted = _mm512_srli_epi16(shifted, shift);
+            constexpr u16 value_mask = (1U << BIT_WIDTH) - 1U;
+            shifted                  = _mm512_and_si512(shifted, _mm512_set1_epi16(static_cast<i16>(value_mask)));
         }
 
         return shifted;
     }
 }
 
-template <uint8_t BIT_WIDTH, bool SIGN_VALUES = true>
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
     requires(BIT_WIDTH >= 17 && BIT_WIDTH <= 24)
-__always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(const __m512i& input) {
-    using tables = unpack_tables_avx512_24<BIT_WIDTH, __m512i>;
+__always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(__m512i input) {
+    using tables = detail::unpack_table<i32, BIT_WIDTH, sizeof(__m512i)>;
 
-    const __m512i permuted = _mm512_permutexvar_epi8(tables::get_permute(), input);
-    __m512i shifted        = _mm512_sllv_epi32(permuted, tables::get_shift());
+    const __m512i permuted    = _mm512_permutexvar_epi8(load_table<__m512i>(tables::primary_permute), input);
+    const __m512i right_shift = load_table<__m512i>(tables::right_shift_magnitude);
+    __m512i shifted           = _mm512_srlv_epi32(permuted, right_shift);
 
-    constexpr uint32_t shift = 32 - BIT_WIDTH;
+    constexpr u32 shift = 32 - BIT_WIDTH;
+    shifted             = _mm512_slli_epi32(shifted, shift);
     if constexpr (SIGN_VALUES) {
         shifted = _mm512_srai_epi32(shifted, shift);
     } else {
@@ -494,7 +457,70 @@ __always_inline __m512i mm512_unpack_epi32_avx512vbmi_17to24(const __m512i& inpu
 
     return shifted;
 }
-} // namespace m512
-} // namespace pernix::internal
+
+template <u8 BIT_WIDTH, bool SIGN_VALUES = true>
+    requires(BIT_WIDTH >= 1 && BIT_WIDTH <= 7)
+__always_inline __m512i mm512_unpack_epi8_avx512vbmi_1to7(__m512i input) {
+    __m512i unpacked;
+
+    if constexpr (BIT_WIDTH == 1) {
+        const __m512i repeated = _mm512_permutexvar_epi8(load_table<__m512i>(unpacking_detail::kRepeatBytes<64, 8>), input);
+        unpacked               = _mm512_and_si512(_mm512_srlv_epi8(repeated, load_table<__m512i>(unpacking_detail::kGroupShifts<64, 8, 1>)),
+                                                  _mm512_set1_epi8(0x01));
+    } else if constexpr (BIT_WIDTH == 2) {
+        const __m512i repeated = _mm512_permutexvar_epi8(load_table<__m512i>(unpacking_detail::kRepeatBytes<64, 4>), input);
+        unpacked               = _mm512_and_si512(_mm512_srlv_epi8(repeated, load_table<__m512i>(unpacking_detail::kGroupShifts<64, 4, 2>)),
+                                                  _mm512_set1_epi8(0x03));
+    } else if constexpr (BIT_WIDTH == 3) {
+        const __m512i groups = mm512_unpack_epi16_avx512vbmi_9to16<4 * BIT_WIDTH, false>(input);
+        const __m512i mask   = _mm512_set1_epi16(0x07);
+
+        const __m256i values0 = _mm512_cvtepi16_epi8(_mm512_and_si512(groups, mask));
+        const __m256i values1 = _mm512_cvtepi16_epi8(_mm512_and_si512(_mm512_srli_epi16(groups, 3), mask));
+        const __m256i values2 = _mm512_cvtepi16_epi8(_mm512_and_si512(_mm512_srli_epi16(groups, 6), mask));
+        const __m256i values3 = _mm512_cvtepi16_epi8(_mm512_srli_epi16(groups, 9));
+
+        __m512i combined = _mm512_castsi128_si512(_mm256_castsi256_si128(values0));
+        combined         = _mm512_inserti32x4(combined, _mm256_castsi256_si128(values1), 1);
+        combined         = _mm512_inserti32x4(combined, _mm256_castsi256_si128(values2), 2);
+        combined         = _mm512_inserti32x4(combined, _mm256_castsi256_si128(values3), 3);
+
+        unpacked = _mm512_permutexvar_epi8(load_table<__m512i>(unpacking_detail::kInterleaveBytes<64, 4>), combined);
+    } else if constexpr (BIT_WIDTH == 4) {
+        const __m512i mask = _mm512_set1_epi8(0x0f);
+        const __m512i even = _mm512_and_si512(input, mask);
+        const __m512i odd  = _mm512_and_si512(_mm512_srli_epi16(input, BIT_WIDTH), mask);
+
+        __m512i combined = _mm512_castsi256_si512(_mm512_castsi512_si256(even));
+        combined         = _mm512_inserti64x4(combined, _mm512_castsi512_si256(odd), 1);
+
+        unpacked = _mm512_permutexvar_epi8(load_table<__m512i>(unpacking_detail::kInterleaveBytes<64, 2>), combined);
+    } else {
+        constexpr u8 pair_bit_width = 2 * BIT_WIDTH;
+        constexpr u16 value_mask    = (1U << BIT_WIDTH) - 1U;
+
+        const __m512i pairs = mm512_unpack_epi16_avx512vbmi_9to16<pair_bit_width, false>(input);
+        const __m512i even  = _mm512_and_si512(pairs, _mm512_set1_epi16(static_cast<i16>(value_mask)));
+        const __m512i odd   = _mm512_srli_epi16(pairs, BIT_WIDTH);
+
+        const __m256i even_bytes = _mm512_cvtepi16_epi8(even);
+        const __m256i odd_bytes  = _mm512_cvtepi16_epi8(odd);
+
+        __m512i combined = _mm512_castsi256_si512(even_bytes);
+        combined         = _mm512_inserti64x4(combined, odd_bytes, 1);
+
+        unpacked = _mm512_permutexvar_epi8(load_table<__m512i>(unpacking_detail::kInterleaveBytes<64, 2>), combined);
+    }
+
+    if constexpr (SIGN_VALUES && BIT_WIDTH > 1) {
+        const __m512i sign = _mm512_set1_epi8(1U << (BIT_WIDTH - 1U));
+        unpacked           = _mm512_sub_epi8(_mm512_xor_si512(unpacked, sign), sign);
+    }
+
+    return unpacked;
+}
+
+}  // namespace m512
+}  // namespace pernix::internal
 
 #endif  // PERNIX_AVX512VBMI_UNPACKING_H

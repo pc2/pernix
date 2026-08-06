@@ -1,124 +1,107 @@
-#include <pernix/pernix.h>
+#include <pernix/detail/api.hpp>
 
-#ifdef __cplusplus
-namespace pernix {
 extern "C" {
-#endif
-
-// Use the best available implementation based on detected CPU features at compile time
-#ifdef PERNIX_AVX2_ENABLED
-#ifdef PERNIX_AVX512_VBMI_ENABLED
-int compress_block(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
-    return mm512_compress_block_avx512vbmi(bit_width, input, scale, output);
+u8 pernix_min_bit_width(void) {
+    return pernix::detail::min_bit_width;
 }
 
-int compress_block_f64(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
-    return mm512_compress_block_f64_avx512vbmi(bit_width, input, scale, output);
+u8 pernix_max_bit_width(void) {
+    return pernix::detail::max_bit_width;
 }
 
-int compress_blocks(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output,
-                    const uint32_t blocks) {
-    return mm512_compress_blocks_avx512vbmi(bit_width, input, scale, output, blocks);
+bool pernix_is_valid_bit_width(u8 bit_width) {
+    return pernix::detail::is_valid_bit_width(bit_width);
 }
 
-int compress_blocks_f64(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,
-                        const uint32_t blocks) {
-    return mm512_compress_blocks_f64_avx512vbmi(bit_width, input, scale, output, blocks);
+bool pernix_is_valid_block_size(u32 block_size) {
+    return pernix::detail::is_valid_block_size(block_size);
 }
 
-int decompress_block(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
-    return mm512_decompress_block_avx512vbmi(bit_width, input, scale, output);
+u32 pernix_compressed_block_size(void) {
+    return pernix::detail::fixed_block_size;
 }
 
-int decompress_block_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
-    return mm512_decompress_block_f64_avx512vbmi(bit_width, input, scale, output);
+u32 pernix_elements_per_block(u8 bit_width) {
+    return pernix::detail::elements_per_block(bit_width);
 }
 
-int decompress_blocks(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
-                      const uint32_t blocks) {
-    return mm512_decompress_blocks_avx512vbmi(bit_width, input, scale, output, blocks);
+const char* pernix_status_string(pernix_status status) {
+    return pernix::detail::status_string(status);
 }
 
-int decompress_blocks_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,
-                          const uint32_t blocks) {
-    return mm512_decompress_blocks_f64_avx512vbmi(bit_width, input, scale, output, blocks);
-}
-#else
-int compress_block(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
-    return mm256_compress_block_avx2(bit_width, input, scale, output);
+pernix_status pernix_scale_f32(float bmax, u8 bit_width, float* scale) {
+    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
 }
 
-int compress_block_f64(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
-    return mm256_compress_block_f64_avx2(bit_width, input, scale, output);
+pernix_status pernix_scale_f64(double bmax, u8 bit_width, double* scale) {
+    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
 }
 
-int compress_blocks(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output,
-                    const uint32_t blocks) {
-    return mm256_compress_blocks_avx2(bit_width, input, scale, output, blocks);
+pernix_status pernix_decompression_scale_f32(float bmax, u8 bit_width, float* scale) {
+    return pernix_scale_f32(bmax, bit_width, scale);
 }
 
-int compress_blocks_f64(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,
-                        const uint32_t blocks) {
-    return mm256_compress_blocks_f64_avx2(bit_width, input, scale, output, blocks);
+pernix_status pernix_decompression_scale_f64(double bmax, u8 bit_width, double* scale) {
+    return pernix_scale_f64(bmax, bit_width, scale);
 }
 
-int decompress_block(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
-    return mm256_decompress_block_avx2(bit_width, input, scale, output);
+pernix_status pernix_inverse_scale_f32(float scale, float* inverse_scale) {
+    return pernix::detail::inverse_scale(scale, inverse_scale);
 }
 
-int decompress_block_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
-    return mm256_decompress_block_f64_avx2(bit_width, input, scale, output);
+pernix_status pernix_inverse_scale_f64(double scale, double* inverse_scale) {
+    return pernix::detail::inverse_scale(scale, inverse_scale);
 }
 
-int decompress_blocks(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
-                      const uint32_t blocks) {
-    return mm256_decompress_blocks_avx2(bit_width, input, scale, output, blocks);
+pernix_status pernix_compression_scale_f32(float bmax, u8 bit_width, float* inverse_scale) {
+    return pernix::detail::compression_scale_from_bmax(bmax, bit_width, inverse_scale);
 }
 
-int decompress_blocks_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,
-                          const uint32_t blocks) {
-    return mm256_decompress_blocks_f64_avx2(bit_width, input, scale, output, blocks);
-}
-#endif
-#else
-int compress_block(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output) {
-    return compress_block_fallback(bit_width, input, scale, output);
+pernix_status pernix_compression_scale_f64(double bmax, u8 bit_width, double* inverse_scale) {
+    return pernix::detail::compression_scale_from_bmax(bmax, bit_width, inverse_scale);
 }
 
-int compress_block_f64(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output) {
-    return compress_block_fallback_f64(bit_width, input, scale, output);
+pernix_status pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale,
+                                        void* output) {
+    return pernix::detail::compress_block(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output);
 }
 
-int compress_blocks(const uint8_t bit_width, const float_t* __restrict__ input, const float_t scale, uint8_t* __restrict__ output,
-                    const uint32_t blocks) {
-    return compress_blocks_fallback(bit_width, input, scale, output, blocks);
+pernix_status pernix_compress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale, void* output,
+                                         u32 blocks) {
+    return pernix::detail::compress_blocks(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output, blocks);
 }
 
-int compress_blocks_f64(const uint8_t bit_width, const double_t* __restrict__ input, const double_t scale, uint8_t* __restrict__ output,
-                        const uint32_t blocks) {
-    return compress_blocks_fallback_f64(bit_width, input, scale, output, blocks);
+pernix_status pernix_decompress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale,
+                                          void* output, bool sign_values) {
+    return pernix::detail::decompress_block(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output,
+                                            sign_values);
 }
 
-int decompress_block(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output) {
-    return decompress_block_fallback(bit_width, input, scale, output);
+pernix_status pernix_decompress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale,
+                                           void* output, u32 blocks, bool sign_values) {
+    return pernix::detail::decompress_blocks(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output, blocks,
+                                             sign_values);
 }
 
-int decompress_block_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output) {
-    return decompress_block_fallback_f64(bit_width, input, scale, output);
+pernix_status pernix_compress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
+                                        void* output) {
+    return pernix::detail::compress_block(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output);
 }
 
-int decompress_blocks(const uint8_t bit_width, const uint8_t* __restrict__ input, const float_t scale, float_t* __restrict__ output,
-                      const uint32_t blocks) {
-    return decompress_blocks_fallback(bit_width, input, scale, output, blocks);
+pernix_status pernix_compress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
+                                         void* output, u32 blocks) {
+    return pernix::detail::compress_blocks(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output, blocks);
 }
 
-int decompress_blocks_f64(const uint8_t bit_width, const uint8_t* __restrict__ input, const double_t scale, double_t* __restrict__ output,
-                          const uint32_t blocks) {
-    return decompress_blocks_fallback_f64(bit_width, input, scale, output, blocks);
+pernix_status pernix_decompress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
+                                          void* output, bool sign_values) {
+    return pernix::detail::decompress_block(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output,
+                                            sign_values);
 }
-#endif
 
-#ifdef __cplusplus
+pernix_status pernix_decompress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
+                                           void* output, u32 blocks, bool sign_values) {
+    return pernix::detail::decompress_blocks(static_cast<pernix::Backend>(backend), bit_width, block_size, input, scale, output, blocks,
+                                             sign_values);
 }
-}  // namespace pernix
-#endif  // __cplusplus
+}

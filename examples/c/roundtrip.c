@@ -6,6 +6,8 @@ int main(void) {
     float restored[elements];
     u8 compressed[block_size];
     float bmax = 0.0f;
+    pernix_dispatcher* dispatcher = 0;
+    int result = 0;
 
     if (!pernix_is_valid_bit_width(bit_width) || pernix_compressed_block_size() != block_size ||
         pernix_elements_per_block(bit_width) != elements) {
@@ -25,20 +27,28 @@ int main(void) {
         return 2;
     }
 
-    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, inverse_scale, compressed) != PERNIX_STATUS_OK) {
+    if (pernix_dispatcher_create(PERNIX_BACKEND_FALLBACK, &dispatcher) != PERNIX_STATUS_OK) {
         return 3;
     }
-    if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, scale, restored, true) !=
-        PERNIX_STATUS_OK) {
-        return 4;
+    if (pernix_compress_block_f32(dispatcher, bit_width, block_size, input, inverse_scale, compressed) != PERNIX_STATUS_OK) {
+        result = 4;
+        goto done;
+    }
+    if (pernix_decompress_block_f32(dispatcher, bit_width, block_size, compressed, scale, restored, true) != PERNIX_STATUS_OK) {
+        result = 5;
+        goto done;
     }
 
     for (int i = 0; i < elements; ++i) {
         const float diff  = restored[i] - input[i];
         const float error = diff < 0.0f ? -diff : diff;
         if (error > scale) {
-            return 5;
+            result = 6;
+            goto done;
         }
     }
-    return 0;
+
+done:
+    pernix_dispatcher_destroy(dispatcher);
+    return result;
 }

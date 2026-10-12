@@ -3,10 +3,10 @@ module pernix_decompression
     implicit none
 
     interface
-        function pernix_decompress_block_f32(backend, bit_width, block_size, input_ptr, scale, output_ptr, sign_values) &
+        function pernix_decompress_block_f32(dispatcher, bit_width, block_size, input_ptr, scale, output_ptr, sign_values) &
                 bind(C, name = "pernix_decompress_block_f32") result(status)
             import :: c_bool, c_float, c_int, c_int8_t, c_int32_t, c_ptr
-            integer(c_int), value :: backend
+            type(c_ptr), value :: dispatcher
             integer(c_int8_t), value :: bit_width
             integer(c_int32_t), value :: block_size
             type(c_ptr), value :: input_ptr
@@ -16,10 +16,10 @@ module pernix_decompression
             integer(c_int) :: status
         end function
 
-        function pernix_decompress_blocks_f32(backend, bit_width, block_size, input_ptr, scale, output_ptr, blocks, &
+        function pernix_decompress_blocks_f32(dispatcher, bit_width, block_size, input_ptr, scale, output_ptr, blocks, &
                 sign_values) bind(C, name = "pernix_decompress_blocks_f32") result(status)
             import :: c_bool, c_float, c_int, c_int8_t, c_int32_t, c_ptr
-            integer(c_int), value :: backend
+            type(c_ptr), value :: dispatcher
             integer(c_int8_t), value :: bit_width
             integer(c_int32_t), value :: block_size
             type(c_ptr), value :: input_ptr
@@ -30,10 +30,10 @@ module pernix_decompression
             integer(c_int) :: status
         end function
 
-        function pernix_decompress_block_f64(backend, bit_width, block_size, input_ptr, scale, output_ptr, sign_values) &
+        function pernix_decompress_block_f64(dispatcher, bit_width, block_size, input_ptr, scale, output_ptr, sign_values) &
                 bind(C, name = "pernix_decompress_block_f64") result(status)
             import :: c_bool, c_double, c_int, c_int8_t, c_int32_t, c_ptr
-            integer(c_int), value :: backend
+            type(c_ptr), value :: dispatcher
             integer(c_int8_t), value :: bit_width
             integer(c_int32_t), value :: block_size
             type(c_ptr), value :: input_ptr
@@ -43,10 +43,10 @@ module pernix_decompression
             integer(c_int) :: status
         end function
 
-        function pernix_decompress_blocks_f64(backend, bit_width, block_size, input_ptr, scale, output_ptr, blocks, &
+        function pernix_decompress_blocks_f64(dispatcher, bit_width, block_size, input_ptr, scale, output_ptr, blocks, &
                 sign_values) bind(C, name = "pernix_decompress_blocks_f64") result(status)
             import :: c_bool, c_double, c_int, c_int8_t, c_int32_t, c_ptr
-            integer(c_int), value :: backend
+            type(c_ptr), value :: dispatcher
             integer(c_int8_t), value :: bit_width
             integer(c_int32_t), value :: block_size
             type(c_ptr), value :: input_ptr

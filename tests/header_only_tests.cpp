@@ -1,4 +1,5 @@
 #include <pernix/pernix.hpp>
+#include <cpp_dispatcher_test_helpers.h>
 
 #include <array>
 #include <cmath>
@@ -27,10 +28,10 @@ void expect_round_trip(const pernix::Backend backend) {
     std::vector<u8> compressed(kBlockSize);
     std::vector<FloatT> restored(kBlockElements, static_cast<FloatT>(0));
 
-    ASSERT_EQ(pernix::compress_block(backend, kBitWidth, kBlockSize, std::span<const FloatT>(input), static_cast<FloatT>(1),
+    ASSERT_EQ(pernix_test::compress_block(backend, kBitWidth, kBlockSize, std::span<const FloatT>(input), static_cast<FloatT>(1),
                                      std::span<u8>(compressed)),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::decompress_block(backend, kBitWidth, kBlockSize, std::span<const u8>(compressed), static_cast<FloatT>(1),
+    ASSERT_EQ(pernix_test::decompress_block(backend, kBitWidth, kBlockSize, std::span<const u8>(compressed), static_cast<FloatT>(1),
                                        std::span<FloatT>(restored)),
               PERNIX_STATUS_OK);
 
@@ -66,33 +67,33 @@ void expect_stdpar_matches_scalar_for_all_bit_widths() {
         std::vector<FloatT> scalar_restored(elements_per_block * blocks);
         std::vector<FloatT> stdpar_restored(elements_per_block * blocks);
 
-        ASSERT_EQ(pernix::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize,
+        ASSERT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize,
                                          std::span<const FloatT>(input.data(), elements_per_block), static_cast<FloatT>(4),
                                          std::span<u8>(scalar_block)),
                   PERNIX_STATUS_OK)
             << "bit_width=" << static_cast<u32>(bit_width);
-        ASSERT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize,
+        ASSERT_EQ(pernix_test::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize,
                                          std::span<const FloatT>(input.data(), elements_per_block), static_cast<FloatT>(4),
                                          std::span<u8>(stdpar_block)),
                   PERNIX_STATUS_OK)
             << "bit_width=" << static_cast<u32>(bit_width);
         EXPECT_EQ(stdpar_block, scalar_block) << "bit_width=" << static_cast<u32>(bit_width);
 
-        ASSERT_EQ(pernix::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input),
+        ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input),
                                           static_cast<FloatT>(4), std::span<u8>(scalar_blocks), blocks),
                   PERNIX_STATUS_OK)
             << "bit_width=" << static_cast<u32>(bit_width);
-        ASSERT_EQ(pernix::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const FloatT>(input),
+        ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const FloatT>(input),
                                           static_cast<FloatT>(4), std::span<u8>(stdpar_blocks), blocks),
                   PERNIX_STATUS_OK)
             << "bit_width=" << static_cast<u32>(bit_width);
         EXPECT_EQ(stdpar_blocks, scalar_blocks) << "bit_width=" << static_cast<u32>(bit_width);
 
-        ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(scalar_blocks),
+        ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(scalar_blocks),
                                             static_cast<FloatT>(0.25), std::span<FloatT>(scalar_restored), blocks, true),
                   PERNIX_STATUS_OK)
             << "bit_width=" << static_cast<u32>(bit_width);
-        ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_blocks),
+        ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_blocks),
                                             static_cast<FloatT>(0.25), std::span<FloatT>(stdpar_restored), blocks, true),
                   PERNIX_STATUS_OK)
             << "bit_width=" << static_cast<u32>(bit_width);
@@ -111,17 +112,17 @@ void expect_cross_compatibility(const u8 bit_width, const u32 blocks, const Floa
     std::vector<FloatT> scalar_to_stdpar(static_cast<usize>(elements_per_block) * blocks, static_cast<FloatT>(0));
     std::vector<FloatT> stdpar_to_scalar(static_cast<usize>(elements_per_block) * blocks, static_cast<FloatT>(0));
 
-    ASSERT_EQ(pernix::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input), compression_scale,
+    ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input), compression_scale,
                                       std::span<u8>(scalar_compressed), blocks),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const FloatT>(input),
+    ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const FloatT>(input),
                                       compression_scale, std::span<u8>(stdpar_compressed), blocks),
               PERNIX_STATUS_OK);
 
-    ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(scalar_compressed),
+    ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(scalar_compressed),
                                         decompression_scale, std::span<FloatT>(scalar_to_stdpar), blocks, sign_values),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed),
+    ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed),
                                         decompression_scale, std::span<FloatT>(stdpar_to_scalar), blocks, sign_values),
               PERNIX_STATUS_OK);
 
@@ -141,18 +142,18 @@ void expect_single_block_partial_group_matches_scalar(const u8 bit_width) {
     std::vector<FloatT> scalar_restored(elements_per_block, static_cast<FloatT>(0));
     std::vector<FloatT> stdpar_restored(elements_per_block, static_cast<FloatT>(0));
 
-    ASSERT_EQ(pernix::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input),
+    ASSERT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const FloatT>(input),
                                      static_cast<FloatT>(4), std::span<u8>(scalar_compressed)),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const FloatT>(input),
+    ASSERT_EQ(pernix_test::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const FloatT>(input),
                                      static_cast<FloatT>(4), std::span<u8>(stdpar_compressed)),
               PERNIX_STATUS_OK);
     EXPECT_EQ(stdpar_compressed, scalar_compressed) << "bit_width=" << static_cast<u32>(bit_width);
 
-    ASSERT_EQ(pernix::decompress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(scalar_compressed),
+    ASSERT_EQ(pernix_test::decompress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(scalar_compressed),
                                        static_cast<FloatT>(0.25), std::span<FloatT>(scalar_restored), true),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::decompress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed),
+    ASSERT_EQ(pernix_test::decompress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed),
                                        static_cast<FloatT>(0.25), std::span<FloatT>(stdpar_restored), true),
               PERNIX_STATUS_OK);
     EXPECT_EQ(stdpar_restored, scalar_restored) << "bit_width=" << static_cast<u32>(bit_width);
@@ -213,7 +214,7 @@ TEST(HeaderOnlyPernix, RejectsUndersizedCompressInputSpan) {
     std::vector<float> input(kBlockElements - 1U, 0.0f);
     std::vector<u8> output(kBlockSize);
 
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
                                      std::span<u8>(output)),
               PERNIX_STATUS_INVALID_ARGUMENT);
 }
@@ -222,7 +223,7 @@ TEST(HeaderOnlyPernix, RejectsUndersizedCompressOutputSpan) {
     std::vector<float> input(kBlockElements, 0.0f);
     std::vector<u8> output(kBlockSize - 1U);
 
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
                                      std::span<u8>(output)),
               PERNIX_STATUS_INVALID_ARGUMENT);
 }
@@ -230,13 +231,13 @@ TEST(HeaderOnlyPernix, RejectsUndersizedCompressOutputSpan) {
 TEST(HeaderOnlyPernix, RejectsUndersizedDecompressSpans) {
     std::vector<u8> short_input(kBlockSize - 1U);
     std::vector<float> output(kBlockElements);
-    EXPECT_EQ(pernix::decompress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const u8>(short_input), 1.0f,
+    EXPECT_EQ(pernix_test::decompress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const u8>(short_input), 1.0f,
                                        std::span<float>(output)),
               PERNIX_STATUS_INVALID_ARGUMENT);
 
     std::vector<u8> input(kBlockSize);
     std::vector<float> short_output(kBlockElements - 1U);
-    EXPECT_EQ(pernix::decompress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const u8>(input), 1.0f,
+    EXPECT_EQ(pernix_test::decompress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const u8>(input), 1.0f,
                                        std::span<float>(short_output)),
               PERNIX_STATUS_INVALID_ARGUMENT);
 }
@@ -245,11 +246,11 @@ TEST(HeaderOnlyPernix, RejectsInvalidSpanParametersBeforeDispatch) {
     std::vector<float> input(kBlockElements, 0.0f);
     std::vector<u8> output(kBlockSize);
 
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, 0, kBlockSize, std::span<const float>(input), 1.0f, std::span<u8>(output)),
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, 0, kBlockSize, std::span<const float>(input), 1.0f, std::span<u8>(output)),
               PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH);
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, kBitWidth, 96, std::span<const float>(input), 1.0f, std::span<u8>(output)),
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, kBitWidth, 96, std::span<const float>(input), 1.0f, std::span<u8>(output)),
               PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE);
-    EXPECT_EQ(pernix::compress_blocks(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
+    EXPECT_EQ(pernix_test::compress_blocks(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
                                       std::span<u8>(output), 0),
               PERNIX_STATUS_INVALID_ARGUMENT);
 }
@@ -259,13 +260,13 @@ TEST(HeaderOnlyPernix, RejectsInvalidScale) {
     std::vector<u8> compressed(kBlockSize);
     std::vector<float> output(input.size());
 
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 0.0f,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input), 0.0f,
                                      std::span<u8>(compressed)),
               PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix::decompress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const u8>(compressed), -1.0f,
+    EXPECT_EQ(pernix_test::decompress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const u8>(compressed), -1.0f,
                                        std::span<float>(output)),
               PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input),
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input),
                                      std::numeric_limits<float>::infinity(), std::span<u8>(compressed)),
               PERNIX_STATUS_INVALID_ARGUMENT);
 }
@@ -279,11 +280,11 @@ TEST(HeaderOnlyPernix, FallbackStdparReturnsUnsupportedImplementation) {
     std::vector<u8> compressed(kBlockSize);
 
 #if defined(PERNIX_BUILD_FALLBACK_STDPAR)
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::FallbackStdpar, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
                                      std::span<u8>(compressed)),
               PERNIX_STATUS_OK);
 #else
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::FallbackStdpar, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
                                      std::span<u8>(compressed)),
               PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
 #endif
@@ -319,18 +320,18 @@ TEST(HeaderOnlyPernix, FallbackStdparMatchesScalarForEdgeValues) {
     std::vector<float> scalar_signed(input.size());
     std::vector<float> stdpar_signed(input.size());
 
-    ASSERT_EQ(pernix::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const float>(input), 1.0f,
+    ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const float>(input), 1.0f,
                                       std::span<u8>(scalar_compressed), blocks),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const float>(input), 1.0f,
+    ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const float>(input), 1.0f,
                                       std::span<u8>(stdpar_compressed), blocks),
               PERNIX_STATUS_OK);
     EXPECT_EQ(stdpar_compressed, scalar_compressed);
 
-    ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(scalar_compressed), 1.0f,
+    ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(scalar_compressed), 1.0f,
                                         std::span<float>(scalar_signed), blocks, true),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed),
+    ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(stdpar_compressed),
                                         1.0f, std::span<float>(stdpar_signed), blocks, true),
               PERNIX_STATUS_OK);
     EXPECT_EQ(stdpar_signed, scalar_signed);
@@ -362,10 +363,10 @@ TEST(HeaderOnlyPernix, FallbackStdparSignValuesFalseMatchesScalar) {
     std::vector<float> scalar_output(elements_per_block, 0.0f);
     std::vector<float> stdpar_output(elements_per_block, 0.0f);
 
-    ASSERT_EQ(pernix::decompress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(compressed), 1.0f,
+    ASSERT_EQ(pernix_test::decompress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(compressed), 1.0f,
                                        std::span<float>(scalar_output), false),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::decompress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(compressed), 1.0f,
+    ASSERT_EQ(pernix_test::decompress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(compressed), 1.0f,
                                        std::span<float>(stdpar_output), false),
               PERNIX_STATUS_OK);
     EXPECT_EQ(stdpar_output, scalar_output);
@@ -381,18 +382,18 @@ TEST(HeaderOnlyPernix, FallbackStdparRepeatedExecutionIsDeterministic) {
     std::vector<float> first_restored(input.size(), 0.0f);
     std::vector<float> second_restored(input.size(), 0.0f);
 
-    ASSERT_EQ(pernix::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const float>(input), 4.0f,
+    ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const float>(input), 4.0f,
                                       std::span<u8>(first_compressed), blocks),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const float>(input), 4.0f,
+    ASSERT_EQ(pernix_test::compress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const float>(input), 4.0f,
                                       std::span<u8>(second_compressed), blocks),
               PERNIX_STATUS_OK);
     EXPECT_EQ(second_compressed, first_compressed);
 
-    ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(first_compressed),
+    ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(first_compressed),
                                         0.25f, std::span<float>(first_restored), blocks, true),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(second_compressed),
+    ASSERT_EQ(pernix_test::decompress_blocks(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const u8>(second_compressed),
                                         0.25f, std::span<float>(second_restored), blocks, true),
               PERNIX_STATUS_OK);
     EXPECT_EQ(second_restored, first_restored);
@@ -405,10 +406,10 @@ TEST(HeaderOnlyPernix, FallbackStdparRepeatedSingleBlockCompressionIsDeterminist
     std::vector<u8> first_compressed(kBlockSize);
     std::vector<u8> second_compressed(kBlockSize);
 
-    ASSERT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const double>(input), 2.0,
+    ASSERT_EQ(pernix_test::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const double>(input), 2.0,
                                      std::span<u8>(first_compressed)),
               PERNIX_STATUS_OK);
-    ASSERT_EQ(pernix::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const double>(input), 2.0,
+    ASSERT_EQ(pernix_test::compress_block(pernix::Backend::FallbackStdpar, bit_width, kBlockSize, std::span<const double>(input), 2.0,
                                      std::span<u8>(second_compressed)),
               PERNIX_STATUS_OK);
     EXPECT_EQ(second_compressed, first_compressed);
@@ -419,11 +420,46 @@ TEST(HeaderOnlyPernix, FallbackSimdReturnsUnsupportedImplementation) {
     auto input = make_input<float>();
     std::vector<u8> compressed(kBlockSize);
 
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::FallbackSimd, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::FallbackSimd, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
                                      std::span<u8>(compressed)),
               PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
 }
 
 TEST(HeaderOnlyPernix, AutoDoubleRoundTrip) {
-    expect_round_trip<double>(pernix::Backend::Auto);
+    pernix::Dispatcher dispatcher;
+    ASSERT_EQ(pernix::Dispatcher::create(pernix::Backend::Auto, dispatcher), PERNIX_STATUS_OK);
+
+    auto input = make_input<double>();
+    std::vector<u8> compressed(kBlockSize);
+    std::vector<double> restored(kBlockElements, 0.0);
+    const auto compress_status = dispatcher.compress_block(kBitWidth, kBlockSize, std::span<const double>(input), 1.0,
+                                                           std::span<u8>(compressed));
+
+    if (dispatcher.backend() == pernix::Backend::Arm64Neon || dispatcher.backend() == pernix::Backend::Arm64Sve) {
+        EXPECT_EQ(compress_status, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
+        return;
+    }
+
+    ASSERT_EQ(compress_status, PERNIX_STATUS_OK);
+    ASSERT_EQ(dispatcher.decompress_block(kBitWidth, kBlockSize, std::span<const u8>(compressed), 1.0,
+                                          std::span<double>(restored)),
+              PERNIX_STATUS_OK);
+    for (usize i = 0; i < restored.size(); ++i) {
+        EXPECT_NEAR(restored[i], input[i], 1.0);
+    }
+}
+
+TEST(HeaderOnlyPernix, DispatcherResolvesBackendOnce) {
+    pernix::Dispatcher dispatcher;
+    EXPECT_FALSE(dispatcher.configured());
+    EXPECT_EQ(dispatcher.backend(), pernix::Backend::Auto);
+
+    ASSERT_EQ(pernix::Dispatcher::create(pernix::Backend::Auto, dispatcher), PERNIX_STATUS_OK);
+    EXPECT_TRUE(dispatcher.configured());
+    EXPECT_NE(dispatcher.backend(), pernix::Backend::Auto);
+
+    pernix::Dispatcher unconfigured;
+    std::array<float, kBlockElements> input{};
+    std::array<u8, kBlockSize> compressed{};
+    EXPECT_EQ(unconfigured.compress_block(kBitWidth, kBlockSize, input, 1.0f, compressed), PERNIX_STATUS_INVALID_ARGUMENT);
 }

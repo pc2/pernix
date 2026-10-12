@@ -33,15 +33,23 @@ int main(void) {
         return 1;
     }
 
-    pernix_status status = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, 1.0f / scale, compressed);
-    if (status != PERNIX_STATUS_OK) {
+    pernix_dispatcher* dispatcher = 0;
+    if (pernix_dispatcher_create(PERNIX_BACKEND_FALLBACK, &dispatcher) != PERNIX_STATUS_OK) {
         return 1;
     }
 
-    status = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, scale, restored, true);
+    pernix_status status = pernix_compress_block_f32(dispatcher, bit_width, block_size, input, 1.0f / scale, compressed);
     if (status != PERNIX_STATUS_OK) {
+        pernix_dispatcher_destroy(dispatcher);
+        return 1;
+    }
+
+    status = pernix_decompress_block_f32(dispatcher, bit_width, block_size, compressed, scale, restored, true);
+    if (status != PERNIX_STATUS_OK) {
+        pernix_dispatcher_destroy(dispatcher);
         return 2;
     }
+    pernix_dispatcher_destroy(dispatcher);
 
     for (int i = 0; i < elements; ++i) {
         const float diff  = restored[i] - input[i];

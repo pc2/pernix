@@ -1,7 +1,8 @@
 program pernix_example_fortran
-    use iso_c_binding, only : c_bool, c_float, c_int, c_int8_t, c_int32_t, c_loc
-    use pernix_compression
-    use pernix_decompression
+    use iso_c_binding, only : c_bool, c_float, c_int, c_int8_t, c_int32_t, c_loc, c_ptr
+    use pernix_dispatcher
+    use pernix_compression, only : pernix_compress_block_f32
+    use pernix_decompression, only : pernix_decompress_block_f32
     implicit none
 
     integer(c_int8_t), parameter :: bit_width = 16_c_int8_t
@@ -15,6 +16,7 @@ program pernix_example_fortran
     real(c_float) :: inverse_scale
     real(c_float) :: error
     integer(c_int) :: status
+    type(c_ptr) :: dispatcher
     integer :: i
 
     do i = 1, elements
@@ -25,14 +27,25 @@ program pernix_example_fortran
     scale = bmax / real((2 ** (int(bit_width) - 1)) - 1, c_float)
     inverse_scale = 1.0_c_float / scale
 
-    status = pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, c_loc(input), &
-                                       inverse_scale, c_loc(compressed))
+    status = pernix_dispatcher_create(PERNIX_BACKEND_FALLBACK, dispatcher)
     if (status /= PERNIX_STATUS_OK) stop 1
 
-    status = pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, c_loc(compressed), &
+    status = pernix_compress_block_f32(dispatcher, bit_width, block_size, c_loc(input), &
+                                       inverse_scale, c_loc(compressed))
+    if (status /= PERNIX_STATUS_OK) then
+        call pernix_dispatcher_destroy(dispatcher)
+        stop 2
+    end if
+
+    status = pernix_decompress_block_f32(dispatcher, bit_width, block_size, c_loc(compressed), &
                                          scale, c_loc(restored), .true._c_bool)
-    if (status /= PERNIX_STATUS_OK) stop 2
+    if (status /= PERNIX_STATUS_OK) then
+        call pernix_dispatcher_destroy(dispatcher)
+        stop 3
+    end if
+
+    call pernix_dispatcher_destroy(dispatcher)
 
     error = maxval(abs(restored - input))
-    if (error > scale) stop 3
+    if (error > scale) stop 4
 end program pernix_example_fortran

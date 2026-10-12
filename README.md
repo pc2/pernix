@@ -6,8 +6,9 @@ decompression with a portable fallback path and optional SIMD backends.
 
 The public API includes:
 
-* C++ functions in `<pernix/pernix.hpp>`, including `pernix::compress_block` and `pernix::decompress_block`
-* a plain C ABI in `<pernix/pernix.h>`, including `pernix_compress_block_f32` and `pernix_decompress_block_f32`
+* a reusable C++ `pernix::Dispatcher` in `<pernix/pernix.hpp>`
+* a plain C ABI in `<pernix/pernix.h>`, including opaque dispatcher creation and `pernix_compress_block_f32` /
+  `pernix_decompress_block_f32`
 * `_f64` variants for double-precision input/output
 * optional Fortran bindings that call the C ABI
 
@@ -85,7 +86,8 @@ Status values:
 * `PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH`: bit width outside `1..24`
 * `PERNIX_STATUS_UNSUPPORTED_BACKEND`: backend enum value is unknown
 * `PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE`: block size is not supported
-* `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`: backend is not compiled in or is unavailable on this CPU
+* `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`: backend or requested kernel is not built or is unavailable on this CPU
+* `PERNIX_STATUS_OUT_OF_MEMORY`: a C dispatcher handle could not be allocated (the compiled C++ dispatcher uses the same handle)
 
 Use `pernix::status_string(status)` or `pernix_status_string(status)` for readable names.
 
@@ -111,8 +113,13 @@ documented quantization model.
 
 ## Backends
 
-`PERNIX_BACKEND_FALLBACK` is the portable scalar backend and is always available. `PERNIX_BACKEND_AUTO` selects an
-available optimized backend when one is compiled and supported on the host CPU, otherwise it falls back.
+`PERNIX_BACKEND_FALLBACK` is the portable scalar backend and is always available. Create a dispatcher once before
+processing data, then reuse it for compression and decompression. `PERNIX_BACKEND_AUTO` resolves to one concrete backend
+when the dispatcher is created: AVX512 VBMI, BMI2, AVX2, SVE2, NEON, then scalar fallback, subject to the kernels built
+for the library and CPU features available on the host. The selected backend stays fixed for that dispatcher's lifetime.
+The C++ `Dispatcher` is move-only. In compiled builds it owns and releases a dispatcher handle; the C API exposes
+explicit create and destroy functions. Compiled C++ and C calls share the library registry; the header-only C++ target
+uses the same registry definitions inline.
 
 Current backend enum values:
 
@@ -125,6 +132,10 @@ Current backend enum values:
 * `PERNIX_BACKEND_ARM64_SVE`
 * `PERNIX_BACKEND_FALLBACK_STDPAR`
 * `PERNIX_BACKEND_FALLBACK_SIMD`
+
+Auto resolves once and never switches backends per operation. If the selected backend has no kernel for an operation,
+that call returns `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`. ARM64 compression kernels are currently incomplete, so use
+the fallback backend for a portable compression/decompression round trip on ARM64.
 
 x86 SIMD kernels are compiled with per-source ISA flags when enabled. Generic dispatch and fallback code are built for
 the
@@ -170,13 +181,15 @@ int main() {
     std::array<u8, block_size> compressed{};
     std::array<float, elements> restored{};
 
-    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, inverse_scale,
-                               compressed) != PERNIX_STATUS_OK) {
+    pernix::Dispatcher dispatcher;
+    if (pernix::Dispatcher::create(pernix::Backend::Fallback, dispatcher) != PERNIX_STATUS_OK) {
         return 2;
     }
-    if (pernix::decompress_block(pernix::Backend::Fallback, bit_width, block_size, compressed, scale,
-                                 restored) != PERNIX_STATUS_OK) {
+    if (dispatcher.compress_block(bit_width, block_size, input, inverse_scale, compressed) != PERNIX_STATUS_OK) {
         return 3;
+    }
+    if (dispatcher.decompress_block(bit_width, block_size, compressed, scale, restored) != PERNIX_STATUS_OK) {
+        return 4;
     }
 }
 ```
@@ -192,6 +205,7 @@ int main(void) {
     float restored[elements];
     u8 compressed[block_size];
     float bmax = 0.0f;
+    pernix_dispatcher* dispatcher = 0;
 
     for (int i = 0; i < elements; ++i) {
         input[i] = ((float)i - 16.0f) * 0.125f;
@@ -206,14 +220,18 @@ int main(void) {
         return 1;
     }
 
-    if (pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input, inverse_scale,
-                                  compressed) != PERNIX_STATUS_OK) {
+    if (pernix_dispatcher_create(PERNIX_BACKEND_FALLBACK, &dispatcher) != PERNIX_STATUS_OK) {
         return 2;
     }
-    if (pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, scale, restored,
-                                    true) != PERNIX_STATUS_OK) {
+    if (pernix_compress_block_f32(dispatcher, bit_width, block_size, input, inverse_scale, compressed) != PERNIX_STATUS_OK) {
+        pernix_dispatcher_destroy(dispatcher);
         return 3;
     }
+    if (pernix_decompress_block_f32(dispatcher, bit_width, block_size, compressed, scale, restored, true) != PERNIX_STATUS_OK) {
+        pernix_dispatcher_destroy(dispatcher);
+        return 4;
+    }
+    pernix_dispatcher_destroy(dispatcher);
 }
 ```
 
@@ -227,10 +245,9 @@ Fortran bindings are optional. Enable them with:
 cmake -S . -B build -DPERNIX_ENABLE_FORTRAN_BINDINGS=ON
 ```
 
-The modules in `bindings/fortran/src` bind directly to the C ABI names and currently expose f32 and f64 compression and
-decompression entry points. The bindings do not yet install Fortran module files as a packaged Fortran SDK; they are
-meant
-for in-tree builds and examples.
+The modules in `bindings/fortran/src` bind directly to the C ABI names and expose dispatcher creation/destruction plus
+f32 and f64 compression and decompression entry points. The bindings do not yet install Fortran module files as a
+packaged Fortran SDK; they are meant for in-tree builds and examples.
 
 ## Building
 

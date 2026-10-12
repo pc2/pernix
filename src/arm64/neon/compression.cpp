@@ -5,24 +5,24 @@ namespace pernix::internal {
 Kernel<KernelBlockF32Func> select_neon_compress_block_f32(const u8 bit_width, const u32 block_size) {
     (void)bit_width;
     (void)block_size;
-    return {"neon", nullptr};
+    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
 }
 
 Kernel<KernelBlocksF32Func> select_neon_compress_blocks_f32(const u8 bit_width, const u32 block_size) {
     (void)bit_width;
     (void)block_size;
-    return {"neon", nullptr};
+    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
 }
 
 Kernel<KernelBlockF64Func> select_neon_compress_block_f64(const u8 bit_width, const u32 block_size) {
     (void)bit_width;
     (void)block_size;
-    return {"neon", nullptr};
+    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
 }
 
 Kernel<KernelBlocksF64Func> select_neon_compress_blocks_f64(const u8 bit_width, const u32 block_size) {
     (void)bit_width;
     (void)block_size;
-    return {"neon", nullptr};
+    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
 }
 }  // namespace pernix::internal

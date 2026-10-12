@@ -5,26 +5,26 @@ namespace pernix::internal {
 #define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                           \
     case N:                                                                                              \
         if (sign_values)                                                                                 \
-            return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, true, BS, f32>); \
-        return Kernel<KernelBlockF32Func>("fallback", &decompress_block_fallback<N, false, BS, f32>)
+            return Kernel<KernelBlockF32Func>(&decompress_block_fallback<N, true, BS, f32>); \
+        return Kernel<KernelBlockF32Func>(&decompress_block_fallback<N, false, BS, f32>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                            \
     case N:                                                                                                \
         if (sign_values)                                                                                   \
-            return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, true, BS, f32>); \
-        return Kernel<KernelBlocksF32Func>("fallback", &decompress_blocks_fallback<N, false, BS, f32>)
+            return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback<N, true, BS, f32>); \
+        return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback<N, false, BS, f32>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                           \
     case N:                                                                                              \
         if (sign_values)                                                                                 \
-            return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, true, BS, f64>); \
-        return Kernel<KernelBlockF64Func>("fallback", &decompress_block_fallback<N, false, BS, f64>)
+            return Kernel<KernelBlockF64Func>(&decompress_block_fallback<N, true, BS, f64>); \
+        return Kernel<KernelBlockF64Func>(&decompress_block_fallback<N, false, BS, f64>)
 
 #define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                            \
     case N:                                                                                                \
         if (sign_values)                                                                                   \
-            return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, true, BS, f64>); \
-        return Kernel<KernelBlocksF64Func>("fallback", &decompress_blocks_fallback<N, false, BS, f64>)
+            return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback<N, true, BS, f64>); \
+        return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback<N, false, BS, f64>)
 
 #define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
     case BS:                                         \
@@ -54,7 +54,7 @@ namespace pernix::internal {
             PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
             default:                                 \
-                return {"fallback", nullptr};        \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};        \
         }                                            \
         break
 
@@ -86,7 +86,7 @@ namespace pernix::internal {
             PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);     \
             PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);     \
             default:                                      \
-                return {"fallback", nullptr};             \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};             \
         }                                                 \
         break
 
@@ -118,7 +118,7 @@ namespace pernix::internal {
             PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
             PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
             default:                                 \
-                return {"fallback", nullptr};        \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};        \
         }                                            \
         break
 
@@ -150,7 +150,7 @@ namespace pernix::internal {
             PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);     \
             PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);     \
             default:                                      \
-                return {"fallback", nullptr};             \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};             \
         }                                                 \
         break
 
@@ -162,7 +162,7 @@ Kernel<KernelBlockF32Func> select_fallback_decompress_block_f32(const u8 bit_wid
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(1024);
         default:
-            return {"fallback", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 
@@ -174,7 +174,7 @@ Kernel<KernelBlocksF32Func> select_fallback_decompress_blocks_f32(const u8 bit_w
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(1024);
         default:
-            return {"fallback", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 
@@ -186,7 +186,7 @@ Kernel<KernelBlockF64Func> select_fallback_decompress_block_f64(const u8 bit_wid
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(1024);
         default:
-            return {"fallback", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 
@@ -198,7 +198,7 @@ Kernel<KernelBlocksF64Func> select_fallback_decompress_blocks_f64(const u8 bit_w
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(512);
         PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(1024);
         default:
-            return {"fallback", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 

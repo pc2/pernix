@@ -1,7 +1,8 @@
 ## Fortran bindings
 
-Fortran bindings for the library are provided in the `bindings/fortran` directory. They expose the public C ABI symbols
-such as `pernix_compress_block_f32`, `pernix_decompress_block_f32`, and the matching f64 variants.
+Fortran bindings for the library are provided in the `bindings/fortran` directory. Create one dispatcher with
+`pernix_dispatcher_create`, then pass that handle to `pernix_compress_block_f32`, `pernix_decompress_block_f32`, and the
+matching f64 variants. Release it with `pernix_dispatcher_destroy` when finished.
 
 ### Building the Fortran bindings
 

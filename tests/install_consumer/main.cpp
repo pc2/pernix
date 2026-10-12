@@ -16,17 +16,21 @@ int main() {
 
     std::array<u8, block_size> compressed{};
     std::array<float, elements> restored{};
-
-    if (pernix::compress_block(pernix::Backend::Fallback, bit_width, block_size, input, 8.0f, compressed) != PERNIX_STATUS_OK) {
+    pernix::Dispatcher dispatcher;
+    if (pernix::Dispatcher::create(pernix::Backend::Fallback, dispatcher) != PERNIX_STATUS_OK) {
         return 1;
     }
-    if (pernix::decompress_block(pernix::Backend::Fallback, bit_width, block_size, compressed, 0.125f, restored) != PERNIX_STATUS_OK) {
+
+    if (dispatcher.compress_block(bit_width, block_size, input, 8.0f, compressed) != PERNIX_STATUS_OK) {
         return 2;
+    }
+    if (dispatcher.decompress_block(bit_width, block_size, compressed, 0.125f, restored) != PERNIX_STATUS_OK) {
+        return 3;
     }
 
     for (usize i = 0; i < input.size(); ++i) {
         if (std::abs(input[i] - restored[i]) > 0.0f) {
-            return 3;
+            return 4;
         }
     }
     return 0;

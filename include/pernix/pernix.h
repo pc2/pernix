@@ -18,6 +18,7 @@ typedef enum pernix_status {  // NOLINT(cppcoreguidelines-use-enum-class, modern
     PERNIX_STATUS_UNSUPPORTED_BACKEND        = -3,
     PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE     = -4,
     PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION = -5,
+    PERNIX_STATUS_OUT_OF_MEMORY              = -6,
 } pernix_status;
 
 typedef enum pernix_backend {  // NOLINT(cppcoreguidelines-use-enum-class, modernize-use-using)
@@ -32,6 +33,15 @@ typedef enum pernix_backend {  // NOLINT(cppcoreguidelines-use-enum-class, moder
     PERNIX_BACKEND_FALLBACK_STDPAR = 7,
     PERNIX_BACKEND_FALLBACK_SIMD   = 8,
 } pernix_backend;
+
+typedef struct pernix_dispatcher pernix_dispatcher;
+
+/* Resolve the requested backend once. Destroy a successful handle when it is no longer needed. */
+PERNIX_API pernix_status pernix_dispatcher_create(pernix_backend backend, pernix_dispatcher** dispatcher);
+
+PERNIX_API void pernix_dispatcher_destroy(pernix_dispatcher* dispatcher);
+
+PERNIX_API pernix_status pernix_dispatcher_backend(const pernix_dispatcher* dispatcher, pernix_backend* backend);
 
 PERNIX_API u8 pernix_min_bit_width(void);
 
@@ -71,28 +81,29 @@ PERNIX_API pernix_status pernix_compression_scale_f32(float bmax, u8 bit_width, 
 /* Computes the inverse compression scale directly from bmax and bit width. */
 PERNIX_API pernix_status pernix_compression_scale_f64(double bmax, u8 bit_width, double* inverse_scale);
 
-PERNIX_API pernix_status pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
+/* Compression and decompression calls use the backend stored in the dispatcher handle. */
+PERNIX_API pernix_status pernix_compress_block_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
                                                    float inverse_scale, void* output);
 
-PERNIX_API pernix_status pernix_compress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
+PERNIX_API pernix_status pernix_compress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
                                                     float inverse_scale, void* output, u32 blocks);
 
-PERNIX_API pernix_status pernix_decompress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale,
+PERNIX_API pernix_status pernix_decompress_block_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, float scale,
                                                      void* output, bool sign_values);
 
-PERNIX_API pernix_status pernix_decompress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale,
+PERNIX_API pernix_status pernix_decompress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, float scale,
                                                       void* output, u32 blocks, bool sign_values);
 
-PERNIX_API pernix_status pernix_compress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
+PERNIX_API pernix_status pernix_compress_block_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
                                                    double inverse_scale, void* output);
 
-PERNIX_API pernix_status pernix_compress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
+PERNIX_API pernix_status pernix_compress_blocks_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
                                                     double inverse_scale, void* output, u32 blocks);
 
-PERNIX_API pernix_status pernix_decompress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
+PERNIX_API pernix_status pernix_decompress_block_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, double scale,
                                                      void* output, bool sign_values);
 
-PERNIX_API pernix_status pernix_decompress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
+PERNIX_API pernix_status pernix_decompress_blocks_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, double scale,
                                                       void* output, u32 blocks, bool sign_values);
 
 #ifdef __cplusplus

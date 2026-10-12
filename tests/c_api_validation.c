@@ -21,6 +21,32 @@ int main(void) {
     u8 compressed[block_size]   = {0};
     float scale_f32             = 0.0f;
     double scale_f64            = 0.0;
+    pernix_dispatcher* dispatcher = 0;
+    pernix_dispatcher* auto_dispatcher = 0;
+    pernix_dispatcher* invalid_dispatcher = 0;
+    pernix_backend selected_backend = PERNIX_BACKEND_AUTO;
+
+    if (expect_status(pernix_dispatcher_create(PERNIX_BACKEND_FALLBACK, &dispatcher), PERNIX_STATUS_OK) != 0 ||
+        expect_status(pernix_dispatcher_backend(dispatcher, &selected_backend), PERNIX_STATUS_OK) != 0 ||
+        selected_backend != PERNIX_BACKEND_FALLBACK) {
+        return 1;
+    }
+    if (expect_status(pernix_dispatcher_create(PERNIX_BACKEND_AUTO, &auto_dispatcher), PERNIX_STATUS_OK) != 0 ||
+        expect_status(pernix_dispatcher_backend(auto_dispatcher, &selected_backend), PERNIX_STATUS_OK) != 0 ||
+        selected_backend == PERNIX_BACKEND_AUTO) {
+        return 1;
+    }
+    if (expect_status(pernix_dispatcher_backend(0, &selected_backend), PERNIX_STATUS_INVALID_ARGUMENT) != 0 ||
+        expect_status(pernix_dispatcher_backend(dispatcher, 0), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+        return 1;
+    }
+    if (expect_status(pernix_dispatcher_create((pernix_backend)255, &invalid_dispatcher), PERNIX_STATUS_UNSUPPORTED_BACKEND) != 0 ||
+        invalid_dispatcher != 0) {
+        return 1;
+    }
+    if (expect_status(pernix_dispatcher_create(PERNIX_BACKEND_FALLBACK, 0), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+        return 1;
+    }
 
     if (expect_status(pernix_scale_f32(1.0f, bit_width, &scale_f32), PERNIX_STATUS_OK) != 0) {
         return 1;
@@ -51,6 +77,7 @@ int main(void) {
 
     if (strcmp(pernix_status_string(PERNIX_STATUS_OK), "PERNIX_STATUS_OK") != 0 ||
         strcmp(pernix_status_string(PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION), "PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION") != 0 ||
+        strcmp(pernix_status_string(PERNIX_STATUS_OUT_OF_MEMORY), "PERNIX_STATUS_OUT_OF_MEMORY") != 0 ||
         strcmp(pernix_status_string((pernix_status)123), "PERNIX_STATUS_UNKNOWN") != 0) {
         return 23;
     }
@@ -85,63 +112,65 @@ int main(void) {
         return 28;
     }
 
-    if (expect_status(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, 0, block_size, input_f32, 1.0f, compressed),
+    if (expect_status(pernix_compress_block_f32(dispatcher, 0, block_size, input_f32, 1.0f, compressed),
                       PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH) != 0) {
         return 9;
     }
-    if (expect_status(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, 96, input_f32, 1.0f, compressed),
+    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, 96, input_f32, 1.0f, compressed),
                       PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE) != 0) {
         return 10;
     }
-    if (expect_status(pernix_compress_block_f32((pernix_backend)255, bit_width, block_size, input_f32, 1.0f, compressed),
-                      PERNIX_STATUS_UNSUPPORTED_BACKEND) != 0) {
+    if (expect_status(pernix_compress_block_f32(0, bit_width, block_size, input_f32, 1.0f, compressed),
+                      PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 11;
     }
-    if (expect_status(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, 0, 1.0f, compressed),
+    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, 0, 1.0f, compressed),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 12;
     }
-    if (expect_status(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input_f32, 1.0f, 0),
+    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, input_f32, 1.0f, 0),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 13;
     }
-    if (expect_status(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input_f32, 0.0f, compressed),
+    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, input_f32, 0.0f, compressed),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 14;
     }
-    if (expect_status(pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, 0, 1.0f, output_f32, true),
+    if (expect_status(pernix_decompress_block_f32(dispatcher, bit_width, block_size, 0, 1.0f, output_f32, true),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 15;
     }
-    if (expect_status(pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, 1.0f, 0, true),
+    if (expect_status(pernix_decompress_block_f32(dispatcher, bit_width, block_size, compressed, 1.0f, 0, true),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 16;
     }
-    if (expect_status(pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, -1.0f, output_f32, true),
+    if (expect_status(pernix_decompress_block_f32(dispatcher, bit_width, block_size, compressed, -1.0f, output_f32, true),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 17;
     }
-    if (expect_status(pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input_f32, 1.0f, compressed, 0),
+    if (expect_status(pernix_compress_blocks_f32(dispatcher, bit_width, block_size, input_f32, 1.0f, compressed, 0),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 18;
     }
 
-    if (expect_status(pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, bit_width, block_size, input_f64, 1.0, compressed),
+    if (expect_status(pernix_compress_block_f64(dispatcher, bit_width, block_size, input_f64, 1.0, compressed),
                       PERNIX_STATUS_OK) != 0) {
         return 19;
     }
-    if (expect_status(pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, 1.0, output_f64, true),
+    if (expect_status(pernix_decompress_block_f64(dispatcher, bit_width, block_size, compressed, 1.0, output_f64, true),
                       PERNIX_STATUS_OK) != 0) {
         return 20;
     }
-    if (expect_status(pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK, bit_width, block_size, 0, 1.0, compressed, 1),
+    if (expect_status(pernix_compress_blocks_f64(dispatcher, bit_width, block_size, 0, 1.0, compressed, 1),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 21;
     }
-    if (expect_status(pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK, bit_width, block_size, compressed, 1.0, 0, 1, true),
+    if (expect_status(pernix_decompress_blocks_f64(dispatcher, bit_width, block_size, compressed, 1.0, 0, 1, true),
                       PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 22;
     }
 
+    pernix_dispatcher_destroy(dispatcher);
+    pernix_dispatcher_destroy(auto_dispatcher);
     return 0;
 }

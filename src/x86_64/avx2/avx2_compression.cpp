@@ -4,19 +4,19 @@
 namespace pernix::internal {
 #define PERNIX_CASE_COMPRESS_BLOCK_32(N, BS) \
     case N:                                  \
-        return Kernel<KernelBlockF32Func>("avx2", &mm256_compress_block_avx2<N, BS>)
+        return Kernel<KernelBlockF32Func>(&mm256_compress_block_avx2<N, BS>)
 
 #define PERNIX_CASE_COMPRESS_BLOCKS_32(N, BS) \
     case N:                                   \
-        return Kernel<KernelBlocksF32Func>("avx2", &mm256_compress_blocks_avx2<N, BS>)
+        return Kernel<KernelBlocksF32Func>(&mm256_compress_blocks_avx2<N, BS>)
 
 #define PERNIX_CASE_COMPRESS_BLOCK_64(N, BS) \
     case N:                                  \
-        return Kernel<KernelBlockF64Func>("avx2", &mm256_compress_block_avx2<N, BS>)
+        return Kernel<KernelBlockF64Func>(&mm256_compress_block_avx2<N, BS>)
 
 #define PERNIX_CASE_COMPRESS_BLOCKS_64(N, BS) \
     case N:                                   \
-        return Kernel<KernelBlocksF64Func>("avx2", &mm256_compress_blocks_avx2<N, BS>)
+        return Kernel<KernelBlocksF64Func>(&mm256_compress_blocks_avx2<N, BS>)
 
 #define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)   \
     case BS:                                       \
@@ -46,7 +46,7 @@ namespace pernix::internal {
             PERNIX_CASE_COMPRESS_BLOCK_32(23, BS); \
             PERNIX_CASE_COMPRESS_BLOCK_32(24, BS); \
             default:                               \
-                return {"avx2", nullptr};          \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};          \
         }
 
 #define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS) \
@@ -77,7 +77,7 @@ namespace pernix::internal {
             PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);     \
             PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);     \
             default:                                    \
-                return {"avx2", nullptr};               \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};               \
         }
 
 #define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)   \
@@ -108,7 +108,7 @@ namespace pernix::internal {
             PERNIX_CASE_COMPRESS_BLOCK_64(23, BS); \
             PERNIX_CASE_COMPRESS_BLOCK_64(24, BS); \
             default:                               \
-                return {"avx2", nullptr};          \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};          \
         }
 
 #define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS) \
@@ -139,7 +139,7 @@ namespace pernix::internal {
             PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);     \
             PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);     \
             default:                                    \
-                return {"avx2", nullptr};               \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};               \
         }
 
 Kernel<KernelBlockF32Func> select_avx2_compress_block_f32(const u8 bit_width, const u32 block_size) {
@@ -150,7 +150,7 @@ Kernel<KernelBlockF32Func> select_avx2_compress_block_f32(const u8 bit_width, co
         PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(512);
         PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(1024);
         default:
-            return {"avx2", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 
@@ -162,7 +162,7 @@ Kernel<KernelBlocksF32Func> select_avx2_compress_blocks_f32(const u8 bit_width, 
         PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(512);
         PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(1024);
         default:
-            return {"avx2", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 
@@ -174,7 +174,7 @@ Kernel<KernelBlockF64Func> select_avx2_compress_block_f64(const u8 bit_width, co
         PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(512);
         PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(1024);
         default:
-            return {"avx2", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 
@@ -186,7 +186,7 @@ Kernel<KernelBlocksF64Func> select_avx2_compress_blocks_f64(const u8 bit_width, 
         PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(512);
         PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(1024);
         default:
-            return {"avx2", nullptr};
+            return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
 }
 

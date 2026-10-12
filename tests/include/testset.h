@@ -2,6 +2,8 @@
 #define PERNIX_TESTSET_H
 
 #include <pernix/pernix.h>
+#include <dispatcher_test_helpers.h>
+#include <cpp_dispatcher_test_helpers.h>
 
 #include <algorithm>
 #include <cmath>
@@ -95,10 +97,10 @@ private:
                                                                                                    : std::numeric_limits<T>::epsilon();
 
             if constexpr (std::is_same_v<T, float>) {
-                pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0f / scalesData[i],
+                test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0f / scalesData[i],
                                           compressedData[i].data());
             } else {
-                pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0 / scalesData[i],
+                test_pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0 / scalesData[i],
                                           compressedData[i].data());
             }
         }

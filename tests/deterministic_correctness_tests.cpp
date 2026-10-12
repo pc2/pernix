@@ -159,9 +159,9 @@ template <typename FloatT>
 pernix_status compress_blocks(pernix_backend backend, const u8 bit_width, const std::vector<FloatT>& input, const FloatT inverse_scale,
                               std::vector<u8>& compressed, const u32 blocks) {
     if constexpr (std::is_same_v<FloatT, float>) {
-        return pernix_compress_blocks_f32(backend, bit_width, kBlockSize, input.data(), inverse_scale, compressed.data(), blocks);
+        return test_pernix_compress_blocks_f32(backend, bit_width, kBlockSize, input.data(), inverse_scale, compressed.data(), blocks);
     } else {
-        return pernix_compress_blocks_f64(backend, bit_width, kBlockSize, input.data(), inverse_scale, compressed.data(), blocks);
+        return test_pernix_compress_blocks_f64(backend, bit_width, kBlockSize, input.data(), inverse_scale, compressed.data(), blocks);
     }
 }
 
@@ -169,9 +169,9 @@ template <typename FloatT>
 pernix_status decompress_blocks(pernix_backend backend, const u8 bit_width, const std::vector<u8>& compressed, const FloatT scale,
                                 std::vector<FloatT>& output, const u32 blocks, const bool sign_values = true) {
     if constexpr (std::is_same_v<FloatT, float>) {
-        return pernix_decompress_blocks_f32(backend, bit_width, kBlockSize, compressed.data(), scale, output.data(), blocks, sign_values);
+        return test_pernix_decompress_blocks_f32(backend, bit_width, kBlockSize, compressed.data(), scale, output.data(), blocks, sign_values);
     } else {
-        return pernix_decompress_blocks_f64(backend, bit_width, kBlockSize, compressed.data(), scale, output.data(), blocks, sign_values);
+        return test_pernix_decompress_blocks_f64(backend, bit_width, kBlockSize, compressed.data(), scale, output.data(), blocks, sign_values);
     }
 }
 
@@ -293,12 +293,12 @@ TEST(DeterministicCorrectnessTest, SignValuesFalseUsesUnsignedPackedValuesForAll
         std::vector<double> unsigned_values_f64(elements);
 
         ASSERT_EQ(
-            pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f, signed_values.data(), true),
+            test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f, signed_values.data(), true),
             PERNIX_STATUS_OK);
         ASSERT_EQ(
-            pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f, unsigned_values.data(), false),
+            test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f, unsigned_values.data(), false),
             PERNIX_STATUS_OK);
-        ASSERT_EQ(pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0,
+        ASSERT_EQ(test_pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0,
                                               unsigned_values_f64.data(), false),
                   PERNIX_STATUS_OK);
 
@@ -312,9 +312,9 @@ TEST(DeterministicCorrectnessTest, SignValuesFalseUsesUnsignedPackedValuesForAll
             std::vector<float> backend_values(elements);
             std::vector<double> backend_values_f64(elements);
             const pernix_status status_f32 =
-                pernix_decompress_block_f32(backend, bit_width, kBlockSize, packed.data(), 1.0f, backend_values.data(), false);
+                test_pernix_decompress_block_f32(backend, bit_width, kBlockSize, packed.data(), 1.0f, backend_values.data(), false);
             const pernix_status status_f64 =
-                pernix_decompress_block_f64(backend, bit_width, kBlockSize, packed.data(), 1.0, backend_values_f64.data(), false);
+                test_pernix_decompress_block_f64(backend, bit_width, kBlockSize, packed.data(), 1.0, backend_values_f64.data(), false);
             if (status_f32 == PERNIX_STATUS_OK) {
                 EXPECT_EQ(backend_values, unsigned_values);
             } else {
@@ -352,11 +352,11 @@ TEST(DeterministicCorrectnessTest, Avx512TableDrivenSmallWidthsMatchFallbackForM
             std::vector<float> fallback_output(elements);
             std::vector<float> avx512_output(elements);
 
-            ASSERT_EQ(pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f,
+            ASSERT_EQ(test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, packed.data(), 1.0f,
                                                   fallback_output.data(), sign_values),
                       PERNIX_STATUS_OK);
 
-            const pernix_status status = pernix_decompress_block_f32(PERNIX_BACKEND_X86_AVX512_VBMI, bit_width, kBlockSize, packed.data(),
+            const pernix_status status = test_pernix_decompress_block_f32(PERNIX_BACKEND_X86_AVX512_VBMI, bit_width, kBlockSize, packed.data(),
                                                                      1.0f, avx512_output.data(), sign_values);
             if (status != PERNIX_STATUS_OK) {
                 EXPECT_TRUE(status == PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION || status == PERNIX_STATUS_UNSUPPORTED_BACKEND ||
@@ -377,9 +377,9 @@ TEST(DeterministicCorrectnessTest, CppSpanWrappersMatchCApiOutputAndStatus) {
 
     std::vector<u8> c_compressed(kBlockSize);
     std::vector<u8> cpp_compressed(kBlockSize);
-    EXPECT_EQ(pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, input.data(), 1.0f / scale, c_compressed.data()),
+    EXPECT_EQ(test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, input.data(), 1.0f / scale, c_compressed.data()),
               PERNIX_STATUS_OK);
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const float>(input), 1.0f / scale,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const float>(input), 1.0f / scale,
                                      std::span<u8>(cpp_compressed)),
               PERNIX_STATUS_OK);
     EXPECT_EQ(cpp_compressed, c_compressed);
@@ -387,16 +387,16 @@ TEST(DeterministicCorrectnessTest, CppSpanWrappersMatchCApiOutputAndStatus) {
     std::vector<float> c_restored(input.size());
     std::vector<float> cpp_restored(input.size());
     EXPECT_EQ(
-        pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, c_compressed.data(), scale, c_restored.data(), true),
+        test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, bit_width, kBlockSize, c_compressed.data(), scale, c_restored.data(), true),
         PERNIX_STATUS_OK);
-    EXPECT_EQ(pernix::decompress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(cpp_compressed), scale,
+    EXPECT_EQ(pernix_test::decompress_block(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(cpp_compressed), scale,
                                        std::span<float>(cpp_restored)),
               PERNIX_STATUS_OK);
     EXPECT_EQ(cpp_restored, c_restored);
 
-    EXPECT_EQ(pernix::compress_block(pernix::Backend::Fallback, 0, kBlockSize, std::span<const float>(input), 1.0f / scale,
+    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, 0, kBlockSize, std::span<const float>(input), 1.0f / scale,
                                      std::span<u8>(cpp_compressed)),
-              pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, 0, kBlockSize, input.data(), 1.0f / scale, c_compressed.data()));
+              test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, 0, kBlockSize, input.data(), 1.0f / scale, c_compressed.data()));
 }
 
 TEST(DeterministicCorrectnessTest, SpanValidationRejectsUndersizedMultiBlockBuffers) {
@@ -406,16 +406,16 @@ TEST(DeterministicCorrectnessTest, SpanValidationRejectsUndersizedMultiBlockBuff
     std::vector<u8> compressed(2U * kBlockSize);
     std::vector<float> restored(elements);
 
-    EXPECT_EQ(pernix::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize,
+    EXPECT_EQ(pernix_test::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize,
                                       std::span<const float>(input).first(input.size() - 1U), 1.0f, std::span<u8>(compressed), 2),
               PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const float>(input), 1.0f,
+    EXPECT_EQ(pernix_test::compress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const float>(input), 1.0f,
                                       std::span<u8>(compressed).first(compressed.size() - 1U), 2),
               PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize,
+    EXPECT_EQ(pernix_test::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize,
                                         std::span<const u8>(compressed).first(compressed.size() - 1U), 1.0f, std::span<float>(restored), 2),
               PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(compressed), 1.0f,
+    EXPECT_EQ(pernix_test::decompress_blocks(pernix::Backend::Fallback, bit_width, kBlockSize, std::span<const u8>(compressed), 1.0f,
                                         std::span<float>(restored).first(restored.size() - 1U), 2),
               PERNIX_STATUS_INVALID_ARGUMENT);
 }

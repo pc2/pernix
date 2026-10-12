@@ -36,6 +36,8 @@
 #endif
 
 namespace pernix::internal {
+pernix_status resolve_backend(Backend requested, Backend* resolved) noexcept;
+
 Kernel<KernelBlockF32Func> select_compress_block_f32(Backend backend, u8 bit_width, u32 block_size);
 
 Kernel<KernelBlocksF32Func> select_compress_blocks_f32(Backend backend, u8 bit_width, u32 block_size);
@@ -51,22 +53,6 @@ Kernel<KernelBlocksF32Func> select_decompress_blocks_f32(Backend backend, u8 bit
 Kernel<KernelBlockF64Func> select_decompress_block_f64(Backend backend, u8 bit_width, u32 block_size, bool sign_values);
 
 Kernel<KernelBlocksF64Func> select_decompress_blocks_f64(Backend backend, u8 bit_width, u32 block_size, bool sign_values);
-
-Kernel<KernelBlockF32Func> select_auto_compress_block_f32(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlocksF32Func> select_auto_compress_blocks_f32(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlockF64Func> select_auto_compress_block_f64(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlocksF64Func> select_auto_compress_blocks_f64(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlockF32Func> select_auto_decompress_block_f32(u8 bit_width, u32 block_size, bool sign_values);
-
-Kernel<KernelBlocksF32Func> select_auto_decompress_blocks_f32(u8 bit_width, u32 block_size, bool sign_values);
-
-Kernel<KernelBlockF64Func> select_auto_decompress_block_f64(u8 bit_width, u32 block_size, bool sign_values);
-
-Kernel<KernelBlocksF64Func> select_auto_decompress_blocks_f64(u8 bit_width, u32 block_size, bool sign_values);
 
 Kernel<KernelBlockF32Func> select_fallback_compress_block_f32(u8 bit_width, u32 block_size);
 
@@ -233,7 +219,7 @@ Kernel<KernelBlocksF64Func> select_sve2_decompress_blocks_f64(u8 bit_width, u32 
 #endif
 }  // namespace pernix::internal
 
-#if !defined(PERNIX_BUILD_LIB)
+#if !defined(PERNIX_BUILD_LIB) && !defined(PERNIX_USE_COMPILED_LIB)
 #include <pernix/dispatch/select_impl.h>
 #endif
 

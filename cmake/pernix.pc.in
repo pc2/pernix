@@ -8,4 +8,4 @@ description: A high-performance C++ library for de/compression of floating-point
 version: @PROJECT_VERSION@
 
 Libs: -L${libdir} -lpernix
-Cflags: -I${includedir}
+Cflags: -I${includedir} -DPERNIX_USE_COMPILED_LIB=1

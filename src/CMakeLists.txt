@@ -2,7 +2,7 @@ add_library(pernix)
 add_library(pernix::pernix ALIAS pernix)
 set_target_properties(pernix PROPERTIES
         VERSION "${PROJECT_VERSION}"
-        SOVERSION "${PROJECT_VERSION_MAJOR}"
+        SOVERSION "1"
         CXX_EXTENSIONS OFF)
 
 add_library(pernix_header_only INTERFACE)
@@ -49,6 +49,7 @@ target_include_directories(pernix_header_only
 )
 
 target_compile_definitions(pernix PRIVATE PERNIX_BUILD_LIB=1)
+target_compile_definitions(pernix PUBLIC PERNIX_USE_COMPILED_LIB=1)
 target_compile_options(pernix PRIVATE ${PERNIX_PRIVATE_COMPILE_OPTIONS})
 
 if (BUILD_SHARED_LIBS)

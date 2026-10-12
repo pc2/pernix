@@ -6,7 +6,6 @@
 
 #include <cmath>
 #include <limits>
-#include <string_view>
 #include <type_traits>
 
 namespace pernix::detail {
@@ -84,19 +83,11 @@ inline const char* status_string(const pernix_status status) {
             return "PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE";
         case PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION:
             return "PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION";
+        case PERNIX_STATUS_OUT_OF_MEMORY:
+            return "PERNIX_STATUS_OUT_OF_MEMORY";
         default:
             return "PERNIX_STATUS_UNKNOWN";
     }
-}
-
-inline pernix_status select_error_status(const std::string_view kernel_name) {
-    if (kernel_name == "invalid_backend") {
-        return PERNIX_STATUS_UNSUPPORTED_BACKEND;
-    }
-    if (kernel_name == "unsupported_implementation") {
-        return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
-    }
-    return PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH;
 }
 
 template <typename ScaleType>
@@ -120,7 +111,7 @@ inline pernix_status compress_block(const Backend backend, const u8 bit_width, c
         }
     }();
     if (!kernel) {
-        return select_error_status(kernel.name);
+        return kernel.status;
     }
 
     return static_cast<pernix_status>(kernel.func(input, scale, output));
@@ -150,7 +141,7 @@ inline pernix_status compress_blocks(const Backend backend, const u8 bit_width, 
         }
     }();
     if (!kernel) {
-        return select_error_status(kernel.name);
+        return kernel.status;
     }
 
     return static_cast<pernix_status>(kernel.func(input, scale, output, blocks));
@@ -177,7 +168,7 @@ inline pernix_status decompress_block(const Backend backend, const u8 bit_width,
         }
     }();
     if (!kernel) {
-        return select_error_status(kernel.name);
+        return kernel.status;
     }
 
     return static_cast<pernix_status>(kernel.func(input, scale, output));
@@ -207,7 +198,7 @@ inline pernix_status decompress_blocks(const Backend backend, const u8 bit_width
         }
     }();
     if (!kernel) {
-        return select_error_status(kernel.name);
+        return kernel.status;
     }
 
     return static_cast<pernix_status>(kernel.func(input, scale, output, blocks));

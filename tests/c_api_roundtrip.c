@@ -29,7 +29,7 @@ int main(void) {
     }
 
     float scale = 0.0f;
-    if (pernix_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK) {
+    if (pernix_decompression_scale_f32(bmax, bit_width, &scale) != PERNIX_STATUS_OK) {
         return 1;
     }
 

@@ -55,9 +55,6 @@ inline constexpr BackendDescriptor kBackendDescriptors[] = {
 #if defined(PERNIX_BUILD_FALLBACK_STDPAR)
     PERNIX_BACKEND_DESCRIPTOR(FallbackStdpar, fallback_stdpar, 0U),
 #endif
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    PERNIX_BACKEND_DESCRIPTOR(FallbackSimd, fallback_simd, 0U),
-#endif
 #if defined(PERNIX_BUILD_X86_AVX512_VBMI)
     PERNIX_BACKEND_DESCRIPTOR(X86Avx512Vbmi, avx512vbmi,
                               CpuAvx512F | CpuAvx512Dq | CpuAvx512Bw | CpuAvx512Vl | CpuAvx512Vbmi),
@@ -120,7 +117,6 @@ constexpr bool is_known_backend(const Backend backend) noexcept {
         case Backend::Arm64Neon:
         case Backend::Arm64Sve:
         case Backend::FallbackStdpar:
-        case Backend::FallbackSimd:
             return true;
         default:
             return false;

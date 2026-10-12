@@ -179,11 +179,11 @@ TEST(HeaderOnlyPernix, PublicHelpersDescribeFixedBlockFormat) {
     EXPECT_EQ(pernix::elements_per_block(0), 0);
 
     float scale_f32 = 0.0f;
-    EXPECT_EQ(pernix::scale_from_bmax(32767.0f, 16, scale_f32), PERNIX_STATUS_OK);
+    EXPECT_EQ(pernix::decompression_scale_from_bmax(32767.0f, 16, scale_f32), PERNIX_STATUS_OK);
     EXPECT_FLOAT_EQ(scale_f32, 1.0f);
 
     double scale_f64 = 0.0;
-    EXPECT_EQ(pernix::scale_from_bmax(0.0, 16, scale_f64), PERNIX_STATUS_OK);
+    EXPECT_EQ(pernix::decompression_scale_from_bmax(0.0, 16, scale_f64), PERNIX_STATUS_OK);
     EXPECT_GT(scale_f64, 0.0);
 }
 
@@ -270,10 +270,6 @@ TEST(HeaderOnlyPernix, RejectsInvalidScale) {
     EXPECT_EQ(pernix_test::compress_block(pernix::Backend::Fallback, kBitWidth, kBlockSize, std::span<const float>(input),
                                      std::numeric_limits<float>::infinity(), std::span<u8>(compressed)),
               PERNIX_STATUS_INVALID_ARGUMENT);
-}
-
-TEST(HeaderOnlyPernix, FallbackAliasMatchesScalar) {
-    EXPECT_EQ(static_cast<int>(pernix::Backend::Fallback), static_cast<int>(pernix::Backend::FallbackScalar));
 }
 
 TEST(HeaderOnlyPernix, FallbackStdparReturnsUnsupportedImplementation) {
@@ -416,15 +412,6 @@ TEST(HeaderOnlyPernix, FallbackStdparRepeatedSingleBlockCompressionIsDeterminist
     EXPECT_EQ(second_compressed, first_compressed);
 }
 #endif
-
-TEST(HeaderOnlyPernix, FallbackSimdReturnsUnsupportedImplementation) {
-    auto input = make_input<float>();
-    std::vector<u8> compressed(kBlockSize);
-
-    EXPECT_EQ(pernix_test::compress_block(pernix::Backend::FallbackSimd, kBitWidth, kBlockSize, std::span<const float>(input), 1.0f,
-                                     std::span<u8>(compressed)),
-              PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
-}
 
 TEST(HeaderOnlyPernix, AutoDoubleRoundTrip) {
     pernix::Dispatcher dispatcher;

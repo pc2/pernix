@@ -35,20 +35,12 @@ const char* pernix_status_string(pernix_status status) {
     return pernix::detail::status_string(status);
 }
 
-pernix_status pernix_scale_f32(float bmax, u8 bit_width, float* scale) {
-    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
-}
-
-pernix_status pernix_scale_f64(double bmax, u8 bit_width, double* scale) {
-    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
-}
-
 pernix_status pernix_decompression_scale_f32(float bmax, u8 bit_width, float* scale) {
-    return pernix_scale_f32(bmax, bit_width, scale);
+    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
 }
 
 pernix_status pernix_decompression_scale_f64(double bmax, u8 bit_width, double* scale) {
-    return pernix_scale_f64(bmax, bit_width, scale);
+    return pernix::detail::scale_from_bmax(bmax, bit_width, scale);
 }
 
 pernix_status pernix_inverse_scale_f32(float scale, float* inverse_scale) {
@@ -74,7 +66,7 @@ pernix_status pernix_dispatcher_create(pernix_backend backend, pernix_dispatcher
     *dispatcher = nullptr;
 
     const int requested_value = static_cast<int>(backend);
-    if (requested_value < PERNIX_BACKEND_AUTO || requested_value > PERNIX_BACKEND_FALLBACK_SIMD) {
+    if (requested_value < PERNIX_BACKEND_AUTO || requested_value > PERNIX_BACKEND_FALLBACK_STDPAR) {
         return PERNIX_STATUS_UNSUPPORTED_BACKEND;
     }
 

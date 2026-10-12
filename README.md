@@ -69,9 +69,6 @@ Use these helpers to avoid mixing the two conventions:
 * C: `pernix_decompression_scale_f32`, `pernix_compression_scale_f32`, `pernix_inverse_scale_f32`
 * C f64: the same names with `_f64`
 
-Compatibility aliases `pernix::scale_from_bmax`, `pernix_scale_f32`, and `pernix_scale_f64` compute the forward
-decompression scale.
-
 Scale arguments passed to compression and decompression must be finite and greater than zero. Zero, negative, NaN, or
 infinite scales return `PERNIX_STATUS_INVALID_ARGUMENT`.
 
@@ -131,7 +128,6 @@ Current backend enum values:
 * `PERNIX_BACKEND_ARM64_NEON`
 * `PERNIX_BACKEND_ARM64_SVE`
 * `PERNIX_BACKEND_FALLBACK_STDPAR`
-* `PERNIX_BACKEND_FALLBACK_SIMD`
 
 Auto resolves once and never switches backends per operation. If the selected backend has no kernel for an operation,
 that call returns `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`. ARM64 compression kernels are currently incomplete, so use

@@ -36,13 +36,8 @@ constexpr u32 elements_per_block(const u8 bit_width) {
 }
 
 template <typename FloatT>
-__always_inline Status scale_from_bmax(const FloatT bmax, const u8 bit_width, FloatT& scale) {
-    return detail::scale_from_bmax(bmax, bit_width, &scale);
-}
-
-template <typename FloatT>
 __always_inline Status decompression_scale_from_bmax(const FloatT bmax, const u8 bit_width, FloatT& scale) {
-    return scale_from_bmax(bmax, bit_width, scale);
+    return detail::scale_from_bmax(bmax, bit_width, &scale);
 }
 
 template <typename FloatT>

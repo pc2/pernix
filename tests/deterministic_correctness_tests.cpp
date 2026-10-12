@@ -69,9 +69,9 @@ FloatT max_abs(const std::vector<FloatT>& values) {
 template <typename FloatT>
 pernix_status compute_scale(const FloatT bmax, const u8 bit_width, FloatT& scale) {
     if constexpr (std::is_same_v<FloatT, float>) {
-        return pernix_scale_f32(bmax, bit_width, &scale);
+        return pernix_decompression_scale_f32(bmax, bit_width, &scale);
     } else {
-        return pernix_scale_f64(bmax, bit_width, &scale);
+        return pernix_decompression_scale_f64(bmax, bit_width, &scale);
     }
 }
 

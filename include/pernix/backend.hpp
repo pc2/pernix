@@ -7,14 +7,12 @@ namespace pernix {
 enum class Backend : u8 {
     Auto           = PERNIX_BACKEND_AUTO,
     Fallback       = PERNIX_BACKEND_FALLBACK,
-    FallbackScalar = PERNIX_BACKEND_FALLBACK_SCALAR,
     X86Avx2        = PERNIX_BACKEND_X86_AVX2,
     X86Bmi2        = PERNIX_BACKEND_X86_BMI2,
     X86Avx512Vbmi  = PERNIX_BACKEND_X86_AVX512_VBMI,
     Arm64Neon      = PERNIX_BACKEND_ARM64_NEON,
     Arm64Sve       = PERNIX_BACKEND_ARM64_SVE,
     FallbackStdpar = PERNIX_BACKEND_FALLBACK_STDPAR,
-    FallbackSimd   = PERNIX_BACKEND_FALLBACK_SIMD,
 };
 }  // namespace pernix
 

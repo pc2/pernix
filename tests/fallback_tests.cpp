@@ -605,14 +605,14 @@ TEST(FallbackEdgeTest, ScaleHelpersValidateInputs) {
     float scale_f32  = 0.0f;
     double scale_f64 = 0.0;
 
-    EXPECT_EQ(pernix_scale_f32(32767.0f, 16, &scale_f32), PERNIX_STATUS_OK);
+    EXPECT_EQ(pernix_decompression_scale_f32(32767.0f, 16, &scale_f32), PERNIX_STATUS_OK);
     EXPECT_FLOAT_EQ(scale_f32, 1.0f);
-    EXPECT_EQ(pernix_scale_f64(32767.0, 16, &scale_f64), PERNIX_STATUS_OK);
+    EXPECT_EQ(pernix_decompression_scale_f64(32767.0, 16, &scale_f64), PERNIX_STATUS_OK);
     EXPECT_DOUBLE_EQ(scale_f64, 1.0);
-    EXPECT_EQ(pernix_scale_f32(1.0f, 0, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix_scale_f32(-1.0f, 16, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix_scale_f64(std::numeric_limits<double>::infinity(), 16, &scale_f64), PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(pernix_scale_f64(1.0, 16, nullptr), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_decompression_scale_f32(1.0f, 0, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_decompression_scale_f32(-1.0f, 16, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_decompression_scale_f64(std::numeric_limits<double>::infinity(), 16, &scale_f64), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_decompression_scale_f64(1.0, 16, nullptr), PERNIX_STATUS_INVALID_ARGUMENT);
 }
 
 #if defined(PERNIX_BUILD_FALLBACK_STDPAR)
@@ -938,10 +938,6 @@ TEST(ErrorCodeTest, NullPointerReturnsError) {
     EXPECT_EQ(st, PERNIX_STATUS_INVALID_ARGUMENT);
 }
 
-TEST(ErrorCodeTest, FallbackAliasMatchesScalar) {
-    EXPECT_EQ(PERNIX_BACKEND_FALLBACK, PERNIX_BACKEND_FALLBACK_SCALAR);
-}
-
 TEST(ErrorCodeTest, FallbackStdparAvailabilityMatchesBuildConfiguration) {
     constexpr u32 BS = 64;
     constexpr u8 BW  = 8;
@@ -956,17 +952,6 @@ TEST(ErrorCodeTest, FallbackStdparAvailabilityMatchesBuildConfiguration) {
     const auto st = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, src, 1.0f, dst);
     EXPECT_EQ(st, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
 #endif
-}
-
-TEST(ErrorCodeTest, FallbackSimdReturnsUnsupportedImplementationByDefault) {
-    constexpr u32 BS = 64;
-    constexpr u8 BW  = 8;
-
-    f32 src[(BS * 8U) / BW] = {};
-    u8 dst[BS]              = {};
-
-    const auto st = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_SIMD, BW, BS, src, 1.0f, dst);
-    EXPECT_EQ(st, PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION);
 }
 
 TEST(ErrorCodeTest, ExplicitUnavailableBackendReturnsError) {

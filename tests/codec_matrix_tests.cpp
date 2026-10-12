@@ -167,8 +167,6 @@ std::string backend_name(const pernix::Backend backend) {
             return "Arm64Sve";
         case pernix::Backend::FallbackStdpar:
             return "FallbackStdpar";
-        case pernix::Backend::FallbackSimd:
-            return "FallbackSimd";
         default:
             return "Fallback";
     }
@@ -196,9 +194,9 @@ pernix::Backend backend_from_name(const std::string_view name) {
 template <typename FloatT>
 void check_backend_matrix(const CodecCase& test_case, const u32 seed, const std::vector<i32>& source_codes,
                           const std::vector<u8>& reference_bytes) {
-    constexpr std::array<pernix::Backend, 7> backends{
+    constexpr std::array<pernix::Backend, 6> backends{
         pernix::Backend::X86Avx2,  pernix::Backend::X86Bmi2,        pernix::Backend::X86Avx512Vbmi, pernix::Backend::Arm64Neon,
-        pernix::Backend::Arm64Sve, pernix::Backend::FallbackStdpar, pernix::Backend::FallbackSimd,
+        pernix::Backend::Arm64Sve, pernix::Backend::FallbackStdpar,
     };
 
     std::vector<FloatT> input(source_codes.size());
@@ -404,6 +402,7 @@ TEST(DispatcherContractTest, AutoChoosesTheFirstSupportedBackendInPriorityOrder)
 
 TEST(DispatcherContractTest, RejectsInvalidBackendAndPreservesMoveOwnership) {
     pernix::Dispatcher output;
+    EXPECT_EQ(pernix::Dispatcher::create(static_cast<pernix::Backend>(8), output), PERNIX_STATUS_UNSUPPORTED_BACKEND);
     EXPECT_EQ(pernix::Dispatcher::create(static_cast<pernix::Backend>(255), output), PERNIX_STATUS_UNSUPPORTED_BACKEND);
     EXPECT_FALSE(output.configured());
     std::array<float, 32> input{};

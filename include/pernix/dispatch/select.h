@@ -102,22 +102,6 @@ Kernel<KernelBlockF64Func> select_fallback_stdpar_decompress_block_f64(u8 bit_wi
 
 Kernel<KernelBlocksF64Func> select_fallback_stdpar_decompress_blocks_f64(u8 bit_width, u32 block_size, bool sign_values);
 
-Kernel<KernelBlockF32Func> select_fallback_simd_compress_block_f32(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlocksF32Func> select_fallback_simd_compress_blocks_f32(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlockF64Func> select_fallback_simd_compress_block_f64(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlocksF64Func> select_fallback_simd_compress_blocks_f64(u8 bit_width, u32 block_size);
-
-Kernel<KernelBlockF32Func> select_fallback_simd_decompress_block_f32(u8 bit_width, u32 block_size, bool sign_values);
-
-Kernel<KernelBlocksF32Func> select_fallback_simd_decompress_blocks_f32(u8 bit_width, u32 block_size, bool sign_values);
-
-Kernel<KernelBlockF64Func> select_fallback_simd_decompress_block_f64(u8 bit_width, u32 block_size, bool sign_values);
-
-Kernel<KernelBlocksF64Func> select_fallback_simd_decompress_blocks_f64(u8 bit_width, u32 block_size, bool sign_values);
-
 #if defined(PERNIX_BUILD_X86_AVX2)
 
 Kernel<KernelBlockF32Func> select_avx2_compress_block_f32(u8 bit_width, u32 block_size);

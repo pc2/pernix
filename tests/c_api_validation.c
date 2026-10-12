@@ -40,6 +40,10 @@ int main(void) {
         expect_status(pernix_dispatcher_backend(dispatcher, 0), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 1;
     }
+    if (expect_status(pernix_dispatcher_create((pernix_backend)8, &invalid_dispatcher), PERNIX_STATUS_UNSUPPORTED_BACKEND) != 0 ||
+        invalid_dispatcher != 0) {
+        return 1;
+    }
     if (expect_status(pernix_dispatcher_create((pernix_backend)255, &invalid_dispatcher), PERNIX_STATUS_UNSUPPORTED_BACKEND) != 0 ||
         invalid_dispatcher != 0) {
         return 1;
@@ -48,19 +52,19 @@ int main(void) {
         return 1;
     }
 
-    if (expect_status(pernix_scale_f32(1.0f, bit_width, &scale_f32), PERNIX_STATUS_OK) != 0) {
+    if (expect_status(pernix_decompression_scale_f32(1.0f, bit_width, &scale_f32), PERNIX_STATUS_OK) != 0) {
         return 1;
     }
-    if (expect_status(pernix_scale_f64(1.0, bit_width, &scale_f64), PERNIX_STATUS_OK) != 0) {
+    if (expect_status(pernix_decompression_scale_f64(1.0, bit_width, &scale_f64), PERNIX_STATUS_OK) != 0) {
         return 2;
     }
-    if (expect_status(pernix_scale_f32(1.0f, bit_width, 0), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+    if (expect_status(pernix_decompression_scale_f32(1.0f, bit_width, 0), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 3;
     }
-    if (expect_status(pernix_scale_f32(-1.0f, bit_width, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+    if (expect_status(pernix_decompression_scale_f32(-1.0f, bit_width, &scale_f32), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 4;
     }
-    if (expect_status(pernix_scale_f64(INFINITY, bit_width, &scale_f64), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+    if (expect_status(pernix_decompression_scale_f64(INFINITY, bit_width, &scale_f64), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 5;
     }
 

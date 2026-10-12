@@ -8,10 +8,6 @@
 #include <pernix/fallback/stdpar_compression.h>
 #include <pernix/fallback/stdpar_decompression.h>
 #endif
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-#include <pernix/fallback/simd_compression.h>
-#include <pernix/fallback/simd_decompression.h>
-#endif
 #if defined(PERNIX_BUILD_X86_AVX2)
 #include <pernix/x86_64/avx2/avx2_compression.h>
 #include <pernix/x86_64/avx2/avx2_decompression.h>
@@ -437,38 +433,6 @@ inline Kernel<KernelBlocksF64Func> select_fallback_stdpar_compress_blocks_f64(co
         default:
             return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlockF32Func> select_fallback_simd_compress_block_f32(const u8, const u32) {
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    return Kernel<KernelBlockF32Func>(&compress_block_fallback_simd<1, 64, f32>);
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlocksF32Func> select_fallback_simd_compress_blocks_f32(const u8, const u32) {
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    return Kernel<KernelBlocksF32Func>(&compress_blocks_fallback_simd<1, 64, f32>);
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlockF64Func> select_fallback_simd_compress_block_f64(const u8, const u32) {
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    return Kernel<KernelBlockF64Func>(&compress_block_fallback_simd<1, 64, f64>);
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlocksF64Func> select_fallback_simd_compress_blocks_f64(const u8, const u32) {
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    return Kernel<KernelBlocksF64Func>(&compress_blocks_fallback_simd<1, 64, f64>);
 #else
     return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
 #endif
@@ -919,54 +883,6 @@ inline Kernel<KernelBlocksF64Func> select_fallback_stdpar_decompress_blocks_f64(
         default:
             return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};
     }
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlockF32Func> select_fallback_simd_decompress_block_f32(const u8, const u32, const bool sign_values) {
-    static_cast<void>(sign_values);
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    if (sign_values) {
-        return Kernel<KernelBlockF32Func>(&decompress_block_fallback_simd<1, true, 64, f32>);
-    }
-    return Kernel<KernelBlockF32Func>(&decompress_block_fallback_simd<1, false, 64, f32>);
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlocksF32Func> select_fallback_simd_decompress_blocks_f32(const u8, const u32, const bool sign_values) {
-    static_cast<void>(sign_values);
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    if (sign_values) {
-        return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback_simd<1, true, 64, f32>);
-    }
-    return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback_simd<1, false, 64, f32>);
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlockF64Func> select_fallback_simd_decompress_block_f64(const u8, const u32, const bool sign_values) {
-    static_cast<void>(sign_values);
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    if (sign_values) {
-        return Kernel<KernelBlockF64Func>(&decompress_block_fallback_simd<1, true, 64, f64>);
-    }
-    return Kernel<KernelBlockF64Func>(&decompress_block_fallback_simd<1, false, 64, f64>);
-#else
-    return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
-#endif
-}
-
-inline Kernel<KernelBlocksF64Func> select_fallback_simd_decompress_blocks_f64(const u8, const u32, const bool sign_values) {
-    static_cast<void>(sign_values);
-#if defined(PERNIX_BUILD_FALLBACK_SIMD)
-    if (sign_values) {
-        return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback_simd<1, true, 64, f64>);
-    }
-    return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback_simd<1, false, 64, f64>);
 #else
     return {PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION, nullptr};
 #endif

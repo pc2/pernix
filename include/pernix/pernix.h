@@ -24,14 +24,12 @@ typedef enum pernix_status {  // NOLINT(cppcoreguidelines-use-enum-class, modern
 typedef enum pernix_backend {  // NOLINT(cppcoreguidelines-use-enum-class, modernize-use-using)
     PERNIX_BACKEND_AUTO            = 0,
     PERNIX_BACKEND_FALLBACK        = 1,
-    PERNIX_BACKEND_FALLBACK_SCALAR = PERNIX_BACKEND_FALLBACK,
     PERNIX_BACKEND_X86_AVX2        = 2,
     PERNIX_BACKEND_X86_BMI2        = 3,
     PERNIX_BACKEND_X86_AVX512_VBMI = 4,
     PERNIX_BACKEND_ARM64_NEON      = 5,
     PERNIX_BACKEND_ARM64_SVE       = 6,
     PERNIX_BACKEND_FALLBACK_STDPAR = 7,
-    PERNIX_BACKEND_FALLBACK_SIMD   = 8,
 } pernix_backend;
 
 typedef struct pernix_dispatcher pernix_dispatcher;
@@ -58,15 +56,9 @@ PERNIX_API u32 pernix_elements_per_block(u8 bit_width);
 PERNIX_API const char* pernix_status_string(pernix_status status);
 
 /* Computes the forward decompression scale from bmax and bit width. */
-PERNIX_API pernix_status pernix_scale_f32(float bmax, u8 bit_width, float* scale);
-
-/* Computes the forward decompression scale from bmax and bit width. */
-PERNIX_API pernix_status pernix_scale_f64(double bmax, u8 bit_width, double* scale);
-
-/* Clearer alias for pernix_scale_f32. */
 PERNIX_API pernix_status pernix_decompression_scale_f32(float bmax, u8 bit_width, float* scale);
 
-/* Clearer alias for pernix_scale_f64. */
+/* Computes the forward decompression scale from bmax and bit width. */
 PERNIX_API pernix_status pernix_decompression_scale_f64(double bmax, u8 bit_width, double* scale);
 
 /* Computes 1 / scale for the compression API from a valid forward scale. */

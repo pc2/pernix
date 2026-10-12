@@ -17,13 +17,12 @@ env:
   CCACHE_MAXSIZE: 500M
 
 jobs:
-  release:
+  x86_64-release:
     name: ${{ matrix.compiler }} release
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc, clang]
         include:
           - compiler: gcc
             cc: gcc
@@ -39,17 +38,16 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++ clang
+          sudo apt-get install -y cmake ninja-build libgtest-dev ccache gcc g++ clang
 
       - name: Cache ccache
         uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
-          key: ccache-${{ runner.os }}-${{ matrix.compiler }}-${{ github.job }}-${{ hashFiles('CMakeLists_old.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
+          key: ccache-${{ runner.os }}-${{ matrix.compiler }}-release-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
           restore-keys: |
-            ccache-${{ runner.os }}-${{ matrix.compiler }}-${{ github.job }}-
+            ccache-${{ runner.os }}-${{ matrix.compiler }}-release-
             ccache-${{ runner.os }}-${{ matrix.compiler }}-
-            ccache-${{ runner.os }}-
 
       - name: Configure
         run: |
@@ -59,17 +57,18 @@ jobs:
             -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPERNIX_ENABLE_TESTS=ON \
+            -DBUILD_TESTING=ON \
             -DPERNIX_ENABLE_EXAMPLES=ON \
             -DPERNIX_ENABLE_INSTALL=ON \
             -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON \
-            -DPERNIX_ENABLE_FALLBACK_STDPAR=OFF
+            -DPERNIX_ENABLE_X86_64_AVX512=ON \
+            -DPERNIX_TEST_REQUIRED_BACKENDS=X86Avx2,X86Bmi2
 
       - name: Build
-        run: cmake --build build --config Release -j"$(nproc)"
+        run: cmake --build build --config Release --parallel "$(nproc)"
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure --no-tests=error
 
       - name: Run examples
         run: |
@@ -87,7 +86,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++
+          sudo apt-get install -y cmake ninja-build libgtest-dev ccache gcc g++
 
       - name: Show runner CPU
         run: |
@@ -99,12 +98,10 @@ jobs:
         uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
-          key: ccache-${{ runner.os }}-arm64-gcc-${{ github.job }}-${{ hashFiles('CMakeLists_old.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
+          key: ccache-${{ runner.os }}-arm64-release-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
           restore-keys: |
-            ccache-${{ runner.os }}-arm64-gcc-${{ github.job }}-
-            ccache-${{ runner.os }}-arm64-gcc-
+            ccache-${{ runner.os }}-arm64-release-
             ccache-${{ runner.os }}-arm64-
-            ccache-${{ runner.os }}-
 
       - name: Configure
         run: |
@@ -112,18 +109,18 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPERNIX_ENABLE_TESTS=ON \
+            -DBUILD_TESTING=ON \
             -DPERNIX_ENABLE_EXAMPLES=ON \
             -DPERNIX_ENABLE_INSTALL=ON \
             -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON \
-            -DPERNIX_ENABLE_FALLBACK_STDPAR=OFF \
-            -DPERNIX_TEST_BLOCK_SIZES=64
+            -DPERNIX_ENABLE_ARM64_SVE2=ON \
+            -DPERNIX_TEST_REQUIRED_BACKENDS=Arm64Neon
 
       - name: Build
-        run: cmake --build build-arm64 --config Release -j"$(nproc)"
+        run: cmake --build build-arm64 --config Release --parallel "$(nproc)"
 
       - name: Test
-        run: ctest --test-dir build-arm64 --output-on-failure
+        run: ctest --test-dir build-arm64 --output-on-failure --no-tests=error
 
       - name: Run examples
         run: |
@@ -141,17 +138,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++
+          sudo apt-get install -y cmake ninja-build libgtest-dev ccache gcc g++
 
       - name: Cache ccache
         uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
-          key: ccache-${{ runner.os }}-gcc-${{ github.job }}-${{ hashFiles('CMakeLists_old.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
+          key: ccache-${{ runner.os }}-fallback-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
           restore-keys: |
-            ccache-${{ runner.os }}-gcc-${{ github.job }}-
-            ccache-${{ runner.os }}-gcc-
-            ccache-${{ runner.os }}-
+            ccache-${{ runner.os }}-fallback-
 
       - name: Configure
         run: |
@@ -159,23 +154,17 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPERNIX_ENABLE_TESTS=ON \
+            -DBUILD_TESTING=ON \
             -DPERNIX_ENABLE_EXAMPLES=ON \
             -DPERNIX_ENABLE_INSTALL=ON \
             -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON \
-            -DPERNIX_ENABLE_FALLBACK_STDPAR=OFF \
-            -DPERNIX_ENABLE_X86_AVX2=OFF \
-            -DPERNIX_ENABLE_X86_BMI2=OFF \
-            -DPERNIX_ENABLE_X86_AVX512VBMI=OFF \
-            -DPERNIX_ENABLE_ARM64_NEON=OFF \
-            -DPERNIX_ENABLE_ARM64_SVE2=OFF \
-            -DPERNIX_TEST_BLOCK_SIZES=64
+            -DPERNIX_ENABLE_X86_64=OFF
 
       - name: Build
-        run: cmake --build build-fallback --config Release -j"$(nproc)"
+        run: cmake --build build-fallback --config Release --parallel "$(nproc)"
 
       - name: Test
-        run: ctest --test-dir build-fallback --output-on-failure
+        run: ctest --test-dir build-fallback --output-on-failure --no-tests=error
 
       - name: Run examples
         run: |
@@ -193,17 +182,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++
+          sudo apt-get install -y cmake ninja-build libgtest-dev ccache gcc g++
 
       - name: Cache ccache
         uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
-          key: ccache-${{ runner.os }}-gcc-${{ github.job }}-${{ hashFiles('CMakeLists_old.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
+          key: ccache-${{ runner.os }}-debug-sanitizers-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'cmake/**', 'src/**', 'include/**', 'tests/**') }}
           restore-keys: |
-            ccache-${{ runner.os }}-gcc-${{ github.job }}-
-            ccache-${{ runner.os }}-gcc-
-            ccache-${{ runner.os }}-
+            ccache-${{ runner.os }}-debug-sanitizers-
 
       - name: Configure debug
         run: |
@@ -211,23 +198,17 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPERNIX_ENABLE_TESTS=ON \
+            -DBUILD_TESTING=ON \
             -DPERNIX_ENABLE_EXAMPLES=ON \
             -DPERNIX_ENABLE_INSTALL=ON \
             -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON \
-            -DPERNIX_ENABLE_FALLBACK_STDPAR=OFF \
-            -DPERNIX_ENABLE_X86_AVX2=OFF \
-            -DPERNIX_ENABLE_X86_BMI2=OFF \
-            -DPERNIX_ENABLE_X86_AVX512VBMI=OFF \
-            -DPERNIX_ENABLE_ARM64_NEON=OFF \
-            -DPERNIX_ENABLE_ARM64_SVE2=OFF \
-            -DPERNIX_TEST_BLOCK_SIZES=64
+            -DPERNIX_ENABLE_X86_64=OFF
 
       - name: Build debug
-        run: cmake --build build-debug --config Debug -j"$(nproc)"
+        run: cmake --build build-debug --config Debug --parallel "$(nproc)"
 
       - name: Test debug
-        run: ctest --test-dir build-debug --output-on-failure
+        run: ctest --test-dir build-debug --output-on-failure --no-tests=error
 
       - name: Configure sanitizers
         run: |
@@ -235,24 +216,18 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DPERNIX_ENABLE_TESTS=ON \
+            -DBUILD_TESTING=ON \
             -DPERNIX_ENABLE_EXAMPLES=OFF \
             -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=OFF \
-            -DPERNIX_ENABLE_FALLBACK_STDPAR=OFF \
+            -DPERNIX_ENABLE_X86_64=OFF \
             -DPERNIX_ENABLE_SANITIZER_ADDRESS=ON \
-            -DPERNIX_ENABLE_SANITIZER_UNDEFINED=ON \
-            -DPERNIX_ENABLE_X86_AVX2=OFF \
-            -DPERNIX_ENABLE_X86_BMI2=OFF \
-            -DPERNIX_ENABLE_X86_AVX512VBMI=OFF \
-            -DPERNIX_ENABLE_ARM64_NEON=OFF \
-            -DPERNIX_ENABLE_ARM64_SVE2=OFF \
-            -DPERNIX_TEST_BLOCK_SIZES=64
+            -DPERNIX_ENABLE_SANITIZER_UNDEFINED=ON
 
       - name: Build sanitizers
-        run: cmake --build build-sanitizers --config Debug -j"$(nproc)"
+        run: cmake --build build-sanitizers --config Debug --parallel "$(nproc)"
 
       - name: Test sanitizers
-        run: ctest --test-dir build-sanitizers --output-on-failure
+        run: ctest --test-dir build-sanitizers --output-on-failure --no-tests=error
 
   fortran:
     name: Fortran bindings
@@ -265,17 +240,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config libgtest-dev ccache gcc g++ gfortran
+          sudo apt-get install -y cmake ninja-build libgtest-dev ccache gcc g++ gfortran
 
       - name: Cache ccache
         uses: actions/cache@v6
         with:
           path: /home/runner/.cache/ccache
-          key: ccache-${{ runner.os }}-gfortran-${{ github.job }}-${{ hashFiles('CMakeLists_old.txt', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'examples/**', 'bindings/**') }}
+          key: ccache-${{ runner.os }}-fortran-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'cmake/**', 'src/**', 'include/**', 'tests/**', 'bindings/**') }}
           restore-keys: |
-            ccache-${{ runner.os }}-gfortran-${{ github.job }}-
-            ccache-${{ runner.os }}-gfortran-
-            ccache-${{ runner.os }}-
+            ccache-${{ runner.os }}-fortran-
 
       - name: Configure
         run: |
@@ -284,18 +257,16 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_Fortran_COMPILER_LAUNCHER=ccache \
-            -DPERNIX_ENABLE_TESTS=ON \
+            -DBUILD_TESTING=ON \
             -DPERNIX_ENABLE_EXAMPLES=ON \
             -DPERNIX_ENABLE_FORTRAN_BINDINGS=ON \
-            -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=OFF \
-            -DPERNIX_ENABLE_FALLBACK_STDPAR=OFF \
-            -DPERNIX_TEST_BLOCK_SIZES=64
+            -DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=OFF
 
       - name: Build
-        run: cmake --build build-fortran --config Release -j"$(nproc)"
+        run: cmake --build build-fortran --config Release --parallel "$(nproc)"
 
       - name: Test
-        run: ctest --test-dir build-fortran --output-on-failure
+        run: ctest --test-dir build-fortran --output-on-failure --no-tests=error
 
       - name: Run Fortran example
         run: ./build-fortran/examples/pernix_example_fortran

@@ -1,0 +1,80 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "tests",
+      "displayName": "Release tests",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-tests",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "ON"
+      }
+    },
+    {
+      "name": "tests-sanitizers",
+      "displayName": "Debug tests with ASan and UBSan",
+      "inherits": "tests",
+      "binaryDir": "${sourceDir}/cmake-build-sanitizers",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PERNIX_ENABLE_X86_64": "OFF",
+        "PERNIX_ENABLE_ARM64": "OFF",
+        "PERNIX_ENABLE_SANITIZER_ADDRESS": "ON",
+        "PERNIX_ENABLE_SANITIZER_UNDEFINED": "ON"
+      }
+    },
+    {
+      "name": "tests-coverage",
+      "displayName": "Release tests with coverage",
+      "inherits": "tests",
+      "binaryDir": "${sourceDir}/cmake-build-coverage",
+      "cacheVariables": {
+        "PERNIX_ENABLE_CODE_COVERAGE": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "tests",
+      "configurePreset": "tests"
+    },
+    {
+      "name": "tests-sanitizers",
+      "configurePreset": "tests-sanitizers"
+    },
+    {
+      "name": "tests-coverage",
+      "configurePreset": "tests-coverage",
+      "targets": ["coverage"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "tests",
+      "configurePreset": "tests",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "tests-sanitizers",
+      "configurePreset": "tests-sanitizers",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "tests-coverage",
+      "configurePreset": "tests-coverage",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

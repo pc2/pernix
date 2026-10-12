@@ -2,13 +2,13 @@
 #define PERNIX_TESTSET_H
 
 #include <pernix/pernix.h>
-#include <dispatcher_test_helpers.h>
-#include <cpp_dispatcher_test_helpers.h>
 
 #include <algorithm>
 #include <cmath>
+#include <cpp_dispatcher_test_helpers.h>
 #include <cstdint>
 #include <cstdlib>
+#include <dispatcher_test_helpers.h>
 #include <limits>
 #include <random>
 #include <sstream>
@@ -97,11 +97,11 @@ private:
                                                                                                    : std::numeric_limits<T>::epsilon();
 
             if constexpr (std::is_same_v<T, float>) {
-                test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0f / scalesData[i],
-                                          compressedData[i].data());
+                pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0f / scalesData[i],
+                                               compressedData[i].data());
             } else {
-                test_pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0 / scalesData[i],
-                                          compressedData[i].data());
+                pernix_test::test_pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, BIT_WIDTH, BLOCK_SIZE, sourceData[i].data(), 1.0 / scalesData[i],
+                                               compressedData[i].data());
             }
         }
     }
@@ -144,7 +144,7 @@ public:
 
     TestSet<BitWidth, f32, BlockSize> testSet;
 
-    CompressionTest() : testSet(1u << 10) {}
+    CompressionTest() : testSet(3) {}
 };
 
 template <typename TestConfigT>
@@ -155,7 +155,7 @@ public:
 
     TestSet<BitWidth, f32, BlockSize> testSet;
 
-    DecompressionTest() : testSet(1u << 10) {}
+    DecompressionTest() : testSet(3) {}
 };
 
 template <typename TestConfigT>
@@ -166,7 +166,7 @@ public:
 
     TestSet<BitWidth, f64, BlockSize> testSet;
 
-    CompressionTest64() : testSet(1u << 10) {}
+    CompressionTest64() : testSet(3) {}
 };
 
 template <typename TestConfigT>
@@ -177,7 +177,7 @@ public:
 
     TestSet<BitWidth, f64, BlockSize> testSet;
 
-    DecompressionTest64() : testSet(1u << 10) {}
+    DecompressionTest64() : testSet(3) {}
 };
 
 template <typename FixtureT>

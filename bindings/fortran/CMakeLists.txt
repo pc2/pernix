@@ -20,4 +20,5 @@ endif ()
 
 if (BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
     add_test(NAME pernix_fortran_roundtrip COMMAND pernix_bindings_fortran_test)
+    set_tests_properties(pernix_fortran_roundtrip PROPERTIES LABELS "integration;fortran")
 endif ()

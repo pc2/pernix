@@ -291,10 +291,52 @@ target_link_libraries(my_target PRIVATE pernix::pernix)
 
 ## Testing
 
+The test suite uses GoogleTest, CMake, and CTest. On Debian or Ubuntu, install the test dependencies with:
+
+```bash
+sudo apt-get install cmake ninja-build libgtest-dev
+```
+
+Configure, build, and run the full suite with the checked-in preset:
+
+```bash
+cmake --preset tests
+cmake --build --preset tests --parallel
+ctest --preset tests
+```
+
+The matrix covers all bit widths and supported block sizes from 64 through 1024 bytes. To run one part of the suite, use its CTest label:
+
+```bash
+ctest --test-dir cmake-build-tests -L header_only --output-on-failure
+ctest --test-dir cmake-build-tests -L c-api --output-on-failure
+```
+
+The pseudo-random cases use a fixed seed by default. Set `PERNIX_TEST_SEED` to reproduce a different deterministic input set. CI can set `PERNIX_TEST_REQUIRED_BACKENDS` at configure time to require a comma-separated list of host backends, such as `X86Avx2,X86Bmi2`.
+
+Run the sanitizer suite with:
+
+```bash
+cmake --preset tests-sanitizers
+cmake --build --preset tests-sanitizers --parallel
+ctest --preset tests-sanitizers
+```
+
+Generate a coverage report with GCC or Clang and `lcov`/`genhtml` installed:
+
+```bash
+cmake --preset tests-coverage
+cmake --build --preset tests-coverage --parallel
+```
+
+The coverage build instruments the compiled library and all test targets. Reports are written to `cmake-build-coverage/coverage_report`.
+
+To configure without presets, the equivalent basic workflow is:
+
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DPERNIX_ENABLE_EXAMPLES=ON
-cmake --build build --config Release -j"$(nproc)"
-ctest --test-dir build --output-on-failure
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure --no-tests=error
 ```
 
 Examples are built when `PERNIX_ENABLE_EXAMPLES=ON`:

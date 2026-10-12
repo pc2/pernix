@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <span>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -461,5 +462,6 @@ TEST(HeaderOnlyPernix, DispatcherResolvesBackendOnce) {
     pernix::Dispatcher unconfigured;
     std::array<float, kBlockElements> input{};
     std::array<u8, kBlockSize> compressed{};
-    EXPECT_EQ(unconfigured.compress_block(kBitWidth, kBlockSize, input, 1.0f, compressed), PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(unconfigured.compress_block(kBitWidth, kBlockSize, std::span<const float>(input), 1.0f, std::span<u8>(compressed)),
+              PERNIX_STATUS_INVALID_ARGUMENT);
 }

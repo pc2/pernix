@@ -16,27 +16,54 @@ static constexpr u32 tail_bytes(const u8 bit_width, const u32 remaining_elements
     return tail_bytes;
 }
 
-__always_inline int32x4x4_t neon_convert_int8x16_int32x4x4(int8x16_t input) {
-    const int16x8_t s16_lo = vmovl_s8(vget_low_s8(input));
-    const int16x8_t s16_hi = vmovl_s8(vget_high_s8(input));
+template <bool SIGN_VALUES = true>
+__always_inline int32x4x4_t neon_convert_int8x16_int32x4x4(const int8x16_t input) {
+    if constexpr (SIGN_VALUES) {
+        const int16x8_t s16_lo = vmovl_s8(vget_low_s8(input));
+        const int16x8_t s16_hi = vmovl_s8(vget_high_s8(input));
 
-    return {
-        {
-         vmovl_s16(vget_low_s16(s16_lo)),
-         vmovl_s16(vget_high_s16(s16_lo)),
-         vmovl_s16(vget_low_s16(s16_hi)),
-         vmovl_s16(vget_high_s16(s16_hi)),
-         }
-    };
+        return {
+            {
+             vmovl_s16(vget_low_s16(s16_lo)),
+             vmovl_s16(vget_high_s16(s16_lo)),
+             vmovl_s16(vget_low_s16(s16_hi)),
+             vmovl_s16(vget_high_s16(s16_hi)),
+             }
+        };
+    } else {
+        const uint8x16_t unsigned_input = vreinterpretq_u8_s8(input);
+        const uint16x8_t u16_lo         = vmovl_u8(vget_low_u8(unsigned_input));
+        const uint16x8_t u16_hi         = vmovl_u8(vget_high_u8(unsigned_input));
+
+        return {
+            {
+             vreinterpretq_s32_u32(vmovl_u16(vget_low_u16(u16_lo))),
+             vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(u16_lo))),
+             vreinterpretq_s32_u32(vmovl_u16(vget_low_u16(u16_hi))),
+             vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(u16_hi))),
+             }
+        };
+    }
 }
 
-__always_inline int32x4x2_t neon_convert_int16x8_int32x4x2(int16x8_t input) {
-    return {
-        {
-         vmovl_s16(vget_low_s16(input)),
-         vmovl_s16(vget_high_s16(input)),
-         }
-    };
+template <bool SIGN_VALUES = true>
+__always_inline int32x4x2_t neon_convert_int16x8_int32x4x2(const int16x8_t input) {
+    if constexpr (SIGN_VALUES) {
+        return {
+            {
+             vmovl_s16(vget_low_s16(input)),
+             vmovl_s16(vget_high_s16(input)),
+             }
+        };
+    } else {
+        const uint16x8_t unsigned_input = vreinterpretq_u16_s16(input);
+        return {
+            {
+             vreinterpretq_s32_u32(vmovl_u16(vget_low_u16(unsigned_input))),
+             vreinterpretq_s32_u32(vmovl_u16(vget_high_u16(unsigned_input))),
+             }
+        };
+    }
 }
 
 __always_inline float32x4x4_t neon_dequantize_epi32(const int32x4x4_t& input, float32x4_t scale) {

@@ -24,7 +24,7 @@ __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8x16_t source  = vld1q_u8(input);
         const int8x16_t unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const int32x4x4_t converted     = neon_convert_int8x16_int32x4x4(unpacked);
+        const int32x4x4_t converted     = neon_convert_int8x16_int32x4x4<SIGN_VALUES>(unpacked);
         const float32x4x4_t dequantized = neon_dequantize_epi32(converted, scale_v);
 
         for (uint32_t j = 0; j < 4; ++j) {
@@ -39,7 +39,7 @@ __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8x16_t tail_source  = neon_load_tail_elements_int8(input, tail_bytes(BIT_WIDTH, remaining_elements));
         const int8x16_t tail_unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(tail_source);
 
-        const int32x4x4_t tail_converted     = neon_convert_int8x16_int32x4x4(tail_unpacked);
+        const int32x4x4_t tail_converted     = neon_convert_int8x16_int32x4x4<SIGN_VALUES>(tail_unpacked);
         const float32x4x4_t tail_dequantized = neon_dequantize_epi32(tail_converted, scale_v);
 
         neon_store_tail_elements_f32(output, tail_dequantized, remaining_elements);
@@ -62,7 +62,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
         const uint16x8_t source  = vld1q_u16(reinterpret_cast<const uint16_t*>(input));
         const int16x8_t unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const int32x4x2_t converted     = neon_convert_int16x8_int32x4x2(unpacked);
+        const int32x4x2_t converted     = neon_convert_int16x8_int32x4x2<SIGN_VALUES>(unpacked);
         const float32x4x2_t dequantized = neon_dequantize_epi32(converted, scale_v);
 
         for (uint32_t j = 0; j < 2; ++j) {
@@ -77,7 +77,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
         const uint16x8_t tail_source  = neon_load_tail_elements_int16(input, tail_bytes(BIT_WIDTH, remaining_elements));
         const int16x8_t tail_unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(tail_source);
 
-        const int32x4x2_t tail_converted     = neon_convert_int16x8_int32x4x2(tail_unpacked);
+        const int32x4x2_t tail_converted     = neon_convert_int16x8_int32x4x2<SIGN_VALUES>(tail_unpacked);
         const float32x4x2_t tail_dequantized = neon_dequantize_epi32(tail_converted, scale_v);
 
         neon_store_tail_elements_f32(output, tail_dequantized, remaining_elements);
@@ -156,7 +156,7 @@ __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8x16_t source  = vld1q_u8(input);
         const int8x16_t unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const int32x4x4_t converted     = neon_convert_int8x16_int32x4x4(unpacked);
+        const int32x4x4_t converted     = neon_convert_int8x16_int32x4x4<SIGN_VALUES>(unpacked);
         const float64x2x8_t dequantized = neon_dequantize_epi32_f64(converted, scale_v);
 
         for (uint32_t j = 0; j < 8; ++j) {
@@ -171,7 +171,7 @@ __always_inline int neon_decompress_block_1to8(const uint8_t* __restrict__ input
         const uint8x16_t tail_source  = neon_load_tail_elements_int8(input, tail_bytes(BIT_WIDTH, remaining_elements));
         const int8x16_t tail_unpacked = b128::neon_unpack_epi8_1to8<BIT_WIDTH, SIGN_VALUES>(tail_source);
 
-        const int32x4x4_t tail_converted     = neon_convert_int8x16_int32x4x4(tail_unpacked);
+        const int32x4x4_t tail_converted     = neon_convert_int8x16_int32x4x4<SIGN_VALUES>(tail_unpacked);
         const float64x2x8_t tail_dequantized = neon_dequantize_epi32_f64(tail_converted, scale_v);
 
         neon_store_tail_elements_f64(output, tail_dequantized, remaining_elements);
@@ -194,7 +194,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
         const uint16x8_t source  = vld1q_u16(reinterpret_cast<const uint16_t*>(input));
         const int16x8_t unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(source);
 
-        const int32x4x2_t converted     = neon_convert_int16x8_int32x4x2(unpacked);
+        const int32x4x2_t converted     = neon_convert_int16x8_int32x4x2<SIGN_VALUES>(unpacked);
         const float64x2x4_t dequantized = neon_dequantize_epi32_f64(converted, scale_v);
 
         for (uint32_t j = 0; j < 4; ++j) {
@@ -209,7 +209,7 @@ __always_inline int neon_decompress_block_9to16(const uint8_t* __restrict__ inpu
         const uint16x8_t tail_source  = neon_load_tail_elements_int16(input, tail_bytes(BIT_WIDTH, remaining_elements));
         const int16x8_t tail_unpacked = b128::neon_unpack_epi16_9to16<BIT_WIDTH, SIGN_VALUES>(tail_source);
 
-        const int32x4x2_t tail_converted     = neon_convert_int16x8_int32x4x2(tail_unpacked);
+        const int32x4x2_t tail_converted     = neon_convert_int16x8_int32x4x2<SIGN_VALUES>(tail_unpacked);
         const float64x2x4_t tail_dequantized = neon_dequantize_epi32_f64(tail_converted, scale_v);
 
         neon_store_tail_elements_f64(output, tail_dequantized, remaining_elements);

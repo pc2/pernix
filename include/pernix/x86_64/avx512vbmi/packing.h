@@ -4,7 +4,7 @@
 #include <pernix/detail/bits.h>
 #include <pernix/detail/pack_tables.h>
 #include <pernix/simd_compat.h>
-#include <pernix/x86/avx512vbmi/tables.h>
+#include <pernix/x86_64/avx512vbmi/tables.h>
 
 #include <array>
 

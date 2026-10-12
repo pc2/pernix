@@ -237,25 +237,27 @@ for in-tree builds and examples.
 Release build:
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 cmake --build build --config Release -j"$(nproc)"
 ```
 
 Common options:
 
-* `-DBUILD_SHARED_LIBS=OFF`: build a static library instead of the default shared library
-* `-DPERNIX_ENABLE_TESTS=ON`: build tests
-* `-DPERNIX_ENABLE_EXAMPLES=ON`: build examples
-* `-DPERNIX_ENABLE_INSTALL=ON`: install library, headers, CMake package files, and pkg-config metadata
-* `-DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON`: add a CTest that installs PERNIX and builds C/C++ consumers
-* `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON`: build Fortran bindings and Fortran example/test
-* `-DPERNIX_ENABLE_X86_AVX2=OFF`, `-DPERNIX_ENABLE_X86_BMI2=OFF`,
-  `-DPERNIX_ENABLE_X86_AVX512VBMI=OFF`: disable specific x86 backends
-* `-DPERNIX_ENABLE_FALLBACK_STDPAR=OFF|AUTO|ON`: control the stdpar fallback backend. TBB is optional and enables
-  parallel standard execution policies when found
-* `-DPERNIX_ENABLE_FALLBACK_SIMD=OFF|AUTO|ON`: control the experimental C++26
-  `std::simd` fallback backend. `AUTO` enables it when both the compiler and standard
-  library support `std::simd`; `ON` makes missing support a configuration error
+* `-DBUILD_SHARED_LIBS=OFF`: build a static library; shared is the default
+* `-DBUILD_TESTING=ON`: configure the test targets; tests are enabled by default
+* `-DPERNIX_ENABLE_EXAMPLES=ON`: build the C and C++ examples
+* `-DPERNIX_ENABLE_INSTALL=OFF`: skip install rules; installation is enabled by default
+* `-DPERNIX_ENABLE_INSTALL_CONSUMER_TESTS=ON`: add a CTest that installs the package and builds C/C++ consumers
+* `-DPERNIX_ENABLE_FORTRAN_BINDINGS=ON`: build the optional Fortran bindings and example
+* `-DPERNIX_ENABLE_X86_64=OFF`: disable all x86_64 optimized backends
+* `-DPERNIX_ENABLE_X86_64_AVX2=OFF`, `-DPERNIX_ENABLE_X86_64_BMI2=OFF`,
+  `-DPERNIX_ENABLE_X86_64_AVX512=ON`: select x86_64 backends
+* `-DPERNIX_ENABLE_ARM64=OFF`: disable all ARM64 optimized backends
+* `-DPERNIX_ENABLE_ARM64_NEON=OFF`, `-DPERNIX_ENABLE_ARM64_SVE2=ON`: select ARM64 backends
+* `-DPERNIX_ENABLE_LTO=ON`: enable link-time optimization
+* `-DPERNIX_ENABLE_SANITIZER_ADDRESS=ON` or `-DPERNIX_ENABLE_SANITIZER_UNDEFINED=ON`: enable a sanitizer
+* `-DPERNIX_ENABLE_DOCS=ON`: generate API documentation with Doxygen
+* `-DPERNIX_INSTALL_DOCS=ON`: install generated docs; requires docs and installation to be enabled
 
 Install:
 
@@ -273,7 +275,7 @@ target_link_libraries(my_target PRIVATE pernix::pernix)
 ## Testing
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPERNIX_ENABLE_TESTS=ON -DPERNIX_ENABLE_EXAMPLES=ON
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DPERNIX_ENABLE_EXAMPLES=ON
 cmake --build build --config Release -j"$(nproc)"
 ctest --test-dir build --output-on-failure
 ```

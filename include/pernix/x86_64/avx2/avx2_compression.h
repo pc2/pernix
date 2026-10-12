@@ -2,7 +2,7 @@
 #define PERNIX_AVX2_COMPRESSION_H
 
 #include <pernix/simd_compat.h>
-#include <pernix/x86/avx2/avx2_tables.h>
+#include <pernix/x86_64/avx2/avx2_tables.h>
 
 #include <array>
 #include <cstring>

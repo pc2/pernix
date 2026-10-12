@@ -2,8 +2,8 @@
 #define PERNIX_BMI2_COMPRESSION_H
 
 #include <pernix/simd_compat.h>
-#include <pernix/x86/avx2/avx2_compression.h>
-#include <pernix/x86/bmi2/bmi2_packing.h>
+#include <pernix/x86_64/avx2/avx2_compression.h>
+#include <pernix/x86_64/bmi2/bmi2_packing.h>
 
 #include <array>
 #include <cstring>

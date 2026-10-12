@@ -1,5 +1,5 @@
 #include <pernix/dispatch/select.h>
-#include <pernix/x86/bmi2/bmi2_decompression.h>
+#include <pernix/x86_64/bmi2/bmi2_decompression.h>
 
 namespace pernix::internal {
 #define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                    \

@@ -3,7 +3,7 @@
 
 #include <pernix/detail/unpack_tables.h>
 #include <pernix/simd_compat.h>
-#include <pernix/x86/avx512vbmi/tables.h>
+#include <pernix/x86_64/avx512vbmi/tables.h>
 
 namespace pernix::internal {
 namespace unpacking_detail {

@@ -14,9 +14,9 @@
 #endif
 // #define SIMDE_NO_NATIVE
 #if defined(PERNIX_BACKEND_X86)
-#include <simde/x86/avx2.h>
-#include <simde/x86/avx512.h>
-#include <simde/x86/bmi.h>
+#include <simde/x86_64/avx2.h>
+#include <simde/x86_64/avx512.h>
+#include <simde/x86_64/bmi.h>
 #elif defined(PERNIX_BACKEND_ARM64_NEON)
 #include <simde/arm/neon.h>
 #elif defined(PERNIX_BACKEND_ARM64_SVE) || defined(PERNIX_BACKEND_ARM64_SVE2)

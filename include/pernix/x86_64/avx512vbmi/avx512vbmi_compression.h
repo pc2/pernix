@@ -2,10 +2,10 @@
 #define PERNIX_AVX512VBMI_COMPRESSION_H
 
 #include <pernix/simd_compat.h>
-#include <pernix/x86/avx2/avx2_compression.h>
-#include <pernix/x86/avx512vbmi/compat.h>
-#include <pernix/x86/avx512vbmi/packing.h>
-#include <pernix/x86/utils.h>
+#include <pernix/x86_64/avx2/avx2_compression.h>
+#include <pernix/x86_64/avx512vbmi/compat.h>
+#include <pernix/x86_64/avx512vbmi/packing.h>
+#include <pernix/x86_64/utils.h>
 
 #include <cstddef>
 #include <cstring>

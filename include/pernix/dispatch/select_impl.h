@@ -13,16 +13,16 @@
 #include <pernix/fallback/simd_decompression.h>
 #endif
 #if defined(PERNIX_BUILD_X86_AVX2)
-#include <pernix/x86/avx2/avx2_compression.h>
-#include <pernix/x86/avx2/avx2_decompression.h>
+#include <pernix/x86_64/avx2/avx2_compression.h>
+#include <pernix/x86_64/avx2/avx2_decompression.h>
 #endif
 #if defined(PERNIX_BUILD_X86_BMI2)
-#include <pernix/x86/bmi2/bmi2_compression.h>
-#include <pernix/x86/bmi2/bmi2_decompression.h>
+#include <pernix/x86_64/bmi2/bmi2_compression.h>
+#include <pernix/x86_64/bmi2/bmi2_decompression.h>
 #endif
 #if defined(PERNIX_BUILD_X86_AVX512_VBMI)
-#include <pernix/x86/avx512vbmi/avx512vbmi_compression.h>
-#include <pernix/x86/avx512vbmi/avx512vbmi_decompression.h>
+#include <pernix/x86_64/avx512vbmi/avx512vbmi_compression.h>
+#include <pernix/x86_64/avx512vbmi/avx512vbmi_decompression.h>
 #endif
 #if defined(PERNIX_BUILD_ARM64_NEON)
 #include <pernix/arm64/neon/compression.h>

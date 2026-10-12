@@ -2,8 +2,8 @@
 #define PERNIX_BMI2_DECOMPRESSION_H
 
 #include <pernix/simd_compat.h>
-#include <pernix/x86/avx2/avx2_decompression.h>
-#include <pernix/x86/bmi2/bmi2_unpacking.h>
+#include <pernix/x86_64/avx2/avx2_decompression.h>
+#include <pernix/x86_64/bmi2/bmi2_unpacking.h>
 
 #include <cstring>
 #include <span>

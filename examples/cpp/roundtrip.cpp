@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <span>
 #include <pernix/pernix.hpp>
 
 int main() {
@@ -32,10 +33,12 @@ int main() {
         return 1;
     }
 
-    if (dispatcher.compress_block(bit_width, block_size, input, inverse_scale, compressed) != PERNIX_STATUS_OK) {
+    if (dispatcher.compress_block(bit_width, block_size, std::span<const float>(input), inverse_scale, std::span<u8>(compressed)) !=
+        PERNIX_STATUS_OK) {
         return 2;
     }
-    if (dispatcher.decompress_block(bit_width, block_size, compressed, scale, restored) != PERNIX_STATUS_OK) {
+    if (dispatcher.decompress_block(bit_width, block_size, std::span<const u8>(compressed), scale, std::span<float>(restored)) !=
+        PERNIX_STATUS_OK) {
         return 3;
     }
 

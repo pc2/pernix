@@ -96,22 +96,24 @@ class Dispatcher {
 public:
     Dispatcher() = default;
 
-    Dispatcher(const Dispatcher&) = delete;
+    Dispatcher(const Dispatcher&)            = delete;
     Dispatcher& operator=(const Dispatcher&) = delete;
 
     Dispatcher(Dispatcher&& other) noexcept
         : backend_(std::exchange(other.backend_, Backend::Auto)), configured_(std::exchange(other.configured_, false))
 #if defined(PERNIX_USE_COMPILED_LIB)
-          , handle_(std::exchange(other.handle_, nullptr))
+          ,
+          handle_(std::exchange(other.handle_, nullptr))
 #endif
-    {}
+    {
+    }
 
     Dispatcher& operator=(Dispatcher&& other) noexcept {
         if (this == &other) {
             return *this;
         }
         release();
-        backend_ = std::exchange(other.backend_, Backend::Auto);
+        backend_    = std::exchange(other.backend_, Backend::Auto);
         configured_ = std::exchange(other.configured_, false);
 #if defined(PERNIX_USE_COMPILED_LIB)
         handle_ = std::exchange(other.handle_, nullptr);
@@ -129,13 +131,13 @@ public:
             return status;
         }
         pernix_backend resolved = PERNIX_BACKEND_AUTO;
-        status = pernix_dispatcher_backend(configured.handle_, &resolved);
+        status                  = pernix_dispatcher_backend(configured.handle_, &resolved);
         if (status != PERNIX_STATUS_OK) {
             return status;
         }
         configured.backend_ = static_cast<Backend>(resolved);
 #else
-        Backend resolved = Backend::Fallback;
+        Backend resolved    = Backend::Fallback;
         const Status status = internal::resolve_backend(requested, &resolved);
         if (status != PERNIX_STATUS_OK) {
             return status;
@@ -143,22 +145,22 @@ public:
         configured.backend_ = resolved;
 #endif
         configured.configured_ = true;
-        output = std::move(configured);
+        output                 = std::move(configured);
         return PERNIX_STATUS_OK;
     }
 
     Backend backend() const noexcept { return configured_ ? backend_ : Backend::Auto; }
+
     bool configured() const noexcept { return configured_; }
 
     template <typename FloatT>
         requires(std::is_same_v<FloatT, f32> || std::is_same_v<FloatT, f64>)
-    Status compress_block(const u8 bit_width, const u32 block_size, const std::span<const FloatT> input,
-                          const FloatT inverse_scale, const std::span<u8> output) const {
+    Status compress_block(const u8 bit_width, const u32 block_size, const std::span<const FloatT> input, const FloatT inverse_scale,
+                          const std::span<u8> output) const {
         if (!configured_) {
             return PERNIX_STATUS_INVALID_ARGUMENT;
         }
-        if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, 1);
-            status != PERNIX_STATUS_OK) {
+        if (const Status status = detail::validate_compress_spans(bit_width, block_size, input, output, 1); status != PERNIX_STATUS_OK) {
             return status;
         }
         if constexpr (std::is_same_v<FloatT, f32>) {
@@ -183,8 +185,7 @@ public:
         if (!configured_) {
             return PERNIX_STATUS_INVALID_ARGUMENT;
         }
-        if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, 1);
-            status != PERNIX_STATUS_OK) {
+        if (const Status status = detail::validate_decompress_spans(bit_width, block_size, input, output, 1); status != PERNIX_STATUS_OK) {
             return status;
         }
         if constexpr (std::is_same_v<FloatT, f32>) {
@@ -204,8 +205,8 @@ public:
 
     template <typename FloatT>
         requires(std::is_same_v<FloatT, f32> || std::is_same_v<FloatT, f64>)
-    Status compress_blocks(const u8 bit_width, const u32 block_size, const std::span<const FloatT> input,
-                           const FloatT inverse_scale, const std::span<u8> output, const u32 blocks) const {
+    Status compress_blocks(const u8 bit_width, const u32 block_size, const std::span<const FloatT> input, const FloatT inverse_scale,
+                           const std::span<u8> output, const u32 blocks) const {
         if (!configured_) {
             return PERNIX_STATUS_INVALID_ARGUMENT;
         }
@@ -263,22 +264,22 @@ public:
 
     template <typename FloatT>
         requires(std::is_same_v<FloatT, f32> || std::is_same_v<FloatT, f64>)
-    Status decompress_block(const u8 bit_width, const std::span<const u8> input, const FloatT scale,
-                            const std::span<FloatT> output, const bool sign_values = true) const {
+    Status decompress_block(const u8 bit_width, const std::span<const u8> input, const FloatT scale, const std::span<FloatT> output,
+                            const bool sign_values = true) const {
         return decompress_block(bit_width, detail::fixed_block_size, input, scale, output, sign_values);
     }
 
     template <typename FloatT>
         requires(std::is_same_v<FloatT, f32> || std::is_same_v<FloatT, f64>)
-    Status compress_blocks(const u8 bit_width, const std::span<const FloatT> input, const FloatT inverse_scale,
-                           const std::span<u8> output, const u32 blocks) const {
+    Status compress_blocks(const u8 bit_width, const std::span<const FloatT> input, const FloatT inverse_scale, const std::span<u8> output,
+                           const u32 blocks) const {
         return compress_blocks(bit_width, detail::fixed_block_size, input, inverse_scale, output, blocks);
     }
 
     template <typename FloatT>
         requires(std::is_same_v<FloatT, f32> || std::is_same_v<FloatT, f64>)
-    Status decompress_blocks(const u8 bit_width, const std::span<const u8> input, const FloatT scale,
-                             const std::span<FloatT> output, const u32 blocks, const bool sign_values = true) const {
+    Status decompress_blocks(const u8 bit_width, const std::span<const u8> input, const FloatT scale, const std::span<FloatT> output,
+                             const u32 blocks, const bool sign_values = true) const {
         return decompress_blocks(bit_width, detail::fixed_block_size, input, scale, output, blocks, sign_values);
     }
 

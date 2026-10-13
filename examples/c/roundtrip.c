@@ -1,13 +1,18 @@
 #include <pernix/pernix.h>
 
 int main(void) {
-    enum { bit_width = 16, block_size = 64, elements = (block_size * 8) / bit_width };
+    enum {
+        bit_width  = 16,
+        block_size = 64,
+        elements   = (block_size * 8) / bit_width
+    };
+
     float input[elements];
     float restored[elements];
     u8 compressed[block_size];
-    float bmax = 0.0f;
+    float bmax                    = 0.0f;
     pernix_dispatcher* dispatcher = 0;
-    int result = 0;
+    int result                    = 0;
 
     if (!pernix_is_valid_bit_width(bit_width) || pernix_compressed_block_size() != block_size ||
         pernix_elements_per_block(bit_width) != elements) {

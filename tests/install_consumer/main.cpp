@@ -22,12 +22,12 @@ int main() {
         return 1;
     }
 
-    if (dispatcher.compress_block(bit_width, block_size, std::span<const float>(input), 8.0f,
-                                  std::span<u8>(compressed)) != PERNIX_STATUS_OK) {
+    if (dispatcher.compress_block(bit_width, block_size, std::span<const float>(input), 8.0f, std::span<u8>(compressed)) !=
+        PERNIX_STATUS_OK) {
         return 2;
     }
-    if (dispatcher.decompress_block(bit_width, block_size, std::span<const u8>(compressed), 0.125f,
-                                    std::span<float>(restored)) != PERNIX_STATUS_OK) {
+    if (dispatcher.decompress_block(bit_width, block_size, std::span<const u8>(compressed), 0.125f, std::span<float>(restored)) !=
+        PERNIX_STATUS_OK) {
         return 3;
     }
 

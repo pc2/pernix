@@ -37,15 +37,15 @@ inline const pernix::Dispatcher* cpp_dispatcher(pernix::Backend backend, pernix:
 template <typename FloatT>
 inline pernix::Status compress_block(pernix::Backend backend, u8 bit_width, u32 block_size, std::span<const FloatT> input,
                                      FloatT inverse_scale, std::span<u8> output) {
-    pernix::Status status = PERNIX_STATUS_OK;
+    pernix::Status status  = PERNIX_STATUS_OK;
     const auto* dispatcher = cpp_dispatcher(backend, status);
     return dispatcher == nullptr ? status : dispatcher->compress_block(bit_width, block_size, input, inverse_scale, output);
 }
 
 template <typename FloatT>
-inline pernix::Status decompress_block(pernix::Backend backend, u8 bit_width, u32 block_size, std::span<const u8> input,
-                                       FloatT scale, std::span<FloatT> output, bool sign_values = true) {
-    pernix::Status status = PERNIX_STATUS_OK;
+inline pernix::Status decompress_block(pernix::Backend backend, u8 bit_width, u32 block_size, std::span<const u8> input, FloatT scale,
+                                       std::span<FloatT> output, bool sign_values = true) {
+    pernix::Status status  = PERNIX_STATUS_OK;
     const auto* dispatcher = cpp_dispatcher(backend, status);
     return dispatcher == nullptr ? status : dispatcher->decompress_block(bit_width, block_size, input, scale, output, sign_values);
 }
@@ -53,19 +53,17 @@ inline pernix::Status decompress_block(pernix::Backend backend, u8 bit_width, u3
 template <typename FloatT>
 inline pernix::Status compress_blocks(pernix::Backend backend, u8 bit_width, u32 block_size, std::span<const FloatT> input,
                                       FloatT inverse_scale, std::span<u8> output, u32 blocks) {
-    pernix::Status status = PERNIX_STATUS_OK;
+    pernix::Status status  = PERNIX_STATUS_OK;
     const auto* dispatcher = cpp_dispatcher(backend, status);
-    return dispatcher == nullptr ? status
-                                 : dispatcher->compress_blocks(bit_width, block_size, input, inverse_scale, output, blocks);
+    return dispatcher == nullptr ? status : dispatcher->compress_blocks(bit_width, block_size, input, inverse_scale, output, blocks);
 }
 
 template <typename FloatT>
-inline pernix::Status decompress_blocks(pernix::Backend backend, u8 bit_width, u32 block_size, std::span<const u8> input,
-                                        FloatT scale, std::span<FloatT> output, u32 blocks, bool sign_values = true) {
-    pernix::Status status = PERNIX_STATUS_OK;
+inline pernix::Status decompress_blocks(pernix::Backend backend, u8 bit_width, u32 block_size, std::span<const u8> input, FloatT scale,
+                                        std::span<FloatT> output, u32 blocks, bool sign_values = true) {
+    pernix::Status status  = PERNIX_STATUS_OK;
     const auto* dispatcher = cpp_dispatcher(backend, status);
-    return dispatcher == nullptr ? status
-                                 : dispatcher->decompress_blocks(bit_width, block_size, input, scale, output, blocks, sign_values);
+    return dispatcher == nullptr ? status : dispatcher->decompress_blocks(bit_width, block_size, input, scale, output, blocks, sign_values);
 }
 }  // namespace pernix_test
 

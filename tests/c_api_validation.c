@@ -14,17 +14,17 @@ static int expect_status(pernix_status actual, pernix_status expected) {
 }
 
 int main(void) {
-    float input_f32[elements]   = {0};
-    float output_f32[elements]  = {0};
-    double input_f64[elements]  = {0};
-    double output_f64[elements] = {0};
-    u8 compressed[block_size]   = {0};
-    float scale_f32             = 0.0f;
-    double scale_f64            = 0.0;
-    pernix_dispatcher* dispatcher = 0;
-    pernix_dispatcher* auto_dispatcher = 0;
+    float input_f32[elements]             = {0};
+    float output_f32[elements]            = {0};
+    double input_f64[elements]            = {0};
+    double output_f64[elements]           = {0};
+    u8 compressed[block_size]             = {0};
+    float scale_f32                       = 0.0f;
+    double scale_f64                      = 0.0;
+    pernix_dispatcher* dispatcher         = 0;
+    pernix_dispatcher* auto_dispatcher    = 0;
     pernix_dispatcher* invalid_dispatcher = 0;
-    pernix_backend selected_backend = PERNIX_BACKEND_AUTO;
+    pernix_backend selected_backend       = PERNIX_BACKEND_AUTO;
 
     if (expect_status(pernix_dispatcher_create(PERNIX_BACKEND_FALLBACK, &dispatcher), PERNIX_STATUS_OK) != 0 ||
         expect_status(pernix_dispatcher_backend(dispatcher, &selected_backend), PERNIX_STATUS_OK) != 0 ||
@@ -124,16 +124,16 @@ int main(void) {
                       PERNIX_STATUS_UNSUPPORTED_BLOCK_SIZE) != 0) {
         return 10;
     }
-    if (expect_status(pernix_compress_block_f32(0, bit_width, block_size, input_f32, 1.0f, compressed),
-                      PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+    if (expect_status(pernix_compress_block_f32(0, bit_width, block_size, input_f32, 1.0f, compressed), PERNIX_STATUS_INVALID_ARGUMENT) !=
+        0) {
         return 11;
     }
-    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, 0, 1.0f, compressed),
-                      PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, 0, 1.0f, compressed), PERNIX_STATUS_INVALID_ARGUMENT) !=
+        0) {
         return 12;
     }
-    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, input_f32, 1.0f, 0),
-                      PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
+    if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, input_f32, 1.0f, 0), PERNIX_STATUS_INVALID_ARGUMENT) !=
+        0) {
         return 13;
     }
     if (expect_status(pernix_compress_block_f32(dispatcher, bit_width, block_size, input_f32, 0.0f, compressed),
@@ -157,8 +157,7 @@ int main(void) {
         return 18;
     }
 
-    if (expect_status(pernix_compress_block_f64(dispatcher, bit_width, block_size, input_f64, 1.0, compressed),
-                      PERNIX_STATUS_OK) != 0) {
+    if (expect_status(pernix_compress_block_f64(dispatcher, bit_width, block_size, input_f64, 1.0, compressed), PERNIX_STATUS_OK) != 0) {
         return 19;
     }
     if (expect_status(pernix_decompress_block_f64(dispatcher, bit_width, block_size, compressed, 1.0, output_f64, true),

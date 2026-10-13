@@ -70,7 +70,7 @@ pernix_status pernix_dispatcher_create(pernix_backend backend, pernix_dispatcher
         return PERNIX_STATUS_UNSUPPORTED_BACKEND;
     }
 
-    pernix::Backend resolved = pernix::Backend::Fallback;
+    pernix::Backend resolved   = pernix::Backend::Fallback;
     const pernix_status status = pernix::internal::resolve_backend(static_cast<pernix::Backend>(backend), &resolved);
     if (status != PERNIX_STATUS_OK) {
         return status;
@@ -104,8 +104,8 @@ pernix_status pernix_compress_block_f32(const pernix_dispatcher* dispatcher, u8 
     return pernix::detail::compress_block(dispatcher->backend, bit_width, block_size, input, scale, output);
 }
 
-pernix_status pernix_compress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, float scale, void* output,
-                                         u32 blocks) {
+pernix_status pernix_compress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, float scale,
+                                         void* output, u32 blocks) {
     if (dispatcher == nullptr) {
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
@@ -120,8 +120,8 @@ pernix_status pernix_decompress_block_f32(const pernix_dispatcher* dispatcher, u
     return pernix::detail::decompress_block(dispatcher->backend, bit_width, block_size, input, scale, output, sign_values);
 }
 
-pernix_status pernix_decompress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, float scale,
-                                           void* output, u32 blocks, bool sign_values) {
+pernix_status pernix_decompress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
+                                           float scale, void* output, u32 blocks, bool sign_values) {
     if (dispatcher == nullptr) {
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
@@ -144,16 +144,16 @@ pernix_status pernix_compress_blocks_f64(const pernix_dispatcher* dispatcher, u8
     return pernix::detail::compress_blocks(dispatcher->backend, bit_width, block_size, input, scale, output, blocks);
 }
 
-pernix_status pernix_decompress_block_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, double scale,
-                                          void* output, bool sign_values) {
+pernix_status pernix_decompress_block_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
+                                          double scale, void* output, bool sign_values) {
     if (dispatcher == nullptr) {
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
     return pernix::detail::decompress_block(dispatcher->backend, bit_width, block_size, input, scale, output, sign_values);
 }
 
-pernix_status pernix_decompress_blocks_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, double scale,
-                                           void* output, u32 blocks, bool sign_values) {
+pernix_status pernix_decompress_blocks_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
+                                           double scale, void* output, u32 blocks, bool sign_values) {
     if (dispatcher == nullptr) {
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }

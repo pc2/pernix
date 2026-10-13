@@ -195,8 +195,8 @@ template <typename FloatT>
 void check_backend_matrix(const CodecCase& test_case, const u32 seed, const std::vector<i32>& source_codes,
                           const std::vector<u8>& reference_bytes) {
     constexpr std::array<pernix::Backend, 6> backends{
-        pernix::Backend::X86Avx2,  pernix::Backend::X86Bmi2,        pernix::Backend::X86Avx512Vbmi, pernix::Backend::Arm64Neon,
-        pernix::Backend::Arm64Sve, pernix::Backend::FallbackStdpar,
+        pernix::Backend::X86Avx2,   pernix::Backend::X86Bmi2,  pernix::Backend::X86Avx512Vbmi,
+        pernix::Backend::Arm64Neon, pernix::Backend::Arm64Sve, pernix::Backend::FallbackStdpar,
     };
 
     std::vector<FloatT> input(source_codes.size());

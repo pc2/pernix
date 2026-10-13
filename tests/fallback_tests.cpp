@@ -121,9 +121,9 @@ TYPED_TEST(CompressionTest, FallbackCompressBlock) {
     for (u32 b = 0; b < this->testSet.numberOfBlocks; b++) {
         compressed[b].resize(TestFixture::BlockSize);
 
-        const auto status = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
-                                                      this->testSet.getDecompressedData()[b].data(), 1.0f / this->testSet.getScales()[b],
-                                                      compressed[b].data());
+        const auto status = pernix_test::test_pernix_compress_block_f32(
+            PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, this->testSet.getDecompressedData()[b].data(),
+            1.0f / this->testSet.getScales()[b], compressed[b].data());
         ASSERT_EQ(status, PERNIX_STATUS_OK);
     }
 
@@ -138,9 +138,9 @@ TYPED_TEST(CompressionTest64, FallbackCompressBlock) {
     for (u32 b = 0; b < this->testSet.numberOfBlocks; b++) {
         compressed[b].resize(TestFixture::BlockSize);
 
-        const auto status = pernix_test::test_pernix_compress_block_f64(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
-                                                      this->testSet.getDecompressedData()[b].data(), 1.0 / this->testSet.getScales()[b],
-                                                      compressed[b].data());
+        const auto status = pernix_test::test_pernix_compress_block_f64(
+            PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, this->testSet.getDecompressedData()[b].data(),
+            1.0 / this->testSet.getScales()[b], compressed[b].data());
         ASSERT_EQ(status, PERNIX_STATUS_OK);
     }
 
@@ -159,9 +159,9 @@ TYPED_TEST(DecompressionTest, FallbackDecompressBlock) {
     for (u32 b = 0; b < this->testSet.numberOfBlocks; b++) {
         decompressed[b].resize(this->testSet.elementsPerBlock);
 
-        const auto status = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
-                                                        this->testSet.getCompressedData()[b].data(), this->testSet.getScales()[b],
-                                                        decompressed[b].data(), true);
+        const auto status = pernix_test::test_pernix_decompress_block_f32(
+            PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, this->testSet.getCompressedData()[b].data(),
+            this->testSet.getScales()[b], decompressed[b].data(), true);
         ASSERT_EQ(status, PERNIX_STATUS_OK);
     }
 
@@ -176,9 +176,9 @@ TYPED_TEST(DecompressionTest64, FallbackDecompressBlock) {
     for (u32 b = 0; b < this->testSet.numberOfBlocks; b++) {
         decompressed[b].resize(this->testSet.elementsPerBlock);
 
-        const auto status = pernix_test::test_pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
-                                                        this->testSet.getCompressedData()[b].data(), this->testSet.getScales()[b],
-                                                        decompressed[b].data(), true);
+        const auto status = pernix_test::test_pernix_decompress_block_f64(
+            PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, this->testSet.getCompressedData()[b].data(),
+            this->testSet.getScales()[b], decompressed[b].data(), true);
         ASSERT_EQ(status, PERNIX_STATUS_OK);
     }
 
@@ -245,13 +245,13 @@ TYPED_TEST(CompressionTest, FallbackCompressBlocksRoundtrip) {
     const float scale_inv = 1.0f / scale;
 
     std::vector<u8> compressed(nb * TestFixture::BlockSize);
-    auto status = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, flat.data(), scale_inv,
-                                             compressed.data(), nb);
+    auto status = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                               flat.data(), scale_inv, compressed.data(), nb);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     std::vector<f32> restored(total);
-    status = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(), scale,
-                                          restored.data(), nb, true);
+    status = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                            compressed.data(), scale, restored.data(), nb, true);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     const float tol = (std::abs(scale) * 0.5f) + (std::numeric_limits<f32>::epsilon() * 16.0f);
@@ -280,13 +280,13 @@ TYPED_TEST(CompressionTest64, FallbackCompressBlocksRoundtrip) {
     const double scale_inv = 1.0 / scale;
 
     std::vector<u8> compressed(nb * TestFixture::BlockSize);
-    auto status = pernix_test::test_pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, flat.data(), scale_inv,
-                                             compressed.data(), nb);
+    auto status = pernix_test::test_pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                               flat.data(), scale_inv, compressed.data(), nb);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     std::vector<f64> restored(total);
-    status = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(), scale,
-                                          restored.data(), nb, true);
+    status = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                            compressed.data(), scale, restored.data(), nb, true);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     const double tol = (std::abs(scale) * 0.5) + (std::numeric_limits<f64>::epsilon() * 16.0);
@@ -315,13 +315,13 @@ TYPED_TEST(CompressionTest, FallbackStdparCompressBlocksRoundtrip) {
     const float scale_inv = 1.0f / scale;
 
     std::vector<u8> compressed(nb * TestFixture::BlockSize);
-    auto status = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, flat.data(),
-                                             scale_inv, compressed.data(), nb);
+    auto status = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth,
+                                                               TestFixture::BlockSize, flat.data(), scale_inv, compressed.data(), nb);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     std::vector<f32> restored(total);
-    status = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(),
-                                          scale, restored.data(), nb, true);
+    status = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                            compressed.data(), scale, restored.data(), nb, true);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     const float tol = (std::abs(scale) * 0.5f) + (std::numeric_limits<f32>::epsilon() * 16.0f);
@@ -349,13 +349,13 @@ TYPED_TEST(CompressionTest64, FallbackStdparCompressBlocksRoundtrip) {
     const double scale_inv = 1.0 / scale;
 
     std::vector<u8> compressed(nb * TestFixture::BlockSize);
-    auto status = pernix_test::test_pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, flat.data(),
-                                             scale_inv, compressed.data(), nb);
+    auto status = pernix_test::test_pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth,
+                                                               TestFixture::BlockSize, flat.data(), scale_inv, compressed.data(), nb);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     std::vector<f64> restored(total);
-    status = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(),
-                                          scale, restored.data(), nb, true);
+    status = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                            compressed.data(), scale, restored.data(), nb, true);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     const double tol = (std::abs(scale) * 0.5) + (std::numeric_limits<f64>::epsilon() * 16.0);
@@ -376,12 +376,12 @@ TYPED_TEST(CompressionTest, SingleBlockCompressBlocksMatchesBlock) {
     std::vector<u8> blockOut(TestFixture::BlockSize);
     std::vector<u8> blocksOut(TestFixture::BlockSize);
 
-    auto s1 = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, src.data(), scale_inv,
-                                        blockOut.data());
+    auto s1 = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                          src.data(), scale_inv, blockOut.data());
     ASSERT_EQ(s1, PERNIX_STATUS_OK);
 
-    auto s2 = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, src.data(), scale_inv,
-                                         blocksOut.data(), 1);
+    auto s2 = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                           src.data(), scale_inv, blocksOut.data(), 1);
     ASSERT_EQ(s2, PERNIX_STATUS_OK);
 
     for (u32 i = 0; i < TestFixture::BlockSize; i++) {
@@ -397,12 +397,12 @@ TYPED_TEST(DecompressionTest, SingleBlockDecompressBlocksMatchesBlock) {
     std::vector<f32> blockOut(epb);
     std::vector<f32> blocksOut(epb);
 
-    auto s1 = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(), scale,
-                                          blockOut.data(), true);
+    auto s1 = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                            compressed.data(), scale, blockOut.data(), true);
     ASSERT_EQ(s1, PERNIX_STATUS_OK);
 
-    auto s2 = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(), scale,
-                                           blocksOut.data(), 1, true);
+    auto s2 = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                             compressed.data(), scale, blocksOut.data(), 1, true);
     ASSERT_EQ(s2, PERNIX_STATUS_OK);
 
     for (u32 i = 0; i < epb; i++) {
@@ -418,12 +418,12 @@ TYPED_TEST(CompressionTest, SingleBlockStdparCompressBlocksMatchesBlock) {
     std::vector<u8> block_out(TestFixture::BlockSize);
     std::vector<u8> blocks_out(TestFixture::BlockSize);
 
-    auto s1 = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, src.data(),
-                                        scale_inv, block_out.data());
+    auto s1 = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                          src.data(), scale_inv, block_out.data());
     ASSERT_EQ(s1, PERNIX_STATUS_OK);
 
-    auto s2 = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, src.data(),
-                                         scale_inv, blocks_out.data(), 1);
+    auto s2 = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                           src.data(), scale_inv, blocks_out.data(), 1);
     ASSERT_EQ(s2, PERNIX_STATUS_OK);
 
     for (u32 i = 0; i < TestFixture::BlockSize; ++i) {
@@ -439,12 +439,12 @@ TYPED_TEST(DecompressionTest, SingleBlockStdparDecompressBlocksMatchesBlock) {
     std::vector<f32> block_out(epb);
     std::vector<f32> blocks_out(epb);
 
-    auto s1 = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(),
-                                          scale, block_out.data(), true);
+    auto s1 = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                            compressed.data(), scale, block_out.data(), true);
     ASSERT_EQ(s1, PERNIX_STATUS_OK);
 
-    auto s2 = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize, compressed.data(),
-                                           scale, blocks_out.data(), 1, true);
+    auto s2 = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, TestFixture::BitWidth, TestFixture::BlockSize,
+                                                             compressed.data(), scale, blocks_out.data(), 1, true);
     ASSERT_EQ(s2, PERNIX_STATUS_OK);
 
     for (u32 i = 0; i < epb; ++i) {
@@ -548,14 +548,18 @@ TEST(FallbackEdgeTest, FixedBlockInvariantAndMixedSignMultiBlockRoundTrip) {
     std::array<f32, total> restored_f32{};
     std::array<f64, total> restored_f64{};
 
-    auto status = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input_f32.data(), 4.0f, compressed_f32.data(), blocks);
+    auto status = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input_f32.data(), 4.0f,
+                                                               compressed_f32.data(), blocks);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
-    status = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK, BW, BS, compressed_f32.data(), 0.25f, restored_f32.data(), blocks, true);
+    status = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK, BW, BS, compressed_f32.data(), 0.25f,
+                                                            restored_f32.data(), blocks, true);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
-    status = pernix_test::test_pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK, BW, BS, input_f64.data(), 4.0, compressed_f64.data(), blocks);
+    status =
+        pernix_test::test_pernix_compress_blocks_f64(PERNIX_BACKEND_FALLBACK, BW, BS, input_f64.data(), 4.0, compressed_f64.data(), blocks);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
-    status = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK, BW, BS, compressed_f64.data(), 0.25, restored_f64.data(), blocks, true);
+    status = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK, BW, BS, compressed_f64.data(), 0.25,
+                                                            restored_f64.data(), blocks, true);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 
     for (u32 i = 0; i < total; ++i) {
@@ -564,7 +568,8 @@ TEST(FallbackEdgeTest, FixedBlockInvariantAndMixedSignMultiBlockRoundTrip) {
     }
 
     std::array<f32, (BS * 8) / 4> unsigned_output{};
-    status = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, compressed_f32.data(), 1.0f, unsigned_output.data(), false);
+    status = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, compressed_f32.data(), 1.0f,
+                                                           unsigned_output.data(), false);
     ASSERT_EQ(status, PERNIX_STATUS_OK);
 }
 
@@ -581,9 +586,9 @@ TEST(FallbackEdgeTest, CApiRejectsInvalidScale) {
               PERNIX_STATUS_INVALID_ARGUMENT);
     EXPECT_EQ(pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, compressed.data(), -1.0f, output.data(), true),
               PERNIX_STATUS_INVALID_ARGUMENT);
-    EXPECT_EQ(
-        pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input.data(), std::numeric_limits<f32>::infinity(), compressed.data()),
-        PERNIX_STATUS_INVALID_ARGUMENT);
+    EXPECT_EQ(pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, input.data(),
+                                                          std::numeric_limits<f32>::infinity(), compressed.data()),
+              PERNIX_STATUS_INVALID_ARGUMENT);
 }
 
 TEST(FallbackEdgeTest, CApiRejectsInvalidScaleF64) {
@@ -666,10 +671,12 @@ TEST(FallbackStdparEdgeTest, ClampsNonFiniteAndOutOfRangeBeforeNarrowing) {
     st = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 1.0f, stdpar_compressed.data());
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, scalar_compressed.data(), 1.0f, scalar_restored.data(), true);
+    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, scalar_compressed.data(), 1.0f,
+                                                       scalar_restored.data(), true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, stdpar_compressed.data(), 1.0f, stdpar_restored.data(), true);
+    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, stdpar_compressed.data(), 1.0f,
+                                                       stdpar_restored.data(), true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
     EXPECT_EQ(stdpar_compressed, scalar_compressed);
@@ -686,10 +693,12 @@ TEST(FallbackStdparEdgeTest, SignValuesFalseMatchesScalar) {
     std::array<f32, (BS * 8) / 4> scalar_output{};
     std::array<f32, (BS * 8) / 4> stdpar_output{};
 
-    auto st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, input.data(), 1.0f, scalar_output.data(), false);
+    auto st =
+        pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, 4, BS, input.data(), 1.0f, scalar_output.data(), false);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, 4, BS, input.data(), 1.0f, stdpar_output.data(), false);
+    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, 4, BS, input.data(), 1.0f, stdpar_output.data(),
+                                                       false);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
     EXPECT_EQ(stdpar_output, scalar_output);
@@ -724,10 +733,12 @@ TEST(FallbackStdparEdgeTest, RoundingAndClampingMatchScalar) {
     st = pernix_test::test_pernix_compress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 1.0f, stdpar_compressed.data());
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, scalar_compressed.data(), 1.0f, scalar_restored.data(), true);
+    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, scalar_compressed.data(), 1.0f,
+                                                       scalar_restored.data(), true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, stdpar_compressed.data(), 1.0f, stdpar_restored.data(), true);
+    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, stdpar_compressed.data(), 1.0f,
+                                                       stdpar_restored.data(), true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
     EXPECT_EQ(stdpar_compressed, scalar_compressed);
@@ -750,18 +761,20 @@ TEST(FallbackStdparEdgeTest, RepeatedExecutionIsDeterministic) {
     std::array<f32, blocks * EPB> first_restored{};
     std::array<f32, blocks * EPB> second_restored{};
 
-    auto st = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 4.0f, first_compressed.data(), blocks);
+    auto st = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 4.0f,
+                                                           first_compressed.data(), blocks);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 4.0f, second_compressed.data(), blocks);
+    st = pernix_test::test_pernix_compress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, input.data(), 4.0f, second_compressed.data(),
+                                                      blocks);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, first_compressed.data(), 0.25f, first_restored.data(), blocks,
-                                      true);
+    st = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, first_compressed.data(), 0.25f,
+                                                        first_restored.data(), blocks, true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, second_compressed.data(), 0.25f, second_restored.data(),
-                                      blocks, true);
+    st = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, second_compressed.data(), 0.25f,
+                                                        second_restored.data(), blocks, true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
     EXPECT_EQ(second_compressed, first_compressed);
@@ -847,10 +860,12 @@ TEST(FallbackStdparEdgeTest, TailWidthDecompressMatchesScalarF32) {
     st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK, BW, BS, compressed.data(), 1.0f, scalar_block.data(), true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0f, stdpar_block.data(), true);
+    st = pernix_test::test_pernix_decompress_block_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0f, stdpar_block.data(),
+                                                       true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0f, stdpar_blocks.data(), 1, true);
+    st = pernix_test::test_pernix_decompress_blocks_f32(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0f,
+                                                        stdpar_blocks.data(), 1, true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
     for (u32 i = 0; i < EPB; ++i) {
@@ -880,10 +895,12 @@ TEST(FallbackStdparEdgeTest, TailWidthDecompressMatchesScalarF64) {
     st = pernix_test::test_pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK, BW, BS, compressed.data(), 1.0, scalar_block.data(), true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0, stdpar_block.data(), true);
+    st = pernix_test::test_pernix_decompress_block_f64(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0, stdpar_block.data(),
+                                                       true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
-    st = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0, stdpar_blocks.data(), 1, true);
+    st = pernix_test::test_pernix_decompress_blocks_f64(PERNIX_BACKEND_FALLBACK_STDPAR, BW, BS, compressed.data(), 1.0,
+                                                        stdpar_blocks.data(), 1, true);
     ASSERT_EQ(st, PERNIX_STATUS_OK);
 
     for (u32 i = 0; i < EPB; ++i) {

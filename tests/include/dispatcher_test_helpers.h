@@ -39,40 +39,37 @@ inline pernix_status c_dispatcher(pernix_backend backend, const pernix_dispatche
         return PERNIX_STATUS_UNSUPPORTED_BACKEND;
     }
     const auto& cache = c_dispatcher_cache();
-    *dispatcher = cache.dispatchers[index];
+    *dispatcher       = cache.dispatchers[index];
     return cache.statuses[index];
 }
 
 inline pernix_status test_pernix_compress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
                                                     float inverse_scale, void* output) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
-    return status == PERNIX_STATUS_OK ? pernix_compress_block_f32(dispatcher, bit_width, block_size, input, inverse_scale, output)
-                                      : status;
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
+    return status == PERNIX_STATUS_OK ? pernix_compress_block_f32(dispatcher, bit_width, block_size, input, inverse_scale, output) : status;
 }
 
 inline pernix_status test_pernix_compress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
                                                      float inverse_scale, void* output, u32 blocks) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
-    return status == PERNIX_STATUS_OK
-               ? pernix_compress_blocks_f32(dispatcher, bit_width, block_size, input, inverse_scale, output, blocks)
-               : status;
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
+    return status == PERNIX_STATUS_OK ? pernix_compress_blocks_f32(dispatcher, bit_width, block_size, input, inverse_scale, output, blocks)
+                                      : status;
 }
 
-inline pernix_status test_pernix_decompress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
-                                                      float scale, void* output, bool sign_values) {
+inline pernix_status test_pernix_decompress_block_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale,
+                                                      void* output, bool sign_values) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
-    return status == PERNIX_STATUS_OK
-               ? pernix_decompress_block_f32(dispatcher, bit_width, block_size, input, scale, output, sign_values)
-               : status;
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
+    return status == PERNIX_STATUS_OK ? pernix_decompress_block_f32(dispatcher, bit_width, block_size, input, scale, output, sign_values)
+                                      : status;
 }
 
-inline pernix_status test_pernix_decompress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
-                                                       float scale, void* output, u32 blocks, bool sign_values) {
+inline pernix_status test_pernix_decompress_blocks_f32(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, float scale,
+                                                       void* output, u32 blocks, bool sign_values) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
     return status == PERNIX_STATUS_OK
                ? pernix_decompress_blocks_f32(dispatcher, bit_width, block_size, input, scale, output, blocks, sign_values)
                : status;
@@ -81,33 +78,30 @@ inline pernix_status test_pernix_decompress_blocks_f32(pernix_backend backend, u
 inline pernix_status test_pernix_compress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
                                                     double inverse_scale, void* output) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
-    return status == PERNIX_STATUS_OK ? pernix_compress_block_f64(dispatcher, bit_width, block_size, input, inverse_scale, output)
-                                      : status;
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
+    return status == PERNIX_STATUS_OK ? pernix_compress_block_f64(dispatcher, bit_width, block_size, input, inverse_scale, output) : status;
 }
 
 inline pernix_status test_pernix_compress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
                                                      double inverse_scale, void* output, u32 blocks) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
-    return status == PERNIX_STATUS_OK
-               ? pernix_compress_blocks_f64(dispatcher, bit_width, block_size, input, inverse_scale, output, blocks)
-               : status;
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
+    return status == PERNIX_STATUS_OK ? pernix_compress_blocks_f64(dispatcher, bit_width, block_size, input, inverse_scale, output, blocks)
+                                      : status;
 }
 
-inline pernix_status test_pernix_decompress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
-                                                      double scale, void* output, bool sign_values) {
+inline pernix_status test_pernix_decompress_block_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input, double scale,
+                                                      void* output, bool sign_values) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
-    return status == PERNIX_STATUS_OK
-               ? pernix_decompress_block_f64(dispatcher, bit_width, block_size, input, scale, output, sign_values)
-               : status;
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
+    return status == PERNIX_STATUS_OK ? pernix_decompress_block_f64(dispatcher, bit_width, block_size, input, scale, output, sign_values)
+                                      : status;
 }
 
 inline pernix_status test_pernix_decompress_blocks_f64(pernix_backend backend, u8 bit_width, u32 block_size, const void* input,
                                                        double scale, void* output, u32 blocks, bool sign_values) {
     const pernix_dispatcher* dispatcher = nullptr;
-    const pernix_status status = c_dispatcher(backend, &dispatcher);
+    const pernix_status status          = c_dispatcher(backend, &dispatcher);
     return status == PERNIX_STATUS_OK
                ? pernix_decompress_blocks_f64(dispatcher, bit_width, block_size, input, scale, output, blocks, sign_values)
                : status;

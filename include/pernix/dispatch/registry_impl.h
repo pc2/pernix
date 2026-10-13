@@ -8,25 +8,25 @@
 
 namespace pernix::internal {
 namespace dispatch_registry {
-using SelectBlockF32 = Kernel<KernelBlockF32Func> (*)(u8, u32);
-using SelectBlocksF32 = Kernel<KernelBlocksF32Func> (*)(u8, u32);
-using SelectBlockF64 = Kernel<KernelBlockF64Func> (*)(u8, u32);
-using SelectBlocksF64 = Kernel<KernelBlocksF64Func> (*)(u8, u32);
-using SelectDecompressBlockF32 = Kernel<KernelBlockF32Func> (*)(u8, u32, bool);
+using SelectBlockF32            = Kernel<KernelBlockF32Func> (*)(u8, u32);
+using SelectBlocksF32           = Kernel<KernelBlocksF32Func> (*)(u8, u32);
+using SelectBlockF64            = Kernel<KernelBlockF64Func> (*)(u8, u32);
+using SelectBlocksF64           = Kernel<KernelBlocksF64Func> (*)(u8, u32);
+using SelectDecompressBlockF32  = Kernel<KernelBlockF32Func> (*)(u8, u32, bool);
 using SelectDecompressBlocksF32 = Kernel<KernelBlocksF32Func> (*)(u8, u32, bool);
-using SelectDecompressBlockF64 = Kernel<KernelBlockF64Func> (*)(u8, u32, bool);
+using SelectDecompressBlockF64  = Kernel<KernelBlockF64Func> (*)(u8, u32, bool);
 using SelectDecompressBlocksF64 = Kernel<KernelBlocksF64Func> (*)(u8, u32, bool);
 
 enum CpuFeature : u32 {
-    CpuAvx2 = 1U << 0U,
-    CpuBmi2 = 1U << 1U,
-    CpuAvx512F = 1U << 2U,
-    CpuAvx512Dq = 1U << 3U,
-    CpuAvx512Bw = 1U << 4U,
-    CpuAvx512Vl = 1U << 5U,
+    CpuAvx2       = 1U << 0U,
+    CpuBmi2       = 1U << 1U,
+    CpuAvx512F    = 1U << 2U,
+    CpuAvx512Dq   = 1U << 3U,
+    CpuAvx512Bw   = 1U << 4U,
+    CpuAvx512Vl   = 1U << 5U,
     CpuAvx512Vbmi = 1U << 6U,
-    CpuNeon = 1U << 7U,
-    CpuSve2 = 1U << 8U,
+    CpuNeon       = 1U << 7U,
+    CpuSve2       = 1U << 8U,
 };
 
 struct BackendDescriptor {
@@ -42,12 +42,11 @@ struct BackendDescriptor {
     SelectDecompressBlocksF64 decompress_blocks_f64;
 };
 
-#define PERNIX_BACKEND_DESCRIPTOR(BACKEND, PREFIX, FEATURES)                                                                  \
-    BackendDescriptor {                                                                                                       \
-        Backend::BACKEND, FEATURES, &select_##PREFIX##_compress_block_f32, &select_##PREFIX##_compress_blocks_f32,             \
-            &select_##PREFIX##_compress_block_f64, &select_##PREFIX##_compress_blocks_f64,                                     \
-            &select_##PREFIX##_decompress_block_f32, &select_##PREFIX##_decompress_blocks_f32,                                 \
-            &select_##PREFIX##_decompress_block_f64, &select_##PREFIX##_decompress_blocks_f64                                 \
+#define PERNIX_BACKEND_DESCRIPTOR(BACKEND, PREFIX, FEATURES)                                                                            \
+    BackendDescriptor {                                                                                                                 \
+        Backend::BACKEND, FEATURES, &select_##PREFIX##_compress_block_f32, &select_##PREFIX##_compress_blocks_f32,                      \
+            &select_##PREFIX##_compress_block_f64, &select_##PREFIX##_compress_blocks_f64, &select_##PREFIX##_decompress_block_f32,     \
+            &select_##PREFIX##_decompress_blocks_f32, &select_##PREFIX##_decompress_block_f64, &select_##PREFIX##_decompress_blocks_f64 \
     }
 
 inline constexpr BackendDescriptor kBackendDescriptors[] = {
@@ -56,8 +55,7 @@ inline constexpr BackendDescriptor kBackendDescriptors[] = {
     PERNIX_BACKEND_DESCRIPTOR(FallbackStdpar, fallback_stdpar, 0U),
 #endif
 #if defined(PERNIX_BUILD_X86_AVX512_VBMI)
-    PERNIX_BACKEND_DESCRIPTOR(X86Avx512Vbmi, avx512vbmi,
-                              CpuAvx512F | CpuAvx512Dq | CpuAvx512Bw | CpuAvx512Vl | CpuAvx512Vbmi),
+    PERNIX_BACKEND_DESCRIPTOR(X86Avx512Vbmi, avx512vbmi, CpuAvx512F | CpuAvx512Dq | CpuAvx512Bw | CpuAvx512Vl | CpuAvx512Vbmi),
 #endif
 #if defined(PERNIX_BUILD_X86_BMI2)
     PERNIX_BACKEND_DESCRIPTOR(X86Bmi2, bmi2, CpuAvx2 | CpuBmi2),
@@ -145,12 +143,7 @@ inline pernix_status resolve(const Backend requested, Backend* resolved) noexcep
     const CpuFeatures features = get_cached_cpu_features();
     if (requested == Backend::Auto) {
         constexpr Backend priority[] = {
-            Backend::X86Avx512Vbmi,
-            Backend::X86Bmi2,
-            Backend::X86Avx2,
-            Backend::Arm64Sve,
-            Backend::Arm64Neon,
-            Backend::Fallback,
+            Backend::X86Avx512Vbmi, Backend::X86Bmi2, Backend::X86Avx2, Backend::Arm64Sve, Backend::Arm64Neon, Backend::Fallback,
         };
         for (const Backend candidate : priority) {
             const BackendDescriptor* descriptor = find_backend(candidate);
@@ -176,7 +169,7 @@ inline pernix_status resolve(const Backend requested, Backend* resolved) noexcep
 
 template <typename Selector, typename... Args>
 auto select(const Backend backend, const Selector selector, Args... args) noexcept {
-    using KernelType = std::invoke_result_t<Selector, const BackendDescriptor&, Args...>;
+    using KernelType                    = std::invoke_result_t<Selector, const BackendDescriptor&, Args...>;
     const BackendDescriptor* descriptor = find_backend(backend);
     if (descriptor == nullptr) {
         return KernelType::failure(is_known_backend(backend) ? PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION
@@ -188,30 +181,41 @@ auto select(const Backend backend, const Selector selector, Args... args) noexce
 struct CompressBlockF32 {
     Kernel<KernelBlockF32Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b) const { return d.compress_block_f32(w, b); }
 };
+
 struct CompressBlocksF32 {
-    Kernel<KernelBlocksF32Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b) const { return d.compress_blocks_f32(w, b); }
+    Kernel<KernelBlocksF32Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b) const {
+        return d.compress_blocks_f32(w, b);
+    }
 };
+
 struct CompressBlockF64 {
     Kernel<KernelBlockF64Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b) const { return d.compress_block_f64(w, b); }
 };
+
 struct CompressBlocksF64 {
-    Kernel<KernelBlocksF64Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b) const { return d.compress_blocks_f64(w, b); }
+    Kernel<KernelBlocksF64Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b) const {
+        return d.compress_blocks_f64(w, b);
+    }
 };
+
 struct DecompressBlockF32 {
     Kernel<KernelBlockF32Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b, const bool s) const {
         return d.decompress_block_f32(w, b, s);
     }
 };
+
 struct DecompressBlocksF32 {
     Kernel<KernelBlocksF32Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b, const bool s) const {
         return d.decompress_blocks_f32(w, b, s);
     }
 };
+
 struct DecompressBlockF64 {
     Kernel<KernelBlockF64Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b, const bool s) const {
         return d.decompress_block_f64(w, b, s);
     }
 };
+
 struct DecompressBlocksF64 {
     Kernel<KernelBlocksF64Func> operator()(const BackendDescriptor& d, const u8 w, const u32 b, const bool s) const {
         return d.decompress_blocks_f64(w, b, s);
@@ -230,22 +234,22 @@ PERNIX_DISPATCH_LINKAGE pernix_status resolve_backend(const Backend requested, B
 }
 
 PERNIX_DISPATCH_LINKAGE Kernel<KernelBlockF32Func> select_compress_block_f32(const Backend backend, const u8 bit_width,
-                                                                            const u32 block_size) {
+                                                                             const u32 block_size) {
     return dispatch_registry::select(backend, dispatch_registry::CompressBlockF32{}, bit_width, block_size);
 }
 
 PERNIX_DISPATCH_LINKAGE Kernel<KernelBlocksF32Func> select_compress_blocks_f32(const Backend backend, const u8 bit_width,
-                                                                              const u32 block_size) {
+                                                                               const u32 block_size) {
     return dispatch_registry::select(backend, dispatch_registry::CompressBlocksF32{}, bit_width, block_size);
 }
 
 PERNIX_DISPATCH_LINKAGE Kernel<KernelBlockF64Func> select_compress_block_f64(const Backend backend, const u8 bit_width,
-                                                                            const u32 block_size) {
+                                                                             const u32 block_size) {
     return dispatch_registry::select(backend, dispatch_registry::CompressBlockF64{}, bit_width, block_size);
 }
 
 PERNIX_DISPATCH_LINKAGE Kernel<KernelBlocksF64Func> select_compress_blocks_f64(const Backend backend, const u8 bit_width,
-                                                                              const u32 block_size) {
+                                                                               const u32 block_size) {
     return dispatch_registry::select(backend, dispatch_registry::CompressBlocksF64{}, bit_width, block_size);
 }
 

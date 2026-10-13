@@ -80,11 +80,11 @@ PERNIX_API pernix_status pernix_compress_block_f32(const pernix_dispatcher* disp
 PERNIX_API pernix_status pernix_compress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
                                                     float inverse_scale, void* output, u32 blocks);
 
-PERNIX_API pernix_status pernix_decompress_block_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, float scale,
-                                                     void* output, bool sign_values);
+PERNIX_API pernix_status pernix_decompress_block_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
+                                                     float scale, void* output, bool sign_values);
 
-PERNIX_API pernix_status pernix_decompress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, float scale,
-                                                      void* output, u32 blocks, bool sign_values);
+PERNIX_API pernix_status pernix_decompress_blocks_f32(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
+                                                      float scale, void* output, u32 blocks, bool sign_values);
 
 PERNIX_API pernix_status pernix_compress_block_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
                                                    double inverse_scale, void* output);
@@ -92,11 +92,11 @@ PERNIX_API pernix_status pernix_compress_block_f64(const pernix_dispatcher* disp
 PERNIX_API pernix_status pernix_compress_blocks_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
                                                     double inverse_scale, void* output, u32 blocks);
 
-PERNIX_API pernix_status pernix_decompress_block_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, double scale,
-                                                     void* output, bool sign_values);
+PERNIX_API pernix_status pernix_decompress_block_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
+                                                     double scale, void* output, bool sign_values);
 
-PERNIX_API pernix_status pernix_decompress_blocks_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input, double scale,
-                                                      void* output, u32 blocks, bool sign_values);
+PERNIX_API pernix_status pernix_decompress_blocks_f64(const pernix_dispatcher* dispatcher, u8 bit_width, u32 block_size, const void* input,
+                                                      double scale, void* output, u32 blocks, bool sign_values);
 
 #ifdef __cplusplus
 }

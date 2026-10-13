@@ -46,128 +46,128 @@ namespace pernix::internal {
     case N:                                   \
         return Kernel<KernelBlocksF64Func>(&compress_blocks_fallback<N, BS>)
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};      \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};           \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};      \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};           \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
 inline Kernel<KernelBlockF32Func> select_fallback_compress_block_f32(const u8 bit_width, const u32 block_size) {
@@ -250,128 +250,128 @@ inline Kernel<KernelBlocksF64Func> select_fallback_scalar_compress_blocks_f64(co
     case N:                                          \
         return Kernel<KernelBlocksF64Func>(&compress_blocks_fallback_stdpar<N, BS, f64>)
 
-#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_SWITCH_32(BS)   \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(24, BS); \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};      \
+#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_SWITCH_32(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(1, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(2, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(3, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(4, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(5, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(6, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(7, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(8, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(9, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(10, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(11, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(12, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(13, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(14, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(15, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(16, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(17, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(18, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(19, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(20, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(21, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(22, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(23, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_32(24, BS);              \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_BLOCKS_SWITCH_32(BS) \
-    case BS:                                                   \
-        switch (bit_width) {                                   \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(24, BS);     \
-            default:                                           \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};           \
+#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_BLOCKS_SWITCH_32(BS)         \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(1, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(2, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(3, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(4, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(5, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(6, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(7, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(8, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(9, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(10, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(11, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(12, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(13, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(14, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(15, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(16, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(17, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(18, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(19, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(20, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(21, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(22, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(23, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_32(24, BS);             \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_SWITCH_64(BS)   \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(24, BS); \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};      \
+#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_SWITCH_64(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(1, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(2, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(3, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(4, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(5, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(6, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(7, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(8, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(9, BS);               \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(10, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(11, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(12, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(13, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(14, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(15, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(16, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(17, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(18, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(19, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(20, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(21, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(22, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(23, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCK_64(24, BS);              \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_BLOCKS_SWITCH_64(BS) \
-    case BS:                                                   \
-        switch (bit_width) {                                   \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(24, BS);     \
-            default:                                           \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};           \
+#define PERNIX_BLOCK_SIZE_STDPAR_COMPRESS_BLOCKS_SWITCH_64(BS)         \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(1, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(2, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(3, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(4, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(5, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(6, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(7, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(8, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(9, BS);              \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(10, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(11, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(12, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(13, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(14, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(15, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(16, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(17, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(18, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(19, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(20, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(21, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(22, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(23, BS);             \
+            PERNIX_CASE_STDPAR_COMPRESS_BLOCKS_64(24, BS);             \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
 inline Kernel<KernelBlockF32Func> select_fallback_stdpar_compress_block_f32(const u8 bit_width, const u32 block_size) {
@@ -449,155 +449,155 @@ inline Kernel<KernelBlocksF64Func> select_fallback_stdpar_compress_blocks_f64(co
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values)                                                                                 \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                               \
+    case N:                                                                                  \
+        if (sign_values)                                                                     \
             return Kernel<KernelBlockF32Func>(&decompress_block_fallback<N, true, BS, f32>); \
         return Kernel<KernelBlockF32Func>(&decompress_block_fallback<N, false, BS, f32>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values)                                                                                   \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                \
+    case N:                                                                                    \
+        if (sign_values)                                                                       \
             return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback<N, true, BS, f32>); \
         return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback<N, false, BS, f32>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                           \
-    case N:                                                                                              \
-        if (sign_values)                                                                                 \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                               \
+    case N:                                                                                  \
+        if (sign_values)                                                                     \
             return Kernel<KernelBlockF64Func>(&decompress_block_fallback<N, true, BS, f64>); \
         return Kernel<KernelBlockF64Func>(&decompress_block_fallback<N, false, BS, f64>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                            \
-    case N:                                                                                                \
-        if (sign_values)                                                                                   \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                \
+    case N:                                                                                    \
+        if (sign_values)                                                                       \
             return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback<N, true, BS, f64>); \
         return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback<N, false, BS, f64>)
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};        \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};             \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};        \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};             \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
 inline Kernel<KernelBlockF32Func> select_fallback_decompress_block_f32(const u8 bit_width, const u32 block_size, bool sign_values) {
@@ -668,156 +668,156 @@ inline Kernel<KernelBlocksF64Func> select_fallback_scalar_decompress_blocks_f64(
     return select_fallback_decompress_blocks_f64(bit_width, block_size, sign_values);
 }
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(N, BS)                                                                  \
-    case N:                                                                                                            \
-        if (sign_values)                                                                                               \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(N, BS)                                               \
+    case N:                                                                                         \
+        if (sign_values)                                                                            \
             return Kernel<KernelBlockF32Func>(&decompress_block_fallback_stdpar<N, true, BS, f32>); \
         return Kernel<KernelBlockF32Func>(&decompress_block_fallback_stdpar<N, false, BS, f32>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(N, BS)                                                                   \
-    case N:                                                                                                              \
-        if (sign_values)                                                                                                 \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(N, BS)                                                \
+    case N:                                                                                           \
+        if (sign_values)                                                                              \
             return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback_stdpar<N, true, BS, f32>); \
         return Kernel<KernelBlocksF32Func>(&decompress_blocks_fallback_stdpar<N, false, BS, f32>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(N, BS)                                                                  \
-    case N:                                                                                                            \
-        if (sign_values)                                                                                               \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(N, BS)                                               \
+    case N:                                                                                         \
+        if (sign_values)                                                                            \
             return Kernel<KernelBlockF64Func>(&decompress_block_fallback_stdpar<N, true, BS, f64>); \
         return Kernel<KernelBlockF64Func>(&decompress_block_fallback_stdpar<N, false, BS, f64>)
 
-#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(N, BS)                                                                   \
-    case N:                                                                                                              \
-        if (sign_values)                                                                                                 \
+#define PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(N, BS)                                                \
+    case N:                                                                                           \
+        if (sign_values)                                                                              \
             return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback_stdpar<N, true, BS, f64>); \
         return Kernel<KernelBlocksF64Func>(&decompress_blocks_fallback_stdpar<N, false, BS, f64>)
 
-#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_32(BS)   \
-    case BS:                                                \
-        switch (bit_width) {                                \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(24, BS); \
-            default:                                        \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};        \
-        }                                                   \
+#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_32(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(1, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(2, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(3, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(4, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(5, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(6, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(7, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(8, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(9, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(10, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(11, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(12, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(13, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(14, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(15, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(16, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(17, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(18, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(19, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(20, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(21, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(22, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(23, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_32(24, BS);            \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_32(BS) \
-    case BS:                                                     \
-        switch (bit_width) {                                     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(24, BS);     \
-            default:                                             \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};             \
-        }                                                        \
+#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_32(BS)       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(1, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(2, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(3, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(4, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(5, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(6, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(7, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(8, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(9, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(10, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(11, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(12, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(13, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(14, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(15, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(16, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(17, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(18, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(19, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(20, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(21, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(22, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(23, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_32(24, BS);           \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_64(BS)   \
-    case BS:                                                \
-        switch (bit_width) {                                \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(24, BS); \
-            default:                                        \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};        \
-        }                                                   \
+#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_SWITCH_64(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(1, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(2, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(3, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(4, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(5, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(6, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(7, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(8, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(9, BS);             \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(10, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(11, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(12, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(13, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(14, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(15, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(16, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(17, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(18, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(19, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(20, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(21, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(22, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(23, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCK_64(24, BS);            \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_64(BS) \
-    case BS:                                                     \
-        switch (bit_width) {                                     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(24, BS);     \
-            default:                                             \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};             \
-        }                                                        \
+#define PERNIX_BLOCK_SIZE_STDPAR_DECOMPRESS_BLOCKS_SWITCH_64(BS)       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(1, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(2, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(3, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(4, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(5, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(6, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(7, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(8, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(9, BS);            \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(10, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(11, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(12, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(13, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(14, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(15, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(16, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(17, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(18, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(19, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(20, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(21, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(22, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(23, BS);           \
+            PERNIX_CASE_STDPAR_DECOMPRESS_BLOCKS_64(24, BS);           \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
 inline Kernel<KernelBlockF32Func> select_fallback_stdpar_decompress_block_f32(const u8 bit_width, const u32 block_size,
@@ -916,128 +916,128 @@ namespace pernix::internal {
     case N:                                   \
         return Kernel<KernelBlocksF64Func>(&mm256_compress_blocks_avx2<N, BS>)
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};          \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};               \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};          \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};               \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
 inline Kernel<KernelBlockF32Func> select_avx2_compress_block_f32(const u8 bit_width, const u32 block_size) {
@@ -1107,155 +1107,155 @@ inline Kernel<KernelBlocksF64Func> select_avx2_compress_blocks_f64(const u8 bit_
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                    \
-    case N:                                                                                       \
-        if (sign_values)                                                                          \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                            \
+    case N:                                                                               \
+        if (sign_values)                                                                  \
             return Kernel<KernelBlockF32Func>(&mm256_decompress_block_avx2<N, true, BS>); \
         return Kernel<KernelBlockF32Func>(&mm256_decompress_block_avx2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                     \
-    case N:                                                                                         \
-        if (sign_values)                                                                            \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                             \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
             return Kernel<KernelBlocksF32Func>(&mm256_decompress_blocks_avx2<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>(&mm256_decompress_blocks_avx2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                    \
-    case N:                                                                                       \
-        if (sign_values)                                                                          \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                            \
+    case N:                                                                               \
+        if (sign_values)                                                                  \
             return Kernel<KernelBlockF64Func>(&mm256_decompress_block_avx2<N, true, BS>); \
         return Kernel<KernelBlockF64Func>(&mm256_decompress_block_avx2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                     \
-    case N:                                                                                         \
-        if (sign_values)                                                                            \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                             \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
             return Kernel<KernelBlocksF64Func>(&mm256_decompress_blocks_avx2<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>(&mm256_decompress_blocks_avx2<N, false, BS>)
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
 inline Kernel<KernelBlockF32Func> select_avx2_decompress_block_f32(const u8 bit_width, const u32 block_size, bool sign_values) {
@@ -1343,128 +1343,128 @@ namespace pernix::internal {
     case N:                                   \
         return Kernel<KernelBlocksF64Func>(&mm256_compress_blocks_bmi2<N, BS>)
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};          \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};               \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};          \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};               \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
 inline Kernel<KernelBlockF32Func> select_bmi2_compress_block_f32(const u8 bit_width, const u32 block_size) {
@@ -1526,155 +1526,155 @@ inline Kernel<KernelBlocksF64Func> select_bmi2_compress_blocks_f64(const u8 bit_
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                    \
-    case N:                                                                                       \
-        if (sign_values)                                                                          \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                            \
+    case N:                                                                               \
+        if (sign_values)                                                                  \
             return Kernel<KernelBlockF32Func>(&mm256_decompress_block_bmi2<N, true, BS>); \
         return Kernel<KernelBlockF32Func>(&mm256_decompress_block_bmi2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                     \
-    case N:                                                                                         \
-        if (sign_values)                                                                            \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                             \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
             return Kernel<KernelBlocksF32Func>(&mm256_decompress_blocks_bmi2<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>(&mm256_decompress_blocks_bmi2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                    \
-    case N:                                                                                       \
-        if (sign_values)                                                                          \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                            \
+    case N:                                                                               \
+        if (sign_values)                                                                  \
             return Kernel<KernelBlockF64Func>(&mm256_decompress_block_bmi2<N, true, BS>); \
         return Kernel<KernelBlockF64Func>(&mm256_decompress_block_bmi2<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                     \
-    case N:                                                                                         \
-        if (sign_values)                                                                            \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                             \
+    case N:                                                                                 \
+        if (sign_values)                                                                    \
             return Kernel<KernelBlocksF64Func>(&mm256_decompress_blocks_bmi2<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>(&mm256_decompress_blocks_bmi2<N, false, BS>)
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
 inline Kernel<KernelBlockF32Func> select_bmi2_decompress_block_f32(const u8 bit_width, const u32 block_size, bool sign_values) {
@@ -1754,128 +1754,128 @@ namespace pernix::internal {
     case N:                                   \
         return Kernel<KernelBlocksF64Func>(&mm512_compress_blocks_avx512vbmi<N, BS>)
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};    \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_32(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_32(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_32(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_32(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};         \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_32(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_32(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)   \
-    case BS:                                       \
-        switch (bit_width) {                       \
-            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS); \
-            default:                               \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};    \
+#define PERNIX_BLOCK_SIZE_COMPRESS_SWITCH_64(BS)                       \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCK_64(1, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(2, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(3, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(4, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(5, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(6, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(7, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(8, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(9, BS);                      \
+            PERNIX_CASE_COMPRESS_BLOCK_64(10, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(11, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(12, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(13, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(14, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(15, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(16, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(17, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(18, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(19, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(20, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(21, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(22, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(23, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCK_64(24, BS);                     \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
-#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS) \
-    case BS:                                            \
-        switch (bit_width) {                            \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);     \
-            default:                                    \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};         \
+#define PERNIX_BLOCK_SIZE_COMPRESS_BLOCKS_SWITCH_64(BS)                \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(1, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(2, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(3, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(4, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(5, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(6, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(7, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(8, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(9, BS);                     \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(10, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(11, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(12, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(13, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(14, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(15, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(16, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(17, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(18, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(19, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(20, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(21, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(22, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(23, BS);                    \
+            PERNIX_CASE_COMPRESS_BLOCKS_64(24, BS);                    \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
         }
 
 inline Kernel<KernelBlockF32Func> select_avx512vbmi_compress_block_f32(const u8 bit_width, const u32 block_size) {
@@ -1937,155 +1937,155 @@ inline Kernel<KernelBlocksF64Func> select_avx512vbmi_compress_blocks_f64(const u
 }  // namespace pernix::internal
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                                \
-    case N:                                                                                                   \
-        if (sign_values)                                                                                      \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                                  \
+    case N:                                                                                     \
+        if (sign_values)                                                                        \
             return Kernel<KernelBlockF32Func>(&mm512_decompress_block_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlockF32Func>(&mm512_decompress_block_avx512vbmi<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                                 \
-    case N:                                                                                                     \
-        if (sign_values)                                                                                        \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                                   \
+    case N:                                                                                       \
+        if (sign_values)                                                                          \
             return Kernel<KernelBlocksF32Func>(&mm512_decompress_blocks_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>(&mm512_decompress_blocks_avx512vbmi<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                                \
-    case N:                                                                                                   \
-        if (sign_values)                                                                                      \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                                  \
+    case N:                                                                                     \
+        if (sign_values)                                                                        \
             return Kernel<KernelBlockF64Func>(&mm512_decompress_block_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlockF64Func>(&mm512_decompress_block_avx512vbmi<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                                 \
-    case N:                                                                                                     \
-        if (sign_values)                                                                                        \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                                   \
+    case N:                                                                                       \
+        if (sign_values)                                                                          \
             return Kernel<KernelBlocksF64Func>(&mm512_decompress_blocks_avx512vbmi<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>(&mm512_decompress_blocks_avx512vbmi<N, false, BS>)
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};      \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};           \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};      \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};           \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
 inline Kernel<KernelBlockF32Func> select_avx512vbmi_decompress_block_f32(const u8 bit_width, const u32 block_size, bool sign_values) {
@@ -2178,156 +2178,156 @@ using pernix::arm64::neon::neon_decompress_block;
 using pernix::arm64::neon::neon_decompress_blocks;
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                              \
-    case N:                                                                                 \
-        if (sign_values)                                                                    \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                      \
+    case N:                                                                         \
+        if (sign_values)                                                            \
             return Kernel<KernelBlockF32Func>(&neon_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF32Func>(&neon_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                               \
-    case N:                                                                                   \
-        if (sign_values)                                                                      \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                       \
+    case N:                                                                           \
+        if (sign_values)                                                              \
             return Kernel<KernelBlocksF32Func>(&neon_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>(&neon_decompress_blocks<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                              \
-    case N:                                                                                 \
-        if (sign_values)                                                                    \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                      \
+    case N:                                                                         \
+        if (sign_values)                                                            \
             return Kernel<KernelBlockF64Func>(&neon_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF64Func>(&neon_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                               \
-    case N:                                                                                   \
-        if (sign_values)                                                                      \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                       \
+    case N:                                                                           \
+        if (sign_values)                                                              \
             return Kernel<KernelBlocksF64Func>(&neon_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>(&neon_decompress_blocks<N, false, BS>)
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
 inline Kernel<KernelBlockF32Func> select_neon_decompress_block_f32(const u8 bit_width, const u32 block_size, bool sign_values) {
@@ -2420,156 +2420,156 @@ using pernix::arm64::sve2::sve2_decompress_block;
 using pernix::arm64::sve2::sve2_decompress_blocks;
 
 namespace pernix::internal {
-#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                              \
-    case N:                                                                                 \
-        if (sign_values)                                                                    \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_32(N, BS)                                      \
+    case N:                                                                         \
+        if (sign_values)                                                            \
             return Kernel<KernelBlockF32Func>(&sve2_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF32Func>(&sve2_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                               \
-    case N:                                                                                   \
-        if (sign_values)                                                                      \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_32(N, BS)                                       \
+    case N:                                                                           \
+        if (sign_values)                                                              \
             return Kernel<KernelBlocksF32Func>(&sve2_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF32Func>(&sve2_decompress_blocks<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                              \
-    case N:                                                                                 \
-        if (sign_values)                                                                    \
+#define PERNIX_CASE_DECOMPRESS_BLOCK_64(N, BS)                                      \
+    case N:                                                                         \
+        if (sign_values)                                                            \
             return Kernel<KernelBlockF64Func>(&sve2_decompress_block<N, true, BS>); \
         return Kernel<KernelBlockF64Func>(&sve2_decompress_block<N, false, BS>)
 
-#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                               \
-    case N:                                                                                   \
-        if (sign_values)                                                                      \
+#define PERNIX_CASE_DECOMPRESS_BLOCKS_64(N, BS)                                       \
+    case N:                                                                           \
+        if (sign_values)                                                              \
             return Kernel<KernelBlocksF64Func>(&sve2_decompress_blocks<N, true, BS>); \
         return Kernel<KernelBlocksF64Func>(&sve2_decompress_blocks<N, false, BS>)
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_32(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_32(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_32(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_32(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)   \
-    case BS:                                         \
-        switch (bit_width) {                         \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);  \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS); \
-            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS); \
-            default:                                 \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};            \
-        }                                            \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_64(BS)                     \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(1, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(2, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(3, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(4, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(5, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(6, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(7, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(8, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(9, BS);                    \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(10, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(11, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(12, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(13, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(14, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(15, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(16, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(17, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(18, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(19, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(20, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(21, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(22, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(23, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCK_64(24, BS);                   \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
-#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS) \
-    case BS:                                              \
-        switch (bit_width) {                              \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);      \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);     \
-            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);     \
-            default:                                      \
-                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr};                 \
-        }                                                 \
+#define PERNIX_BLOCK_SIZE_DECOMPRESS_SWITCH_BLOCKS_64(BS)              \
+    case BS:                                                           \
+        switch (bit_width) {                                           \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(1, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(2, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(3, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(4, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(5, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(6, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(7, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(8, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(9, BS);                   \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(10, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(11, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(12, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(13, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(14, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(15, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(16, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(17, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(18, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(19, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(20, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(21, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(22, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(23, BS);                  \
+            PERNIX_CASE_DECOMPRESS_BLOCKS_64(24, BS);                  \
+            default:                                                   \
+                return {PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH, nullptr}; \
+        }                                                              \
         break
 
 inline Kernel<KernelBlockF32Func> select_sve2_decompress_block_f32(const u8 bit_width, const u32 block_size, bool sign_values) {

@@ -83,6 +83,13 @@ template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename FloatT>
 int compress_blocks_fallback(const std::span<const FloatT> input, const FloatT scale, std::span<u8> destination, const u32 blocks) {
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
+    usize required_values = 0;
+    usize required_bytes  = 0;
+    if (!detail::checked_batch_sizes(BLOCK_SIZE, elements_per_block, blocks, required_values, required_bytes) || input.size() < required_values ||
+        destination.size() < required_bytes) {
+        return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
+
     for (usize i = 0; i < blocks; i++) {
         const auto block_input = input.subspan(i * elements_per_block, elements_per_block);
         auto block_output      = destination.subspan(i * BLOCK_SIZE, BLOCK_SIZE);
@@ -97,8 +104,14 @@ template <u8 BIT_WIDTH, u32 BLOCK_SIZE, typename FloatT>
 int compress_blocks_fallback(const void* __restrict__ input_ptr, const FloatT scale, void* __restrict__ output_ptr, const u32 blocks) {
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
-    const auto input_span = std::span<const FloatT>(static_cast<const FloatT*>(input_ptr), elements_per_block * blocks);
-    auto output_span      = std::span(static_cast<u8*>(output_ptr), static_cast<usize>(blocks * BLOCK_SIZE));
+    usize input_values = 0;
+    usize output_bytes = 0;
+    if (!detail::checked_batch_sizes(BLOCK_SIZE, elements_per_block, blocks, input_values, output_bytes)) {
+        return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
+
+    const auto input_span = std::span<const FloatT>(static_cast<const FloatT*>(input_ptr), input_values);
+    auto output_span      = std::span(static_cast<u8*>(output_ptr), output_bytes);
 
     return compress_blocks_fallback<BIT_WIDTH, BLOCK_SIZE, FloatT>(input_span, scale, output_span, blocks);
 }

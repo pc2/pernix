@@ -2,6 +2,7 @@
 #define PERNIX_DETAIL_API_HPP
 
 #include <pernix/backend.hpp>
+#include <pernix/detail/batch_sizes.hpp>
 #include <pernix/dispatch/select.h>
 
 #include <cmath>
@@ -133,6 +134,14 @@ inline pernix_status compress_blocks(const Backend backend, const u8 bit_width, 
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
 
+    if (is_valid_bit_width(bit_width)) {
+        usize required_values = 0;
+        usize required_bytes  = 0;
+        if (!checked_batch_sizes(block_size, elements_per_block(bit_width, block_size), blocks, required_values, required_bytes)) {
+            return PERNIX_STATUS_INVALID_ARGUMENT;
+        }
+    }
+
     const auto kernel = [&] {
         if constexpr (std::is_same_v<ScaleType, f32>) {
             return pernix::internal::select_compress_blocks_f32(backend, bit_width, block_size);
@@ -188,6 +197,14 @@ inline pernix_status decompress_blocks(const Backend backend, const u8 bit_width
     }
     if (!is_valid_scale(scale)) {
         return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
+
+    if (is_valid_bit_width(bit_width)) {
+        usize required_values = 0;
+        usize required_bytes  = 0;
+        if (!checked_batch_sizes(block_size, elements_per_block(bit_width, block_size), blocks, required_values, required_bytes)) {
+            return PERNIX_STATUS_INVALID_ARGUMENT;
+        }
     }
 
     const auto kernel = [&] {

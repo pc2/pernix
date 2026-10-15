@@ -2,6 +2,7 @@
 #define PERNIX_FALLBACK_COMMON_H
 
 #include <pernix/compat.h>
+#include <pernix/detail/batch_sizes.hpp>
 
 #include <algorithm>
 #include <cmath>

@@ -81,9 +81,18 @@ template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE, typename FloatT
 int decompress_blocks_fallback(const std::span<const u8> input, const FloatT scale, std::span<FloatT> output, const u32 blocks) {
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
+    usize required_values = 0;
+    usize required_bytes  = 0;
+    if (!detail::checked_batch_sizes(BLOCK_SIZE, elements_per_block, blocks, required_values, required_bytes) || input.size() < required_bytes ||
+        output.size() < required_values) {
+        return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
+
     for (u32 block = 0; block < blocks; block++) {
-        const auto block_input = input.subspan(block * BLOCK_SIZE, BLOCK_SIZE);
-        auto block_output      = output.subspan(block * elements_per_block, elements_per_block);
+        const usize input_offset  = static_cast<usize>(block) * static_cast<usize>(BLOCK_SIZE);
+        const usize output_offset = static_cast<usize>(block) * static_cast<usize>(elements_per_block);
+        const auto block_input    = input.subspan(input_offset, BLOCK_SIZE);
+        auto block_output         = output.subspan(output_offset, elements_per_block);
 
         decompress_block_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE, FloatT>(block_input, scale, block_output);
     }
@@ -96,8 +105,14 @@ template <u8 BIT_WIDTH, bool SIGN_VALUES = true, u32 BLOCK_SIZE, typename FloatT
 int decompress_blocks_fallback(const void* __restrict__ input_ptr, const FloatT scale, void* __restrict__ output_ptr, const u32 blocks) {
     constexpr u32 elements_per_block = (BLOCK_SIZE * 8) / BIT_WIDTH;
 
-    const auto input_span = std::span(static_cast<const u8*>(input_ptr), blocks * BLOCK_SIZE);
-    auto output_span      = std::span<FloatT>(static_cast<FloatT*>(output_ptr), elements_per_block * blocks);
+    usize output_values = 0;
+    usize input_bytes   = 0;
+    if (!detail::checked_batch_sizes(BLOCK_SIZE, elements_per_block, blocks, output_values, input_bytes)) {
+        return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
+
+    const auto input_span = std::span(static_cast<const u8*>(input_ptr), input_bytes);
+    auto output_span      = std::span<FloatT>(static_cast<FloatT*>(output_ptr), output_values);
 
     return decompress_blocks_fallback<BIT_WIDTH, SIGN_VALUES, BLOCK_SIZE, FloatT>(input_span, scale, output_span, blocks);
 }

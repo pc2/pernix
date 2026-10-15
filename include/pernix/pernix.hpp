@@ -68,8 +68,11 @@ __always_inline Status validate_compress_spans(const u8 bit_width, const u32 blo
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
 
-    const usize required_input  = static_cast<usize>(elements_per_block(bit_width, block_size)) * blocks;
-    const usize required_output = static_cast<usize>(block_size) * blocks;
+    usize required_input  = 0;
+    usize required_output = 0;
+    if (!checked_batch_sizes(block_size, elements_per_block(bit_width, block_size), blocks, required_input, required_output)) {
+        return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
     return input.size() >= required_input && output.size() >= required_output ? PERNIX_STATUS_OK : PERNIX_STATUS_INVALID_ARGUMENT;
 }
 
@@ -86,8 +89,11 @@ __always_inline Status validate_decompress_spans(const u8 bit_width, const u32 b
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
 
-    const usize required_input  = static_cast<usize>(block_size) * blocks;
-    const usize required_output = static_cast<usize>(elements_per_block(bit_width, block_size)) * blocks;
+    usize required_output = 0;
+    usize required_input  = 0;
+    if (!checked_batch_sizes(block_size, elements_per_block(bit_width, block_size), blocks, required_output, required_input)) {
+        return PERNIX_STATUS_INVALID_ARGUMENT;
+    }
     return input.size() >= required_input && output.size() >= required_output ? PERNIX_STATUS_OK : PERNIX_STATUS_INVALID_ARGUMENT;
 }
 }  // namespace detail

@@ -30,6 +30,7 @@ typedef enum pernix_backend {  // NOLINT(cppcoreguidelines-use-enum-class, moder
     PERNIX_BACKEND_ARM64_NEON      = 5,
     PERNIX_BACKEND_ARM64_SVE       = 6,
     PERNIX_BACKEND_FALLBACK_STDPAR = 7,
+    PERNIX_BACKEND_CUDA            = 8,
 } pernix_backend;
 
 typedef struct pernix_dispatcher pernix_dispatcher;

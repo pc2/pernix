@@ -11,6 +11,15 @@ install(TARGETS pernix pernix_header_only
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )
 
+if (TARGET pernix_cuda_backend)
+    install(TARGETS pernix_cuda_backend
+            EXPORT pernixTargets
+            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    )
+endif ()
+
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/pernix"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 

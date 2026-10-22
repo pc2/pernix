@@ -40,7 +40,7 @@ int main(void) {
         expect_status(pernix_dispatcher_backend(dispatcher, 0), PERNIX_STATUS_INVALID_ARGUMENT) != 0) {
         return 1;
     }
-    if (expect_status(pernix_dispatcher_create((pernix_backend)8, &invalid_dispatcher), PERNIX_STATUS_UNSUPPORTED_BACKEND) != 0 ||
+    if (expect_status(pernix_dispatcher_create((pernix_backend)9, &invalid_dispatcher), PERNIX_STATUS_UNSUPPORTED_BACKEND) != 0 ||
         invalid_dispatcher != 0) {
         return 1;
     }

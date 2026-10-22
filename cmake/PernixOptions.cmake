@@ -29,8 +29,8 @@ option(PERNIX_ENABLE_ARM64 "Enable ARM64 architecture specific optimizations" ON
 option(PERNIX_ENABLE_ARM64_NEON "Enable ARM64 NEON specific optimizations" ON)
 # option(PERNIX_ENABLE_ARM64_SVE "Enable ARM64 SVE specific optimizations" OFF)
 option(PERNIX_ENABLE_ARM64_SVE2 "Enable ARM64 SVE2 specific optimizations" OFF)
-#LATER
-option(PERNIX_ENABLE_CUDA "Enable CUDA support" OFF)
+
+option(PERNIX_ENABLE_CUDA "Build the NVIDIA CUDA backend" OFF)
 
 if (PERNIX_INSTALL_DOCS AND NOT PERNIX_ENABLE_DOCS)
     message(FATAL_ERROR "PERNIX_INSTALL_DOCS requires PERNIX_ENABLE_DOCS to be ON")

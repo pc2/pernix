@@ -402,7 +402,7 @@ TEST(DispatcherContractTest, AutoChoosesTheFirstSupportedBackendInPriorityOrder)
 
 TEST(DispatcherContractTest, RejectsInvalidBackendAndPreservesMoveOwnership) {
     pernix::Dispatcher output;
-    EXPECT_EQ(pernix::Dispatcher::create(static_cast<pernix::Backend>(8), output), PERNIX_STATUS_UNSUPPORTED_BACKEND);
+    EXPECT_EQ(pernix::Dispatcher::create(static_cast<pernix::Backend>(9), output), PERNIX_STATUS_UNSUPPORTED_BACKEND);
     EXPECT_EQ(pernix::Dispatcher::create(static_cast<pernix::Backend>(255), output), PERNIX_STATUS_UNSUPPORTED_BACKEND);
     EXPECT_FALSE(output.configured());
     std::array<float, 32> input{};

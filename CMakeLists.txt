@@ -12,7 +12,41 @@ if (PROJECT_IS_TOP_LEVEL)
 endif ()
 
 if (PERNIX_ENABLE_FORTRAN_BINDINGS)
+    include(CheckLanguage)
+    check_language(Fortran)
+
+    if (NOT CMAKE_Fortran_COMPILER)
+        message(FATAL_ERROR "Fortran compiler not found, but Fortran bindings are enabled")
+    endif ()
+
     enable_language(Fortran)
+endif ()
+
+if (PERNIX_ENABLE_CUDA)
+    include(CheckLanguage)
+    check_language(CUDA)
+
+    if (NOT CMAKE_CUDA_COMPILER)
+        message(FATAL_ERROR "CUDA compiler not found, but CUDA backend is enabled")
+    endif ()
+
+    enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
+
+    if (NOT CUDAToolkit_FOUND)
+        message(FATAL_ERROR "CUDAToolkit not found, but CUDA backend is enabled")
+    endif ()
+
+    if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 12.0)
+        message(FATAL_ERROR "CUDA compiler version must be at least 12.0, but found ${CMAKE_CUDA_COMPILER_VERSION}")
+    endif ()
+
+    if (NOT CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES native)
+    endif ()
+
+    message(STATUS "PERNIX CUDA toolkit: ${CUDAToolkit_VERSION}")
+    message(STATUS "PERNIX CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}")
 endif ()
 
 add_subdirectory(src)

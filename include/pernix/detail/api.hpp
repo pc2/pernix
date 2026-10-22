@@ -5,6 +5,10 @@
 #include <pernix/detail/batch_sizes.hpp>
 #include <pernix/dispatch/select.h>
 
+#if defined(PERNIX_BUILD_CUDA)
+#include <pernix/cuda/codec.hpp>
+#endif
+
 #include <cmath>
 #include <limits>
 #include <type_traits>
@@ -169,6 +173,25 @@ inline pernix_status decompress_block(const Backend backend, const u8 bit_width,
         return PERNIX_STATUS_INVALID_ARGUMENT;
     }
 
+    if (backend == Backend::Cuda) {
+#if defined(PERNIX_BUILD_CUDA)
+        if (!is_valid_bit_width(bit_width)) {
+            return PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH;
+        }
+        if constexpr (std::is_same_v<ScaleType, f32>) {
+            if (block_size != fixed_block_size) {
+                return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
+            }
+            return pernix::cuda::decompress_blocks_f32_host(static_cast<const u8*>(input), static_cast<f32*>(output), 1,
+                                                            bit_width, scale, sign_values);
+        } else {
+            return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
+        }
+#else
+        return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
+#endif
+    }
+
     const auto kernel = [&] {
         if constexpr (std::is_same_v<ScaleType, f32>) {
             return pernix::internal::select_decompress_block_f32(backend, bit_width, block_size, sign_values);
@@ -205,6 +228,25 @@ inline pernix_status decompress_blocks(const Backend backend, const u8 bit_width
         if (!checked_batch_sizes(block_size, elements_per_block(bit_width, block_size), blocks, required_values, required_bytes)) {
             return PERNIX_STATUS_INVALID_ARGUMENT;
         }
+    }
+
+    if (backend == Backend::Cuda) {
+#if defined(PERNIX_BUILD_CUDA)
+        if (!is_valid_bit_width(bit_width)) {
+            return PERNIX_STATUS_UNSUPPORTED_BIT_WIDTH;
+        }
+        if constexpr (std::is_same_v<ScaleType, f32>) {
+            if (block_size != fixed_block_size) {
+                return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
+            }
+            return pernix::cuda::decompress_blocks_f32_host(static_cast<const u8*>(input), static_cast<f32*>(output), blocks,
+                                                            bit_width, scale, sign_values);
+        } else {
+            return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
+        }
+#else
+        return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
+#endif
     }
 
     const auto kernel = [&] {

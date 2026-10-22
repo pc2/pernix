@@ -128,6 +128,7 @@ Current backend enum values:
 * `PERNIX_BACKEND_ARM64_NEON`
 * `PERNIX_BACKEND_ARM64_SVE`
 * `PERNIX_BACKEND_FALLBACK_STDPAR`
+* `PERNIX_BACKEND_CUDA`
 
 Auto resolves once and never switches backends per operation. If the selected backend has no kernel for an operation,
 that call returns `PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION`. ARM64 compression kernels are currently incomplete, so use
@@ -141,6 +142,27 @@ by default. When enabled, both the compiled library and the header-only target e
 available,
 stdpar uses standard parallel execution policies; otherwise it preserves the same 8-value grouping logic while executing
 sequentially.
+
+## CUDA Setup
+
+CUDA is optional. Configure and build the CUDA runtime library and device probe with:
+
+```bash
+cmake --preset cuda-release
+cmake --build --preset cuda-release
+```
+
+The preset targets CUDA architecture `89`; change `CMAKE_CUDA_ARCHITECTURES` in `CMakePresets.json` to match your GPU.
+Run `cmake-build-cuda/src/cuda/pernix_cuda` to check that the NVIDIA driver exposes a CUDA device. Compilation can
+succeed without a GPU, but the probe requires a working NVIDIA driver and a visible CUDA-capable device.
+
+The compiled CUDA backend supports float32 decompression for 64-byte blocks. Create a dispatcher with
+`pernix::Backend::Cuda` (or `PERNIX_BACKEND_CUDA` in C) to use it; the span-based API copies packed input to the GPU and
+copies decoded values back. `Backend::Auto` selects a CPU backend because CUDA currently only implements decompression.
+The lower-level `pernix::cuda::decompress_blocks_f32` API accepts device pointers directly.
+
+Build and run the CUDA smoke test with `cmake --preset cuda-tests`, `cmake --build --preset cuda-tests`, and
+`ctest --preset cuda-tests`. CTest marks the smoke and decompression tests skipped when no usable CUDA device is available.
 
 ## C++ Example
 

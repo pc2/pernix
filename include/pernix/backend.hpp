@@ -13,6 +13,7 @@ enum class Backend : u8 {
     Arm64Neon      = PERNIX_BACKEND_ARM64_NEON,
     Arm64Sve       = PERNIX_BACKEND_ARM64_SVE,
     FallbackStdpar = PERNIX_BACKEND_FALLBACK_STDPAR,
+    Cuda           = PERNIX_BACKEND_CUDA,
 };
 }  // namespace pernix
 

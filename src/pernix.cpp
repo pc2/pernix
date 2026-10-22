@@ -66,7 +66,7 @@ pernix_status pernix_dispatcher_create(pernix_backend backend, pernix_dispatcher
     *dispatcher = nullptr;
 
     const int requested_value = static_cast<int>(backend);
-    if (requested_value < PERNIX_BACKEND_AUTO || requested_value > PERNIX_BACKEND_FALLBACK_STDPAR) {
+    if (requested_value < PERNIX_BACKEND_AUTO || requested_value > PERNIX_BACKEND_CUDA) {
         return PERNIX_STATUS_UNSUPPORTED_BACKEND;
     }
 

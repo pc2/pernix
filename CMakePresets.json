@@ -37,6 +37,27 @@
       "cacheVariables": {
         "PERNIX_ENABLE_CODE_COVERAGE": "ON"
       }
+    },
+    {
+      "name": "cuda-release",
+      "displayName": "CUDA Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF",
+        "PERNIX_ENABLE_CUDA": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "89"
+      }
+    },
+    {
+      "name": "cuda-tests",
+      "displayName": "CUDA smoke tests",
+      "inherits": "cuda-release",
+      "binaryDir": "${sourceDir}/cmake-build-cuda-tests",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -52,6 +73,14 @@
       "name": "tests-coverage",
       "configurePreset": "tests-coverage",
       "targets": ["coverage"]
+    },
+    {
+      "name": "cuda-release",
+      "configurePreset": "cuda-release"
+    },
+    {
+      "name": "cuda-tests",
+      "configurePreset": "cuda-tests"
     }
   ],
   "testPresets": [
@@ -72,6 +101,13 @@
     {
       "name": "tests-coverage",
       "configurePreset": "tests-coverage",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "cuda-tests",
+      "configurePreset": "cuda-tests",
       "output": {
         "outputOnFailure": true
       }

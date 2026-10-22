@@ -45,6 +45,38 @@ target_include_directories(pernix_c_api_matrix PRIVATE "${PROJECT_SOURCE_DIR}/in
 add_test(NAME pernix_c_api_matrix COMMAND pernix_c_api_matrix)
 set_tests_properties(pernix_c_api_matrix PROPERTIES LABELS "contract;c-api;matrix")
 
+if (PERNIX_ENABLE_CUDA)
+    add_executable(pernix_cuda_smoke_test cuda/smoke_test.cu)
+    target_link_libraries(pernix_cuda_smoke_test PRIVATE pernix::pernix_cuda CUDA::cudart)
+    set_target_properties(pernix_cuda_smoke_test PROPERTIES
+            CUDA_EXTENSIONS OFF
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON
+    )
+    add_test(NAME pernix_cuda_smoke_test COMMAND pernix_cuda_smoke_test)
+    set_tests_properties(pernix_cuda_smoke_test PROPERTIES
+            LABELS "integration;cuda"
+            SKIP_RETURN_CODE 77
+    )
+
+    add_executable(pernix_cuda_decompression_test cuda/decompression_test.cu)
+    target_link_libraries(pernix_cuda_decompression_test PRIVATE pernix::pernix pernix::pernix_cuda cuda CUDA::cudart)
+    set_target_properties(
+            pernix_cuda_decompression_test PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON
+    )
+    add_test(
+            NAME pernix_cuda_decompression
+            COMMAND pernix_cuda_decompression_test
+    )
+
+    set_tests_properties(pernix_cuda_decompression PROPERTIES
+            LABELS "integration;cuda"
+            SKIP_RETURN_CODE 77
+    )
+endif ()
+
 if (PERNIX_ENABLE_INSTALL_CONSUMER_TESTS)
     add_test(NAME pernix_install_consumer
             COMMAND ${CMAKE_COMMAND}
@@ -120,4 +152,8 @@ if (PERNIX_ENABLE_CODE_COVERAGE)
             COMMENT "Generating Pernix code coverage report"
             VERBATIM
     )
+
+    if (TARGET pernix_cuda_smoke_test)
+        add_dependencies(coverage pernix_cuda_smoke_test)
+    endif ()
 endif ()

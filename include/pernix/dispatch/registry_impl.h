@@ -4,6 +4,10 @@
 #include <pernix/dispatch/cpu_features.h>
 #include <pernix/dispatch/select.h>
 
+#if defined(PERNIX_BUILD_CUDA)
+#include <pernix/cuda/runtime.hpp>
+#endif
+
 #include <type_traits>
 
 namespace pernix::internal {
@@ -115,6 +119,7 @@ constexpr bool is_known_backend(const Backend backend) noexcept {
         case Backend::Arm64Neon:
         case Backend::Arm64Sve:
         case Backend::FallbackStdpar:
+        case Backend::Cuda:
             return true;
         default:
             return false;
@@ -157,6 +162,15 @@ inline pernix_status resolve(const Backend requested, Backend* resolved) noexcep
 
     if (!is_known_backend(requested)) {
         return PERNIX_STATUS_UNSUPPORTED_BACKEND;
+    }
+    if (requested == Backend::Cuda) {
+#if defined(PERNIX_BUILD_CUDA)
+        if (pernix::cuda::device_count() > 0) {
+            *resolved = Backend::Cuda;
+            return PERNIX_STATUS_OK;
+        }
+#endif
+        return PERNIX_STATUS_UNSUPPORTED_IMPLEMENTATION;
     }
     const BackendDescriptor* descriptor = find_backend(requested);
     if (descriptor == nullptr || !supports(*descriptor, features)) {
